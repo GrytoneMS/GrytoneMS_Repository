@@ -16,7 +16,7 @@
 | 영역 | 스택 |
 | --- | --- |
 | 프론트엔드 | React (반응형 웹) |
-| 백엔드 | 미정 |
+| 백엔드 | Spring Boot (Java) |
 | DB | MySQL 8.0 (InnoDB, utf8mb4) |
 | 기타 | Redis (인증 코드), 오브젝트 스토리지 (업로드 파일) |
 
@@ -80,7 +80,7 @@ npm run dev
 
 # backend
 cd backend
-# 실행 명령 추가
+./gradlew bootRun
 ```
 
 환경 변수는 `.env`에 두고 커밋하지 않습니다. 필요한 키 목록은 `.env.example`로 공유합니다.
