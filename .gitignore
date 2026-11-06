@@ -1,0 +1,56 @@
+# ===== 환경 변수 / 비밀값 =====
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== IDE / 에디터 =====
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+
+# ===== 로그 =====
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===== Node / React (frontend, Node 백엔드) =====
+node_modules/
+dist/
+build/
+.vite/
+.next/
+out/
+coverage/
+.eslintcache
+*.tsbuildinfo
+
+# ===== Java / Spring (백엔드가 Spring일 경우) =====
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+target/
+*.class
+bin/
+HELP.md
+
+# ===== Python (백엔드가 Python일 경우) =====
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# ===== 업로드 파일 (로컬 테스트용) =====
+uploads/
