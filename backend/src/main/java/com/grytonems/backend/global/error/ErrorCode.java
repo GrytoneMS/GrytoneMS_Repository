@@ -30,7 +30,7 @@ public enum ErrorCode {
     SCHOOL_NOT_FOUND(HttpStatus.NOT_FOUND, "학교를 찾을 수 없어요"),
     SCHOOL_DOMAIN_DUPLICATED(HttpStatus.CONFLICT, "이미 등록된 이메일 도메인이에요"),
 
-    //모집글
+    // 모집글
     POST_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "모집 중인 글은 최대 3개까지 올릴 수 있어요");
 
     private final HttpStatus status;

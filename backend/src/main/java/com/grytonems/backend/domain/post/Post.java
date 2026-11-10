@@ -107,7 +107,7 @@ public class Post extends BaseTimeEntity {
 
     /** POST-04: 수동 마감 */
     public void close() {
-        this.status = RecruitStatus.CLOSED; //상태 마감으로 변경
+        this.status = RecruitStatus.CLOSED;
         this.closedAt = LocalDateTime.now();
     }
 }
