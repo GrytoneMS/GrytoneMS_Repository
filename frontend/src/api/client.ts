@@ -25,6 +25,11 @@ function isEnvelope(value: unknown): value is ApiResponse<unknown> {
   if (value.success !== false || !('code' in value) || !('message' in value)) return false
   if (typeof value.code !== 'string' || typeof value.message !== 'string') return false
   if (!('fieldErrors' in value) || value.fieldErrors == null) return true
+  if (Array.isArray(value.fieldErrors)) {
+    return value.fieldErrors.every((error: unknown) => typeof error === 'object' && error !== null
+      && 'field' in error && typeof error.field === 'string'
+      && 'message' in error && typeof error.message === 'string')
+  }
   return typeof value.fieldErrors === 'object' && !Array.isArray(value.fieldErrors)
     && Object.values(value.fieldErrors).every((message) => typeof message === 'string')
 }

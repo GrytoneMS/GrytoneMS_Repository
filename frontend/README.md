@@ -1,7 +1,8 @@
 ﻿# 프론트엔드 기본 구조
 
-React + Vite + TypeScript 기반입니다. 현재는 페이지 이름과 경로만 확인할 수 있습니다.
-로그인, 권한 검사, API 연동, 지원 동작은 구현하지 않았습니다. 상단 링크는 개발용입니다.
+React + Vite + TypeScript 기반입니다. 모집글 목록·상세는 1차 명세의 조회 API와 개발용 예시 모드를 지원합니다.
+실행·확인 주소와 연동 범위는 [모집글 작업 안내](./POSTS.md)를 참고하세요.
+나머지는 경로 확인용 화면이며 로그인·권한 검사·지원 동작은 구현하지 않았습니다.
 
 ## 설치와 실행
 
@@ -18,7 +19,8 @@ npm run dev
 PowerShell에서는 `Copy-Item .env.example .env`를 사용합니다.
 실행 정책으로 npm.ps1이 차단되면 `npm.cmd ci`, `npm.cmd run dev`처럼 실행합니다.
 터미널에 출력된 주소(기본 http://localhost:5173)로 접속하세요.
-현재 자리 표시 화면은 백엔드 서버 없이 확인할 수 있습니다.
+모집글 예시 화면은 VITE_POSTS_MOCK=true인 개발 서버에서 백엔드 없이 확인할 수 있습니다.
+나머지 자리 표시 화면도 백엔드 없이 확인할 수 있습니다.
 Windows에서 의존성을 다시 설치할 때는 실행 중인 개발 서버를 `Ctrl+C`로 먼저 종료하세요.
 
 ```bash
@@ -45,9 +47,9 @@ token을 전달하면 Authorization: Bearer 헤더를 붙이며 자동으로 저
 - 성공 규약과 HTTP 실패가 충돌: HTTP_ERROR
 - 네트워크 오류와 취소: fetch 오류를 그대로 전달
 
-fieldErrors는 임시로 Record<string, string>으로 정의했습니다. 실제 필드 오류 구조는
-백엔드와 확정해야 합니다. T는 컴파일 시 계약이며 data의 런타임 검증은 기능별 API에서
-필요에 따라 추가합니다. 현재 페이지에서 실제 API 요청을 보내지 않습니다.
+fieldErrors는 1차 명세의 { field, message }[]와 기존 Record<string, string> 형식을 지원합니다.
+T는 컴파일 시 계약이며 data의 런타임 검증은 기능별 API에서
+필요에 따라 추가합니다. 목록·상세는 VITE_POSTS_MOCK=false일 때 실제 API 요청을 보냅니다.
 
 ## 폴더별 역할
 
