@@ -7,7 +7,7 @@ export type RoleCode = 'PLANNING' | 'DESIGN' | 'DEV' | 'VIDEO' | 'MARKETING' | '
 export type ApplicationStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELED' | 'CLOSED' | 'LEFT'
 export type Viewer = 'guest' | 'other' | 'owner' | 'applied' | 'accepted' | 'rejected' | 'canceled' | 'applicationClosed' | 'left'
 export type RoleSummary = { roleCode: RoleCode; roleName: string; remaining: number }
-export type PostRole = { id: number; roleCode: RoleCode; roleName: string; headcount: number; filledCount: number; requirements: string; status: PostStatus }
+export type PostRole = { id: number; roleCode: RoleCode; roleName: string; headcount: number; filledCount: number; requirements: string | null; status: PostStatus }
 export type Leader = { id: number; nickname: string; schoolName: string }
 export type PostSummary = {
   id: number; title: string; category: Category; status: PostStatus; deadline: string; dDay: number;

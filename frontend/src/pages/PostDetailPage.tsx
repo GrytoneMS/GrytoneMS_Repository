@@ -1,7 +1,7 @@
 ﻿import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { Button } from '../components/Button'
-import { MockControls, PostError, RoleAvailability, StatusBadge } from '../features/posts/components'
+import { MockControls, PostError, RoleAvailability, RoleRequirements, StatusBadge } from '../features/posts/components'
 import { categoryLabels, locationLabel, meetingLabels, postActionLabel } from '../features/posts/model'
 import type { PostDetail } from '../features/posts/model'
 import { isPostMock, loadPost, readScenario, readViewer } from '../features/posts/source'
@@ -56,7 +56,7 @@ function PostDetailContent() {
         {post.roles.map(role => <section className="post-panel post-role-panel" key={role.id}>
           <RoleAvailability role={{ roleName: role.roleName, remaining: role.headcount - role.filledCount }} />
           <p>{role.status === 'CLOSED' ? '역할 모집 마감' : '역할 모집 중'} · 총 {role.headcount}명 중 {role.filledCount}명 충원</p>
-          <p>{role.requirements}</p><progress max={role.headcount} value={role.filledCount} aria-label={`${role.roleName} 모집 ${role.headcount}명 중 ${role.filledCount}명 충원`} />
+          <RoleRequirements requirements={role.requirements} /><progress max={role.headcount} value={role.filledCount} aria-label={`${role.roleName} 모집 ${role.headcount}명 중 ${role.filledCount}명 충원`} />
         </section>)}
         <Button disabled>{postActionLabel(post)}</Button>
         {post.isMine && <Button disabled>{post.status === 'CLOSED' ? '모집 마감됨' : '모집 마감하기 · 준비 중'}</Button>}
