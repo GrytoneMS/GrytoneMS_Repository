@@ -22,6 +22,28 @@ try {
   const model = await server.ssrLoadModule('/src/features/posts/model.ts')
   const mock = await server.ssrLoadModule('/src/features/posts/mock.ts')
   const source = await server.ssrLoadModule('/src/features/posts/source.ts')
+  const { RoleRequirements } = await server.ssrLoadModule('/src/features/posts/components.tsx')
+  await check('역할 요구조건: 정상 문자열 보존, null·빈 문자열·공백 표시 및 API 원본 보존', async () => {
+    for (const [requirements, expected] of [
+      ['Premiere 가능자 우대', 'Premiere 가능자 우대'],
+      ['  Figma 가능자  ', '  Figma 가능자  '],
+      [null, '요구조건 없음'], ['', '요구조건 없음'], ['   ', '요구조건 없음'], ['\t\n', '요구조건 없음'],
+    ]) {
+      const detail = mock.mockDetail('1', 'other')
+      const payload = { ...detail, roles: [{ ...detail.roles[0], requirements }] }
+      globalThis.fetch = async () => success(payload)
+      const result = await api.getPost('1')
+      const html = renderToStaticMarkup(createElement(RoleRequirements, result.roles[0]))
+      assert.equal(html, `<p>${expected}</p>`)
+      assert.equal(result.roles[0].requirements, requirements)
+    }
+    for (const [id, expected] of [['2', null], ['3', ''], ['4', '   ']]) {
+      const role = mock.mockDetail(id, 'other').roles[0]
+      assert.equal(role.requirements, expected)
+      assert.equal(renderToStaticMarkup(createElement(RoleRequirements, role)), '<p>요구조건 없음</p>')
+      assert.equal(role.requirements, expected)
+    }
+  })
   const { ApiError } = await server.ssrLoadModule('/src/api/client.ts')
   const { postErrorMessage } = await server.ssrLoadModule('/src/features/posts/errors.ts')
   const calls = []

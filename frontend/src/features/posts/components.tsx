@@ -1,9 +1,12 @@
 import { Link } from 'react-router'
 import { Button } from '../../components/Button'
 import { categoryLabels, meetingLabels } from './model'
-import type { PostStatus, PostSummary, RoleSummary, Viewer } from './model'
+import type { PostRole, PostStatus, PostSummary, RoleSummary, Viewer } from './model'
 import { isPostMock, type Scenario } from './source'
 
+export function RoleRequirements({ requirements }: Pick<PostRole, 'requirements'>) {
+  return <p>{requirements?.trim() ? requirements : '요구조건 없음'}</p>
+}
 export function StatusBadge({ status, daysLeft }: { status: PostStatus; daysLeft: number }) {
   return <span className={`post-chip ${status === 'CLOSED' ? 'post-chip-closed' : daysLeft <= 3 ? 'post-chip-urgent' : ''}`}>{status === 'CLOSED' ? '모집 마감' : daysLeft === 0 ? 'D-Day' : daysLeft < 0 ? `마감일 ${Math.abs(daysLeft)}일 경과` : `D-${daysLeft}`}</span>
 }

@@ -33,6 +33,7 @@ API 모드에서 HTTP·네트워크 오류가 나도 mock으로 전환하지 않
 | `/posts?scenario=moreError` | 첫 페이지 유지, 추가 로딩 오류 및 재시도 |
 | `/posts/1` | 행사 포함 상세, `/users/1` 프로필 연결 |
 | `/posts/2` | 행사 없는 비대면 상세; 없는 위치·빈도 표시 안 함 |
+| `/posts/2`, `/posts/3`, `/posts/4` | 역할 요구조건이 각각 null·빈 문자열·공백인 예시: ‘요구조건 없음’ 표시 (`/posts/1`은 정상 문자열) |
 | `/posts/12` | 모집 마감 |
 | `/posts/1?viewer=owner` | 본인 모집글의 관리·마감 준비 중 버튼 |
 | `/posts/1?viewer=applied` | PENDING 지원 상태 |

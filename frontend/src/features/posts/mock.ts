@@ -17,7 +17,7 @@ export const mockPosts: PostDetail[] = titles.map((title, index) => ({
   roles: index === 0 ? [
     { id: 31, roleCode: 'VIDEO', roleName: '영상 편집', headcount: 1, filledCount: 0, requirements: 'Premiere 가능자 우대', status: 'OPEN' },
     { id: 32, roleCode: 'DESIGN', roleName: '디자인', headcount: 2, filledCount: 1, requirements: 'Figma 가능자', status: 'OPEN' },
-  ] : [{ id: 100 + index, roleCode: 'ETC', roleName: index === 1 ? '스터디원' : '팀원', headcount: 3, filledCount: index === 11 ? 3 : 1, requirements: '함께 꾸준히 활동할 분', status: index === 11 ? 'CLOSED' : 'OPEN' }],
+  ] : [{ id: 100 + index, roleCode: 'ETC', roleName: index === 1 ? '스터디원' : '팀원', headcount: 3, filledCount: index === 11 ? 3 : 1, requirements: index === 1 ? null : index === 2 ? '' : index === 3 ? '   ' : '함께 꾸준히 활동할 분', status: index === 11 ? 'CLOSED' : 'OPEN' }],
   leader: { id: 1, nickname: '민지', schoolName: '단국대학교', major: '컴퓨터공학', profileImageUrl: null },
   description: '천안·아산 대학생들과 함께 결과물을 만들 팀원을 모집해요.\n매주 진행 상황을 공유하고, 서로의 아이디어를 발전시키며 프로젝트를 완성하려고 합니다.',
   periodStart: dateAfter(21), periodEnd: dateAfter(50),
