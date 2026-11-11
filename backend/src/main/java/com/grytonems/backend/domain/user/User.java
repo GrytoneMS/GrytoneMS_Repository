@@ -140,6 +140,13 @@ public class User extends BaseTimeEntity {
         this.status = UserStatus.VERIFIED;
     }
 
+    /** 기본 정보 수정 (PROF-01). 비운 항목은 null로 저장합니다 */
+    public void updateProfile(String major, Integer grade, String bio) {
+        this.major = major;
+        this.grade = grade;
+        this.bio = bio;
+    }
+
     /** 이용 정지 (ADMN-04에서 사용) */
     public void suspend() {
         this.status = UserStatus.SUSPENDED;

@@ -42,6 +42,7 @@ com.grytonems.backend
     ├── verification/        # 학교 이메일 인증 (AUTH-06)
     ├── post/                # 모집글 (POST)
     ├── application/         # 지원·수락·거절·연락 수단 (APPL)
+    ├── profile/             # 프로필: 기본 정보·희망 역할·보유 기술·타인 프로필 (PROF-01~03, 12)
     └── school/              # 예시: 학교 목록·등록 (AUTH-06, ADMN-05)
         ├── School.java              # Entity
         ├── SchoolRepository.java    # DB 접근
