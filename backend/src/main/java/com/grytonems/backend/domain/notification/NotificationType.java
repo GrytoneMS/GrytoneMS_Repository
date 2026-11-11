@@ -13,5 +13,7 @@ public enum NotificationType {
     SCRAP_DEADLINE_SOON,   // 스크랩한 사용자: 마감 D-1
     REVERIFY_REQUIRED,     // 전체: 학기 재인증 요청
     REPORT_RESOLVED,       // 신고자: 신고 처리 완료
-    VERIFY_RESULT          // 서류 인증 결과
+    VERIFY_RESULT,         // 서류 인증 결과
+    POST_HIDDEN,           // 팀장: 내 모집글 숨김 (1차 추가)
+    POST_RESTORED          // 팀장: 내 모집글 복구 (1차 추가)
 }

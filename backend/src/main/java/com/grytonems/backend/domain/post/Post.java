@@ -110,4 +110,14 @@ public class Post extends BaseTimeEntity {
         this.status = RecruitStatus.CLOSED;
         this.closedAt = LocalDateTime.now();
     }
+
+    /** SAFE-02·ADMN-02: 숨김 (신고 누적·관리자 조치). 모집 상태는 그대로 둡니다 */
+    public void hide() {
+        this.hidden = true;
+    }
+
+    /** ADMN-02: 관리자 복구 → 숨김 전 상태로 */
+    public void restore() {
+        this.hidden = false;
+    }
 }

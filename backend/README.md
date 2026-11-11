@@ -113,6 +113,14 @@ notificationService.notify(받는사람Id, NotificationType.ACCEPTED, Notificati
 - 문구는 기능 명세서 6장 "알림 목록"의 문구 예시를 따릅니다. 여러 명에게 보낼 때는 `notifyAll`.
 - 앱 푸시는 1차 범위에서 빠져 알림함에만 쌓입니다.
 
+## 모집글 숨김 (SAFE-02, ADMN-02)
+
+숨김·복구는 `PostModerationService`의 `hide(postId)`, `restore(postId)` 한곳에서 처리합니다. 관리자는 `PATCH /api/admin/posts/{id}/hide`, `/restore`로 호출하고, 신고 기능을 만들 때는 신고 3건이 쌓이면 `hide`를 호출하면 됩니다.
+
+- 숨김 글은 목록·상세에서 빠지고 팀장 본인에게도 404입니다. 모집 중인 글 3개 제한에서는 빠집니다.
+- 숨기면 대기 중인 지원은 마감되고, 팀장에게 숨김 알림(이동 대상 없음), 대기 지원자에게 마감 알림이 갑니다.
+- 복구하면 숨김 전 모집 상태로 돌아가고 팀장에게 복구 알림이 갑니다. 숨김 때 마감된 지원은 되돌리지 않습니다.
+
 ## 주소별 권한
 
 `global/security/SecurityConfig.java`에서 한곳에 관리합니다.
