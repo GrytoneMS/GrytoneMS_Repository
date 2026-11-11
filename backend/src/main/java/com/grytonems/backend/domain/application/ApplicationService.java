@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.grytonems.backend.domain.application.dto.AcceptResponse;
 import com.grytonems.backend.domain.application.dto.ApplyRequest;
 import com.grytonems.backend.domain.application.dto.ApplyResponse;
+import com.grytonems.backend.domain.application.dto.CancelResponse;
 import com.grytonems.backend.domain.application.dto.ContactResponse;
 import com.grytonems.backend.domain.application.dto.MyApplicationResponse;
 import com.grytonems.backend.domain.application.dto.RejectRequest;
@@ -164,6 +165,26 @@ public class ApplicationService {
                 NotificationTargetType.POST, application.getPost().getId(),
                 "'" + application.getPost().getTitle() + "' 지원 결과를 확인하세요");
         return new RejectResponse(applicationId, application.getStatus());
+    }
+
+    /** APPL-03 지원 취소: 본인 지원만, 대기 상태만. 취소한 글에는 다시 지원할 수 없습니다 */
+    @Transactional
+    public CancelResponse cancel(Long userId, Long applicationId) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "지원 내역을 찾을 수 없어요"));
+        if (!application.getApplicant().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "내 지원만 취소할 수 있어요");
+        }
+        if (application.getStatus() != ApplicationStatus.PENDING) {
+            throw new BusinessException(ErrorCode.INVALID_APPLICATION_STATUS);
+        }
+        // 확인과 변경 사이에 팀장이 처리했을 수 있으므로, 대기 상태일 때만 바꾸는 조건부 변경으로 한 번 더 막습니다
+        int canceled = applicationRepository.cancelPending(applicationId, userId, LocalDateTime.now(),
+                ApplicationStatus.PENDING, ApplicationStatus.CANCELED);
+        if (canceled == 0) {
+            throw new BusinessException(ErrorCode.INVALID_APPLICATION_STATUS);
+        }
+        return new CancelResponse(applicationId, ApplicationStatus.CANCELED);
     }
 
     /** APPL-07 연락 수단: 팀장이거나 이 글에 수락된 지원자만 */

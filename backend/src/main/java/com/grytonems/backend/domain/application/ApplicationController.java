@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.grytonems.backend.domain.application.dto.AcceptResponse;
 import com.grytonems.backend.domain.application.dto.ApplyRequest;
 import com.grytonems.backend.domain.application.dto.ApplyResponse;
+import com.grytonems.backend.domain.application.dto.CancelResponse;
 import com.grytonems.backend.domain.application.dto.ContactResponse;
 import com.grytonems.backend.domain.application.dto.MyApplicationResponse;
 import com.grytonems.backend.domain.application.dto.RejectRequest;
@@ -62,6 +63,13 @@ public class ApplicationController {
     public ApiResponse<RejectResponse> reject(@AuthenticationPrincipal AuthUser loginUser,
             @PathVariable Long applicationId, @RequestBody(required = false) RejectRequest request) {
         return ApiResponse.ok(applicationService.reject(loginUser.id(), applicationId, request));
+    }
+
+    /** APPL-03 지원 취소 (대기 상태만) */
+    @PatchMapping("/api/applications/{applicationId}/cancel")
+    public ApiResponse<CancelResponse> cancel(@AuthenticationPrincipal AuthUser loginUser,
+            @PathVariable Long applicationId) {
+        return ApiResponse.ok(applicationService.cancel(loginUser.id(), applicationId));
     }
 
     /** APPL-07 연락 수단 보기 (팀장·수락된 지원자만) */
