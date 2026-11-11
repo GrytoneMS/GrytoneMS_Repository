@@ -39,6 +39,7 @@ com.grytonems.backend
 │   └── security/            # 로그인 토큰(JWT), 주소별 권한(SecurityConfig)
 └── domain/                  # 기능별 폴더 (기능 명세서 영역 단위)
     ├── user/                # 회원가입·로그인·내 정보 (AUTH-01, AUTH-04)
+    ├── verification/        # 학교 이메일 인증 (AUTH-06)
     └── school/              # 예시: 학교 목록·등록 (AUTH-06, ADMN-05)
         ├── School.java              # Entity
         ├── SchoolRepository.java    # DB 접근
@@ -116,8 +117,31 @@ public ApiResponse<PostCreateResponse> create(@AuthenticationPrincipal AuthUser 
 
 MySQL·Redis 없이 메모리 DB(H2)로 돌아갑니다 (`src/test/resources/application-test.yml`). PR을 올리면 GitHub Actions가 같은 테스트를 자동으로 돌리고, PR 화면 아래 Checks에 결과가 나옵니다.
 
+## 학교 이메일 인증 (AUTH-06)
+
+인증 코드는 Redis에 5분간 저장되므로 `docker compose up -d`로 Redis가 떠 있어야 합니다.
+
+**메일 서버를 설정하지 않으면** 메일 대신 서버 로그에 코드가 찍힙니다. 로컬 개발·시연은 이걸로 충분해요.
+
+```
+[메일 서버 미설정: 로그로 대신 출력] to=student@dankook.ac.kr subject=[천안·아산 팀원 모집] 학교 인증 코드
+학교 인증 코드: 482913
+```
+
+**실제 메일을 보내려면** (Gmail 예시) 서버 실행 환경 변수에 아래를 넣습니다. 비밀번호는 Google 계정의 "앱 비밀번호"(16자리)를 씁니다.
+
+```
+SPRING_MAIL_HOST=smtp.gmail.com
+SPRING_MAIL_PORT=587
+SPRING_MAIL_USERNAME=보내는계정@gmail.com
+SPRING_MAIL_PASSWORD=앱비밀번호16자리
+```
+
+**인증할 학교 등록:** 학교 목록은 비어 있습니다. 관리자 계정으로 `POST /api/admin/schools`에 학교명·캠퍼스·학생 이메일 도메인을 등록해야 그 학교로 인증할 수 있어요. 관리자 계정은 지금 DB에서 `users.role`을 `ADMIN`으로 바꿔 만듭니다.
+
 ## 아직 없는 것
 
-- 학교 인증 (AUTH-06·07). 지금은 가입하면 미인증이라 글쓰기·지원이 막힙니다. 로컬에서 테스트하려면 DB에서 `users.status`를 `VERIFIED`로 바꿔 주세요.
+- 서류 인증 (AUTH-07), 학기 재인증 (AUTH-08)
+- 9개 학교의 학생 이메일 도메인 확인 및 등록
 - 커서 페이지네이션 공통 클래스
 - DB 설계서 기준 `schema.sql`

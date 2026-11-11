@@ -32,6 +32,14 @@ public enum ErrorCode {
     LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않아요"),
     LOGIN_LOCKED(HttpStatus.LOCKED, "로그인에 5회 실패해 잠시 잠겼어요"),
 
+    // 학교 이메일 인증 (AUTH-06)
+    SCHOOL_EMAIL_DOMAIN_MISMATCH(HttpStatus.BAD_REQUEST, "선택한 학교의 이메일 주소가 아니에요"),
+    SCHOOL_EMAIL_IN_USE(HttpStatus.CONFLICT, "다른 계정에서 이미 인증한 학교 이메일이에요"),
+    VERIFICATION_SEND_LIMIT(HttpStatus.TOO_MANY_REQUESTS, "인증 코드는 하루 5회까지 받을 수 있어요"),
+    VERIFICATION_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "인증 코드가 만료됐어요. 코드를 다시 받아 주세요"),
+    VERIFICATION_CODE_MISMATCH(HttpStatus.BAD_REQUEST, "인증 코드가 맞지 않아요"),
+    EMAIL_SEND_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요"),
+
     // 학교 (예시 기능)
     SCHOOL_NOT_FOUND(HttpStatus.NOT_FOUND, "학교를 찾을 수 없어요"),
     SCHOOL_DOMAIN_DUPLICATED(HttpStatus.CONFLICT, "이미 등록된 이메일 도메인이에요");
