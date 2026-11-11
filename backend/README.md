@@ -43,6 +43,7 @@ com.grytonems.backend
     ├── post/                # 모집글 (POST)
     ├── application/         # 지원·수락·거절·연락 수단 (APPL)
     ├── profile/             # 프로필: 기본 정보·희망 역할·보유 기술·타인 프로필 (PROF-01~03, 12)
+    ├── notification/        # 알림 생성·알림함 (NOTI-01, 02)
     └── school/              # 예시: 학교 목록·등록 (AUTH-06, ADMN-05)
         ├── School.java              # Entity
         ├── SchoolRepository.java    # DB 접근
@@ -98,6 +99,19 @@ public ApiResponse<PostCreateResponse> create(@AuthenticationPrincipal AuthUser 
 
 - `loginUser.id()`: 사용자 id, `loginUser.status()`: 인증 상태, `loginUser.role()`: USER / ADMIN
 - 토큰이 없으면 컨트롤러까지 오기 전에 401로 막히므로 `loginUser`가 null인지 확인할 필요 없습니다. (비회원도 들어오는 주소에서는 null일 수 있어요.)
+
+## 알림 보내기
+
+다른 기능에서 알림을 보낼 때는 `NotificationService`를 주입받아 한 줄로 호출합니다.
+
+```java
+notificationService.notify(받는사람Id, NotificationType.ACCEPTED, NotificationTargetType.POST, postId,
+        "축하해요! '" + postTitle + "' 팀에 합류했어요. 연락 수단을 확인하세요");
+```
+
+- 호출한 쪽의 트랜잭션에 함께 묶여서, 그 작업이 실패해 취소되면 알림도 같이 취소됩니다.
+- 문구는 기능 명세서 6장 "알림 목록"의 문구 예시를 따릅니다. 여러 명에게 보낼 때는 `notifyAll`.
+- 앱 푸시는 1차 범위에서 빠져 알림함에만 쌓입니다.
 
 ## 주소별 권한
 
