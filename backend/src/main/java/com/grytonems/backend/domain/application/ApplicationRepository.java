@@ -15,6 +15,9 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     /** APPL-01: 이 글에 지원한 적이 있는지 (취소·거절 포함 → 재지원 불가) */
     boolean existsByPostIdAndApplicantId(Long postId, Long applicantId);
 
+    /** LIST-05: 상세 화면의 "내 지원" 표시용 (글 하나에 한 번만 지원 가능) */
+    Optional<Application> findByPostIdAndApplicantId(Long postId, Long applicantId);
+
     /** APPL-07: 이 글에 특정 상태(수락)인 지원이 있는지 */
     boolean existsByPostIdAndApplicantIdAndStatus(Long postId, Long applicantId, ApplicationStatus status);
 

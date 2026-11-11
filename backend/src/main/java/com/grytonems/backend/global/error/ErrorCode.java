@@ -52,7 +52,8 @@ public enum ErrorCode {
     SCHOOL_DOMAIN_DUPLICATED(HttpStatus.CONFLICT, "이미 등록된 이메일 도메인이에요"),
 
     // 모집글
-    POST_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "모집 중인 글은 최대 3개까지 올릴 수 있어요");
+    POST_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "모집 중인 글은 최대 3개까지 올릴 수 있어요"),
+    POST_ALREADY_CLOSED(HttpStatus.CONFLICT, "이미 마감된 모집글이에요");
 
     private final HttpStatus status;
     private final String message;
