@@ -26,6 +26,20 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
+  # 학교 인증 메일 (AUTH-06)
+  # 메일 서버 주소(host)는 여기 적지 않습니다. 환경 변수 SPRING_MAIL_HOST 등을 넣으면 실제 메일이 나가고,
+  # 없으면 인증 코드를 서버 로그에 찍습니다 (로컬 개발용). backend/README.md 참고
+  mail:
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
   jackson:
     time-zone: Asia/Seoul
     date-format: yyyy-MM-dd'T'HH:mm:ss
@@ -42,6 +56,9 @@ app:
   cors:
     # 프론트 개발 서버 주소 (여러 개면 쉼표로 구분)
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  mail:
+    # 보내는 사람 주소. 비우면 SPRING_MAIL_USERNAME을 씁니다
+    from: ${MAIL_FROM:}
 
 logging:
   level:
