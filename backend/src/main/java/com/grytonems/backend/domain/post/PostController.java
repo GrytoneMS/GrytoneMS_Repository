@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 
 import com.grytonems.backend.domain.post.dto.PostDetailResponse;
 import com.grytonems.backend.domain.post.dto.PostCardResponse;
@@ -55,5 +56,14 @@ public class PostController {
             @PathVariable Long postId) {
         Long loginUserId = (loginUser == null) ? null : loginUser.id();
         return ApiResponse.ok(postService.getPost(postId, loginUserId));
+    }
+
+    /** POST-04: 모집 수동 마감 (팀장만) */
+    @PatchMapping("/api/posts/{postId}/close")
+    public ApiResponse<Void> closePost(
+            @AuthenticationPrincipal AuthUser loginUser,
+            @PathVariable Long postId) {
+        postService.closePost(loginUser.id(), postId);
+        return ApiResponse.ok();
     }
 }

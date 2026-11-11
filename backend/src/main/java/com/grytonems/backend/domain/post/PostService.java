@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,10 @@ import com.grytonems.backend.global.error.ErrorCode;
 import com.grytonems.backend.domain.application.Application;
 import com.grytonems.backend.domain.application.ApplicationRepository;
 import com.grytonems.backend.domain.post.dto.PostDetailResponse;
+import com.grytonems.backend.domain.application.ApplicationStatus;
+import com.grytonems.backend.domain.notification.NotificationService;
+import com.grytonems.backend.domain.notification.NotificationTargetType;
+import com.grytonems.backend.domain.notification.NotificationType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -41,6 +46,7 @@ public class PostService {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final ApplicationRepository applicationRepository;
+    private final NotificationService notificationService;
 
     /** POST-01: 모집글 작성 (글 + 역할 + 행사를 한 번에 저장) */
     @Transactional
@@ -152,6 +158,38 @@ public class PostService {
 
         // ④ 한 상자에 담기
         return PostDetailResponse.of(post, roles, event, leader, isMine, myApplication, LocalDate.now());
+    }
+    /** POST-04: 수동 마감 (팀장만). 글·역할 마감 + 대기 지원 마감 + 대기자에게 알림 */
+    @Transactional
+    public void closePost(Long loginUserId, Long postId) {
+        // ① 글 꺼내기 + 팀장인지, 이미 마감됐는지 확인
+        Post post = postRepository.findById(postId)
+                .filter(p -> !p.isHidden() && p.getDeletedAt() == null)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        if (!post.getLeaderId().equals(loginUserId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        if (post.getStatus() == RecruitStatus.CLOSED) {
+            throw new BusinessException(ErrorCode.POST_ALREADY_CLOSED);
+        }
+
+        // ② 글과 역할 마감 (아래 ③보다 먼저 해야 저장돼요)
+        List<PostRole> roles = postRoleRepository.findAllByPostIdOrderByIdAsc(postId);
+        post.close();
+        roles.forEach(PostRole::close);
+
+        // ③ 역할마다 대기 중인 지원자를 알림 대상으로 기억하고, 그 지원들을 마감
+        List<Long> waitingApplicantIds = new ArrayList<>();
+        for (PostRole role : roles) {
+            waitingApplicantIds.addAll(applicationRepository
+                    .findApplicantIdsByPostRoleIdAndStatus(role.getId(), ApplicationStatus.PENDING));
+            applicationRepository.closePendingByPostRoleId(role.getId(),
+                    ApplicationStatus.PENDING, ApplicationStatus.CLOSED);
+        }
+
+        // ④ 대기자들에게 알림 (현찬님 수락 자동 마감과 같은 문구)
+        notificationService.notifyAll(waitingApplicantIds, NotificationType.POST_CLOSED,
+                NotificationTargetType.POST, postId, "'" + post.getTitle() + "' 모집이 마감되었어요");
     }
 
     /** 최신순: 커서 = 마지막 글 id. 첫 요청이면 가장 큰 숫자부터 */
