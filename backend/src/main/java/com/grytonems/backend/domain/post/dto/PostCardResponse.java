@@ -27,6 +27,7 @@ public record PostCardResponse(
         MeetingType meetingType,
         Leader leader,
         List<RoleSummary> roles,
+        @JsonProperty("isScrapped") boolean isScrapped,
         LocalDateTime createdAt
 ) {
 
@@ -50,7 +51,9 @@ public record PostCardResponse(
         }
     }
 
-    public static PostCardResponse of(Post post, List<PostRole> roles, User leader, LocalDate today) {
+    /** isScrapped: 로그인한 사람이 스크랩한 글인지 (비회원은 false, SCRP-01 북마크 표시) */
+    public static PostCardResponse of(Post post, List<PostRole> roles, User leader, LocalDate today,
+                                      boolean isScrapped) {
         return new PostCardResponse(
                 post.getId(),
                 post.getTitle(),
@@ -61,6 +64,7 @@ public record PostCardResponse(
                 post.getMeetingType(),
                 Leader.of(post.getLeaderId(), leader),
                 roles.stream().map(RoleSummary::from).toList(),
+                isScrapped,
                 post.getCreatedAt()
         );
     }

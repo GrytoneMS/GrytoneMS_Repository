@@ -12,6 +12,7 @@ import com.grytonems.backend.domain.application.ApplicationStatus;
 import com.grytonems.backend.domain.notification.NotificationService;
 import com.grytonems.backend.domain.notification.NotificationTargetType;
 import com.grytonems.backend.domain.notification.NotificationType;
+import com.grytonems.backend.domain.scrap.ScrapRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +28,7 @@ public class PostDeadlineService {
     private final PostRoleRepository postRoleRepository;
     private final ApplicationRepository applicationRepository;
     private final NotificationService notificationService;
+    private final ScrapRepository scrapRepository;
 
     /** 마감일이 지난 모집중 글 id. 글마다 closeExpired를 따로 호출합니다 */
     @Transactional(readOnly = true)
@@ -66,17 +68,22 @@ public class PostDeadlineService {
     }
 
     /**
-     * NOTI-01: 내일 마감인 모집중 글의 팀장에게 알림 (하루 한 번 실행).
+     * NOTI-01: 내일 마감인 모집중 글의 팀장과 그 글을 스크랩한 사람에게 알림 (하루 한 번 실행).
      * @return 보낸 알림 수
      */
     @Transactional
     public int notifyDeadlineTomorrow(LocalDate today) {
         List<Post> posts = postRepository.findAllByStatusAndDeadlineAndHiddenFalseAndDeletedAtIsNull(
                 RecruitStatus.OPEN, today.plusDays(1));
+        int sent = 0;
         for (Post post : posts) {
             notificationService.notify(post.getLeaderId(), NotificationType.DEADLINE_SOON,
                     NotificationTargetType.POST, post.getId(), "'" + post.getTitle() + "' 마감이 내일이에요");
+            List<Long> scrapperIds = scrapRepository.findUserIdsByPostId(post.getId());
+            notificationService.notifyAll(scrapperIds, NotificationType.SCRAP_DEADLINE_SOON,
+                    NotificationTargetType.POST, post.getId(), "스크랩한 '" + post.getTitle() + "' 모집이 내일 마감돼요");
+            sent += 1 + scrapperIds.size();
         }
-        return posts.size();
+        return sent;
     }
 }

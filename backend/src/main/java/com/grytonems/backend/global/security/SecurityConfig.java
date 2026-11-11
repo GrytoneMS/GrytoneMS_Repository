@@ -53,9 +53,10 @@ public class SecurityConfig {
                         // 관리자만
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // 학교 인증 회원만 (글쓰기 POST-01, 지원 APPL-01)
+                        // 학교 인증 회원만 (글쓰기 POST-01, 지원 APPL-01, 스크랩 SCRP-01)
                         .requestMatchers(HttpMethod.POST, "/api/posts", "/api/posts/*/applications")
                                 .hasAuthority(AuthUser.VERIFIED_AUTHORITY)
+                        .requestMatchers(HttpMethod.PUT, "/api/posts/*/scrap").hasAuthority(AuthUser.VERIFIED_AUTHORITY)
 
                         // 그 밖의 API는 로그인 필요
                         .requestMatchers("/api/**").authenticated()
