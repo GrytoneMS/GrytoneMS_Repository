@@ -35,7 +35,7 @@ public class SchoolController {
         return ApiResponse.ok(schoolService.getActiveSchools());
     }
 
-    // TODO: 인증 기능이 생기면 /api/admin/** 은 관리자만 접근하도록 막기
+    // /api/admin/** 은 SecurityConfig에서 관리자만 접근하도록 막혀 있습니다
 
     /** 관리자: 학교 등록 */
     @PostMapping("/api/admin/schools")

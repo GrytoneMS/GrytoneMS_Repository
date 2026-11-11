@@ -1,0 +1,22 @@
+# 테스트 전용 설정: MySQL·Redis 없이 메모리 DB(H2, MySQL 호환 모드)로 실행합니다.
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+jwt:
+  secret: test-only-secret-0123456789-0123456789-abcdef
+  access-token-expiration: PT1H
+
+app:
+  cors:
+    allowed-origins: http://localhost:5173
+
+logging:
+  level:
+    org.hibernate.SQL: warn

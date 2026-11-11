@@ -34,9 +34,11 @@ docker compose up -d
 com.grytonems.backend
 ├── global/                  # 모든 기능이 같이 쓰는 것
 │   ├── common/              # ApiResponse(성공 응답), BaseTimeEntity(created_at·updated_at)
-│   ├── config/              # 설정
-│   └── error/               # ErrorCode, BusinessException, 공통 예외 처리
+│   ├── config/              # 설정 (CORS 등)
+│   ├── error/               # ErrorCode, BusinessException, 공통 예외 처리
+│   └── security/            # 로그인 토큰(JWT), 주소별 권한(SecurityConfig)
 └── domain/                  # 기능별 폴더 (기능 명세서 영역 단위)
+    ├── user/                # 회원가입·로그인·내 정보 (AUTH-01, AUTH-04)
     └── school/              # 예시: 학교 목록·등록 (AUTH-06, ADMN-05)
         ├── School.java              # Entity
         ├── SchoolRepository.java    # DB 접근
@@ -78,8 +80,44 @@ com.grytonems.backend
 
 프론트는 `code`로 분기합니다 (`UNAUTHORIZED` → 로그인 화면, `UNVERIFIED` → 학교 인증 화면). `fieldErrors`는 입력 검증 실패일 때만 들어갑니다.
 
+## 로그인 사용자 꺼내기
+
+로그인한 사용자는 컨트롤러 파라미터에 `@AuthenticationPrincipal AuthUser loginUser`를 적어 받습니다.
+
+```java
+@PostMapping("/api/posts")
+public ApiResponse<PostCreateResponse> create(@AuthenticationPrincipal AuthUser loginUser,
+                                              @Valid @RequestBody PostCreateRequest request) {
+    return ApiResponse.ok(postService.create(loginUser.id(), request));
+}
+```
+
+- `loginUser.id()`: 사용자 id, `loginUser.status()`: 인증 상태, `loginUser.role()`: USER / ADMIN
+- 토큰이 없으면 컨트롤러까지 오기 전에 401로 막히므로 `loginUser`가 null인지 확인할 필요 없습니다. (비회원도 들어오는 주소에서는 null일 수 있어요.)
+
+## 주소별 권한
+
+`global/security/SecurityConfig.java`에서 한곳에 관리합니다.
+
+| 구분 | 주소 | 실패 시 |
+| --- | --- | --- |
+| 비회원 가능 | `POST /api/auth/signup`, `POST /api/auth/login`, `GET /api/schools`, `GET /api/posts`, `GET /api/posts/{id}` | - |
+| 학교 인증 회원만 | `POST /api/posts`, `POST /api/posts/{id}/applications` | 미인증 403 `UNVERIFIED`, 정지 403 `SUSPENDED` |
+| 관리자만 | `/api/admin/**` | 403 `FORBIDDEN` |
+| 그 밖의 `/api/**` | 로그인만 하면 가능 | 401 `UNAUTHORIZED` |
+
+새 API가 비회원용이거나 인증 회원 전용이면 `SecurityConfig` 목록에 주소를 추가해 주세요. 그 외에는 따로 할 일이 없습니다.
+
+## 테스트
+
+```bash
+./gradlew test
+```
+
+MySQL·Redis 없이 메모리 DB(H2)로 돌아갑니다 (`src/test/resources/application-test.yml`). PR을 올리면 GitHub Actions가 같은 테스트를 자동으로 돌리고, PR 화면 아래 Checks에 결과가 나옵니다.
+
 ## 아직 없는 것
 
-- 로그인·토큰·권한 체크 (공통 기반 다음 작업). 지금 `/api/admin/**`은 누구나 호출할 수 있습니다.
+- 학교 인증 (AUTH-06·07). 지금은 가입하면 미인증이라 글쓰기·지원이 막힙니다. 로컬에서 테스트하려면 DB에서 `users.status`를 `VERIFIED`로 바꿔 주세요.
 - 커서 페이지네이션 공통 클래스
 - DB 설계서 기준 `schema.sql`
