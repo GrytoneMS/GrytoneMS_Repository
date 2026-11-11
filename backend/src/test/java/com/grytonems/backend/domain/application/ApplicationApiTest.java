@@ -79,7 +79,7 @@ class ApplicationApiTest {
         leaderToken = signupVerified("leader@example.com", "팀장");
         leaderId = userRepository.findByEmail("leader@example.com").orElseThrow().getId();
         aliceToken = signupVerified("alice@example.com", "앨리스");
-        bobToken = signupVerified("bob@example.com", "밥");
+        bobToken = signupVerified("bob@example.com", "밥이");
     }
 
     @AfterEach
@@ -282,7 +282,7 @@ class ApplicationApiTest {
                 .andExpect(jsonPath("$.data[0].applications[0].status").value("PENDING"))
                 .andExpect(jsonPath("$.data[0].applications[0].applicant.nickname").value("앨리스"))
                 .andExpect(jsonPath("$.data[0].applications[0].applicant.schoolName").value("단국대학교"))
-                .andExpect(jsonPath("$.data[0].applications[1].applicant.nickname").value("밥"))
+                .andExpect(jsonPath("$.data[0].applications[1].applicant.nickname").value("밥이"))
                 .andExpect(jsonPath("$.data[1].postRoleId").value(dev.getId()))
                 .andExpect(jsonPath("$.data[1].applications", hasSize(0)));
 
