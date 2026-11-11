@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PathVariable;
 
+import com.grytonems.backend.domain.post.dto.PostDetailResponse;
 import com.grytonems.backend.domain.post.dto.PostCardResponse;
 import com.grytonems.backend.domain.post.dto.PostCreateRequest;
 import com.grytonems.backend.domain.post.dto.PostCreateResponse;
@@ -44,5 +46,14 @@ public class PostController {
             @RequestParam(required = false) String cursor,
             @RequestParam(required = false) Integer size) {
         return ApiResponse.ok(postService.getPosts(sort, cursor, size));
+    }
+
+    /** LIST-05: 모집글 상세 (비회원도 가능) */
+    @GetMapping("/api/posts/{postId}")
+    public ApiResponse<PostDetailResponse> getPost(
+            @AuthenticationPrincipal AuthUser loginUser,
+            @PathVariable Long postId) {
+        Long loginUserId = (loginUser == null) ? null : loginUser.id();
+        return ApiResponse.ok(postService.getPost(postId, loginUserId));
     }
 }

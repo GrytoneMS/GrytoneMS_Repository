@@ -19,6 +19,9 @@ import com.grytonems.backend.domain.user.UserRepository;
 import com.grytonems.backend.global.common.CursorPage;
 import com.grytonems.backend.global.error.BusinessException;
 import com.grytonems.backend.global.error.ErrorCode;
+import com.grytonems.backend.domain.application.Application;
+import com.grytonems.backend.domain.application.ApplicationRepository;
+import com.grytonems.backend.domain.post.dto.PostDetailResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,6 +40,7 @@ public class PostService {
     private final PostRoleRepository postRoleRepository;
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
+    private final ApplicationRepository applicationRepository;
 
     /** POST-01: 모집글 작성 (글 + 역할 + 행사를 한 번에 저장) */
     @Transactional
@@ -126,6 +130,28 @@ public class PostService {
                         rolesByPostId.getOrDefault(post.getId(), List.of()),
                         leadersById.get(post.getLeaderId()),
                         today));
+    }
+
+    /** LIST-05: 모집글 상세 (비회원도 가능. 로그인했으면 isMine·myApplication 채움) */
+    public PostDetailResponse getPost(Long postId, Long loginUserId) {
+        // ① 글 꺼내기 (없거나 숨김·삭제된 글이면 404)
+        Post post = postRepository.findById(postId)
+                .filter(p -> !p.isHidden() && p.getDeletedAt() == null)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        // ② 역할·행사·팀장 꺼내기
+        List<PostRole> roles = postRoleRepository.findAllByPostIdOrderByIdAsc(postId);
+        Event event = eventRepository.findByPostId(postId).orElse(null);
+        User leader = userRepository.findById(post.getLeaderId()).orElse(null);
+
+        // ③ 로그인한 사람 기준 정보
+        boolean isMine = loginUserId != null && loginUserId.equals(post.getLeaderId());
+        Application myApplication = (loginUserId == null || isMine)
+                ? null
+                : applicationRepository.findByPostIdAndApplicantId(postId, loginUserId).orElse(null);
+
+        // ④ 한 상자에 담기
+        return PostDetailResponse.of(post, roles, event, leader, isMine, myApplication, LocalDate.now());
     }
 
     /** 최신순: 커서 = 마지막 글 id. 첫 요청이면 가장 큰 숫자부터 */
