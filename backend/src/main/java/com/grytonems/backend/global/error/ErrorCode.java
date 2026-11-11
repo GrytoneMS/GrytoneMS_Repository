@@ -26,6 +26,12 @@ public enum ErrorCode {
     SUSPENDED(HttpStatus.FORBIDDEN, "이용이 정지된 계정이에요"),
     FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없어요"),
 
+    // 회원·로그인 (AUTH-01, AUTH-04)
+    EMAIL_DUPLICATED(HttpStatus.CONFLICT, "이미 가입된 이메일이에요"),
+    NICKNAME_DUPLICATED(HttpStatus.CONFLICT, "이미 사용 중인 닉네임이에요"),
+    LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않아요"),
+    LOGIN_LOCKED(HttpStatus.LOCKED, "로그인에 5회 실패해 잠시 잠겼어요"),
+
     // 학교 (예시 기능)
     SCHOOL_NOT_FOUND(HttpStatus.NOT_FOUND, "학교를 찾을 수 없어요"),
     SCHOOL_DOMAIN_DUPLICATED(HttpStatus.CONFLICT, "이미 등록된 이메일 도메인이에요");
