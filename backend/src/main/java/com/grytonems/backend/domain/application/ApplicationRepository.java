@@ -83,4 +83,26 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
             """)
     int closePendingByPostRoleId(@Param("postRoleId") Long postRoleId,
             @Param("pending") ApplicationStatus pending, @Param("closed") ApplicationStatus closed);
+
+    /**
+     * APPL-03: 대기 → 취소. 본인 지원이고 대기 상태일 때만 바뀌고, 바뀐 행 수를 돌려줍니다.
+     * 팀장이 같은 순간 수락·거절해도 둘 중 하나만 성공합니다. 취소한 시각은 decidedAt에 남깁니다.
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            update Application a
+            set a.status = :canceled, a.decidedAt = :now
+            where a.id = :id and a.applicant.id = :applicantId and a.status = :pending
+            """)
+    int cancelPending(@Param("id") Long id, @Param("applicantId") Long applicantId, @Param("now") LocalDateTime now,
+            @Param("pending") ApplicationStatus pending, @Param("canceled") ApplicationStatus canceled);
+
+    /** APPL-11: 글 여러 개의 역할별·상태별 지원 수 */
+    @Query("""
+            select new com.grytonems.backend.domain.application.RoleApplicationCount(a.postRole.id, a.status, count(a))
+            from Application a
+            where a.post.id in :postIds
+            group by a.postRole.id, a.status
+            """)
+    List<RoleApplicationCount> countByRoleAndStatus(@Param("postIds") List<Long> postIds);
 }

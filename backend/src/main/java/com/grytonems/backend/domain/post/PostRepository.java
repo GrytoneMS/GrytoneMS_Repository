@@ -3,6 +3,7 @@ package com.grytonems.backend.domain.post;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -27,4 +28,15 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
 
     /** NOTI-01 마감 D-1: 마감일이 특정 날짜인 모집중 글 (숨김·삭제된 글 제외) */
     List<Post> findAllByStatusAndDeadlineAndHiddenFalseAndDeletedAtIsNull(RecruitStatus status, LocalDate deadline);
+
+    /** APPL-11 내 모집글: 최신순, 커서는 직전 페이지 마지막 글 id (숨김·삭제된 글 제외) */
+    @Query("""
+            select p from Post p
+            where p.leaderId = :leaderId and p.deletedAt is null and p.hidden = false
+              and (:status is null or p.status = :status)
+              and (:cursor is null or p.id < :cursor)
+            order by p.id desc
+            """)
+    List<Post> findMine(@Param("leaderId") Long leaderId, @Param("status") RecruitStatus status,
+            @Param("cursor") Long cursor, Pageable pageable);
 }
