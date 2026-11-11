@@ -19,6 +19,9 @@ import com.grytonems.backend.domain.application.dto.MyApplicationResponse;
 import com.grytonems.backend.domain.application.dto.RejectRequest;
 import com.grytonems.backend.domain.application.dto.RejectResponse;
 import com.grytonems.backend.domain.application.dto.RoleApplicantsResponse;
+import com.grytonems.backend.domain.notification.NotificationService;
+import com.grytonems.backend.domain.notification.NotificationTargetType;
+import com.grytonems.backend.domain.notification.NotificationType;
 import com.grytonems.backend.domain.post.Post;
 import com.grytonems.backend.domain.post.PostRepository;
 import com.grytonems.backend.domain.post.PostRole;
@@ -43,6 +46,7 @@ public class ApplicationService {
     private final PostRepository postRepository;
     private final PostRoleRepository postRoleRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     /**
      * APPL-01 지원하기.
@@ -67,7 +71,8 @@ public class ApplicationService {
             throw new BusinessException(ErrorCode.ROLE_CLOSED);
         }
 
-        User applicant = userRepository.getReferenceById(userId);
+        User applicant = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
         try {
             Application saved = applicationRepository.saveAndFlush(Application.builder()
                     .post(post)
@@ -76,6 +81,10 @@ public class ApplicationService {
                     .message(request.message().trim())
                     .availableTime(request.availableTime().trim())
                     .build());
+            // 팀장에게 "새 지원 도착" 알림
+            notificationService.notify(post.getLeaderId(), NotificationType.NEW_APPLICATION,
+                    NotificationTargetType.POST, postId,
+                    applicant.getNickname() + "님이 '" + role.getRoleName() + "'에 지원했어요");
             return new ApplyResponse(saved.getId(), saved.getStatus());
         } catch (DataIntegrityViolationException e) {
             // 지원 버튼을 동시에 두 번 누른 경우: DB의 UQ(post_id, applicant_id)가 막아 줍니다
@@ -110,6 +119,8 @@ public class ApplicationService {
         requireLeader(application.getPost(), userId);
         Long postId = application.getPost().getId();
         Long roleId = application.getPostRole().getId();
+        Long applicantId = application.getApplicant().getId();
+        String postTitle = application.getPost().getTitle();
 
         int accepted = applicationRepository.markAccepted(applicationId, LocalDateTime.now(),
                 ApplicationStatus.PENDING, ApplicationStatus.ACCEPTED);
@@ -124,12 +135,19 @@ public class ApplicationService {
         boolean roleClosed = roleSeatRepository.closeIfFull(roleId, RecruitStatus.OPEN, RecruitStatus.CLOSED) == 1;
         boolean postClosed = false;
         if (roleClosed) {
+            // 마감 처리 전에, 이 역할에 아직 대기 중이던 지원자들을 알림 대상으로 기억해 둡니다
+            List<Long> waitingApplicantIds = applicationRepository
+                    .findApplicantIdsByPostRoleIdAndStatus(roleId, ApplicationStatus.PENDING);
             applicationRepository.closePendingByPostRoleId(roleId, ApplicationStatus.PENDING, ApplicationStatus.CLOSED);
+            notificationService.notifyAll(waitingApplicantIds, NotificationType.POST_CLOSED,
+                    NotificationTargetType.POST, postId, "'" + postTitle + "' 모집이 마감되었어요");
             if (roleSeatRepository.countOpenRoles(postId, RecruitStatus.OPEN) == 0) {
                 postRepository.findById(postId).ifPresent(Post::close);
                 postClosed = true;
             }
         }
+        notificationService.notify(applicantId, NotificationType.ACCEPTED, NotificationTargetType.POST, postId,
+                "축하해요! '" + postTitle + "' 팀에 합류했어요. 연락 수단을 확인하세요");
         return new AcceptResponse(applicationId, ApplicationStatus.ACCEPTED, roleClosed, postClosed);
     }
 
@@ -142,6 +160,9 @@ public class ApplicationService {
             throw new BusinessException(ErrorCode.INVALID_APPLICATION_STATUS);
         }
         application.reject(request == null ? null : request.reason(), LocalDateTime.now());
+        notificationService.notify(application.getApplicant().getId(), NotificationType.REJECTED,
+                NotificationTargetType.POST, application.getPost().getId(),
+                "'" + application.getPost().getTitle() + "' 지원 결과를 확인하세요");
         return new RejectResponse(applicationId, application.getStatus());
     }
 

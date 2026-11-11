@@ -56,6 +56,11 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
             @Param("cursor") Long cursor,
             Pageable pageable);
 
+    /** APPL-08: 역할 마감 알림을 보낼 대상 (그 역할에 특정 상태로 남아 있는 지원자 id) */
+    @Query("select a.applicant.id from Application a where a.postRole.id = :postRoleId and a.status = :status")
+    List<Long> findApplicantIdsByPostRoleIdAndStatus(@Param("postRoleId") Long postRoleId,
+            @Param("status") ApplicationStatus status);
+
     /**
      * APPL-05: 대기 → 수락. 대기 상태일 때만 바뀌고, 바뀐 행 수를 돌려줍니다.
      * 0이면 이미 다른 요청이 처리한 지원입니다 (동시에 두 번 눌러도 한 번만 성공).
