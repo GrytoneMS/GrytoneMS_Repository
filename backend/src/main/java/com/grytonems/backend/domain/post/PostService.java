@@ -59,7 +59,7 @@ public class PostService {
         validate(request);
 
         // ② 모집 중인 글 3개 제한
-        long openCount = postRepository.countByLeaderIdAndStatusAndDeletedAtIsNull(leaderId, RecruitStatus.OPEN);
+        long openCount = postRepository.countByLeaderIdAndStatusAndHiddenFalseAndDeletedAtIsNull(leaderId, RecruitStatus.OPEN);
         if (openCount >= MAX_OPEN_POSTS) {
             throw new BusinessException(ErrorCode.POST_LIMIT_EXCEEDED);
         }
