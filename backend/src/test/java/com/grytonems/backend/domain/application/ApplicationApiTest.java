@@ -29,6 +29,7 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.grytonems.backend.domain.notification.NotificationRepository;
 import com.grytonems.backend.domain.post.EventRepository;
 import com.grytonems.backend.domain.post.MeetingType;
 import com.grytonems.backend.domain.post.Post;
@@ -64,6 +65,7 @@ class ApplicationApiTest {
     @Autowired PostRoleRepository postRoleRepository;
     @Autowired EventRepository eventRepository;
     @Autowired ApplicationRepository applicationRepository;
+    @Autowired NotificationRepository notificationRepository;
 
     School school;
     String leaderToken;
@@ -84,6 +86,7 @@ class ApplicationApiTest {
 
     @AfterEach
     void cleanUp() {
+        notificationRepository.deleteAll();
         applicationRepository.deleteAll();
         eventRepository.deleteAll();
         postRoleRepository.deleteAll();
