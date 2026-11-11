@@ -40,6 +40,13 @@ public enum ErrorCode {
     VERIFICATION_CODE_MISMATCH(HttpStatus.BAD_REQUEST, "인증 코드가 맞지 않아요"),
     EMAIL_SEND_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요"),
 
+    // 지원 (APPL)
+    CANNOT_APPLY_OWN_POST(HttpStatus.BAD_REQUEST, "내가 올린 모집글에는 지원할 수 없어요"),
+    ALREADY_APPLIED(HttpStatus.CONFLICT, "이미 지원한 모집글이에요"),
+    ROLE_CLOSED(HttpStatus.CONFLICT, "모집이 마감된 역할이에요"),
+    INVALID_APPLICATION_STATUS(HttpStatus.CONFLICT, "이미 처리된 지원이에요"),
+    ROLE_FULL(HttpStatus.CONFLICT, "이 역할은 모집 인원이 다 찼어요"),
+
     // 학교 (예시 기능)
     SCHOOL_NOT_FOUND(HttpStatus.NOT_FOUND, "학교를 찾을 수 없어요"),
     SCHOOL_DOMAIN_DUPLICATED(HttpStatus.CONFLICT, "이미 등록된 이메일 도메인이에요"),

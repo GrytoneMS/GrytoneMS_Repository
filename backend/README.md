@@ -33,13 +33,15 @@ docker compose up -d
 ```
 com.grytonems.backend
 ├── global/                  # 모든 기능이 같이 쓰는 것
-│   ├── common/              # ApiResponse(성공 응답), BaseTimeEntity(created_at·updated_at)
+│   ├── common/              # ApiResponse(성공 응답), CursorPage(목록 페이지), BaseTimeEntity(created_at·updated_at)
 │   ├── config/              # 설정 (CORS 등)
 │   ├── error/               # ErrorCode, BusinessException, 공통 예외 처리
 │   └── security/            # 로그인 토큰(JWT), 주소별 권한(SecurityConfig)
 └── domain/                  # 기능별 폴더 (기능 명세서 영역 단위)
     ├── user/                # 회원가입·로그인·내 정보 (AUTH-01, AUTH-04)
     ├── verification/        # 학교 이메일 인증 (AUTH-06)
+    ├── post/                # 모집글 (POST)
+    ├── application/         # 지원·수락·거절·연락 수단 (APPL)
     └── school/              # 예시: 학교 목록·등록 (AUTH-06, ADMN-05)
         ├── School.java              # Entity
         ├── SchoolRepository.java    # DB 접근
@@ -143,5 +145,4 @@ SPRING_MAIL_PASSWORD=앱비밀번호16자리
 
 - 서류 인증 (AUTH-07), 학기 재인증 (AUTH-08)
 - 9개 학교의 학생 이메일 도메인 확인 및 등록
-- 커서 페이지네이션 공통 클래스
 - DB 설계서 기준 `schema.sql`
