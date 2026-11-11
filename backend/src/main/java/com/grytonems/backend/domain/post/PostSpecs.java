@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
+import org.hibernate.query.criteria.HibernateCriteriaBuilder;
+import org.hibernate.query.sqm.TemporalUnit;
 
 import com.grytonems.backend.domain.user.User;
 
@@ -96,12 +98,16 @@ public final class PostSpecs {
         };
     }
 
-    /** 활동 기간: (종료일 - 시작일) 일수가 범위 안인 글 */
+    /**
+     * 활동 기간: (종료일 - 시작일) 일수가 범위 안인 글
+     * DB 함수를 직접 부르지 않고 Hibernate가 DB에 맞는 SQL을 만들게 합니다 (MySQL·H2 모두 동작)
+     */
     public static Specification<Post> periodIn(PostPeriod period) {
         return (root, query, cb) -> {
-            Expression<Integer> days = cb.function("DATEDIFF", Integer.class,
-                    root.get("periodEnd"), root.get("periodStart"));
-            return cb.between(days, period.minDays(), period.maxDays());
+            HibernateCriteriaBuilder hcb = (HibernateCriteriaBuilder) cb;
+            Expression<Long> days = hcb.durationByUnit(TemporalUnit.DAY,
+                    hcb.durationBetween(root.<LocalDate>get("periodEnd"), root.<LocalDate>get("periodStart")));
+            return cb.between(days, (long) period.minDays(), (long) period.maxDays());
         };
     }
 
