@@ -1,19 +1,29 @@
 package com.grytonems.backend.domain.post;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.grytonems.backend.domain.post.dto.PostCardResponse;
 import com.grytonems.backend.domain.post.dto.PostCreateRequest;
 import com.grytonems.backend.domain.post.dto.PostCreateResponse;
+import com.grytonems.backend.domain.user.User;
+import com.grytonems.backend.domain.user.UserRepository;
+import com.grytonems.backend.global.common.CursorPage;
 import com.grytonems.backend.global.error.BusinessException;
 import com.grytonems.backend.global.error.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * 모집글 기능의 규칙과 처리 (기능 명세서 POST)
+ * 모집글 기능의 규칙과 처리 (기능 명세서 POST, LIST)
  */
 @Service
 @RequiredArgsConstructor
@@ -26,6 +36,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final PostRoleRepository postRoleRepository;
     private final EventRepository eventRepository;
+    private final UserRepository userRepository;
 
     /** POST-01: 모집글 작성 (글 + 역할 + 행사를 한 번에 저장) */
     @Transactional
@@ -80,6 +91,79 @@ public class PostService {
 
         // ④ 만든 글 id 돌려주기
         return new PostCreateResponse(post.getId());
+    }
+
+    /** LIST-01·02: 모집글 목록 (커서 방식, 최신순 / 마감 임박순) */
+    public CursorPage<PostCardResponse> getPosts(String sort, String cursor, Integer size) {
+        PostSort postSort = PostSort.from(sort);
+        int pageSize = CursorPage.normalizeSize(size);
+        LocalDate today = LocalDate.now();
+        Pageable limit = PageRequest.of(0, pageSize + 1); // 다음 페이지가 있는지 보려고 1개 더
+
+        // ① 글 꺼내기 (정렬에 따라 다른 조회)
+        List<Post> posts = (postSort == PostSort.LATEST)
+                ? findLatest(cursor, limit)
+                : findByDeadline(today, cursor, limit);
+
+        if (posts.isEmpty()) {
+            return new CursorPage<>(List.of(), null, false);
+        }
+
+        // ② 글들의 역할을 한 번에 꺼내서 글 id별로 묶기
+        List<Long> postIds = posts.stream().map(Post::getId).toList();
+        Map<Long, List<PostRole>> rolesByPostId = postRoleRepository.findAllByPostIdInOrderByIdAsc(postIds).stream()
+                .collect(Collectors.groupingBy(role -> role.getPost().getId()));
+
+        // ③ 팀장들을 한 번에 꺼내서 id로 찾기 쉽게 만들기
+        List<Long> leaderIds = posts.stream().map(Post::getLeaderId).distinct().toList();
+        Map<Long, User> leadersById = userRepository.findAllById(leaderIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        // ④ 카드로 바꾸고 다음 커서 만들기 (CursorPage가 20개로 자르고 hasNext 판단)
+        return CursorPage.of(posts, pageSize,
+                post -> nextCursorOf(postSort, post),
+                post -> PostCardResponse.of(post,
+                        rolesByPostId.getOrDefault(post.getId(), List.of()),
+                        leadersById.get(post.getLeaderId()),
+                        today));
+    }
+
+    /** 최신순: 커서 = 마지막 글 id. 첫 요청이면 가장 큰 숫자부터 */
+    private List<Post> findLatest(String cursor, Pageable limit) {
+        long cursorId = isBlank(cursor) ? Long.MAX_VALUE : parseId(cursor);
+        return postRepository.findLatest(cursorId, limit);
+    }
+
+    /** 마감 임박순: 커서 = "마감일_id" (예: 2026-11-30_12). 첫 요청이면 어제 날짜부터 */
+    private List<Post> findByDeadline(LocalDate today, String cursor, Pageable limit) {
+        if (isBlank(cursor)) {
+            return postRepository.findByDeadline(today, today.minusDays(1), 0L, limit);
+        }
+        String[] parts = cursor.split("_");
+        if (parts.length != 2) {
+            throw invalid("잘못된 cursor 값이에요");
+        }
+        LocalDate cursorDeadline;
+        try {
+            cursorDeadline = LocalDate.parse(parts[0]);
+        } catch (RuntimeException e) {
+            throw invalid("잘못된 cursor 값이에요");
+        }
+        return postRepository.findByDeadline(today, cursorDeadline, parseId(parts[1]), limit);
+    }
+
+    private String nextCursorOf(PostSort sort, Post post) {
+        return (sort == PostSort.LATEST)
+                ? String.valueOf(post.getId())
+                : post.getDeadline() + "_" + post.getId();
+    }
+
+    private long parseId(String value) {
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            throw invalid("잘못된 cursor 값이에요");
+        }
     }
 
     /** 명세서 POST-01 규칙 중 여러 칸을 함께 봐야 하는 것들 */
