@@ -93,7 +93,7 @@ public class ScrapService {
         Map<Long, List<PostRole>> rolesByPost = postRoleRepository.findAllByPostIdInOrderByIdAsc(postIds).stream()
                 .collect(Collectors.groupingBy(role -> role.getPost().getId()));
         List<Long> leaderIds = page.stream().map(scrap -> scrap.getPost().getLeaderId()).distinct().toList();
-        Map<Long, User> leaders = userRepository.findAllById(leaderIds).stream()
+        Map<Long, User> leaders = userRepository.findAllWithSchoolByIdIn(leaderIds).stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
         LocalDate today = LocalDate.now();

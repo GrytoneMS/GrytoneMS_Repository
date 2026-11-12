@@ -13,6 +13,8 @@ import com.grytonems.backend.domain.notification.NotificationService;
 import com.grytonems.backend.domain.notification.NotificationTargetType;
 import com.grytonems.backend.domain.notification.NotificationType;
 import com.grytonems.backend.domain.scrap.ScrapRepository;
+import com.grytonems.backend.domain.user.UserRepository;
+import com.grytonems.backend.domain.user.UserStatus;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,6 +31,7 @@ public class PostDeadlineService {
     private final ApplicationRepository applicationRepository;
     private final NotificationService notificationService;
     private final ScrapRepository scrapRepository;
+    private final UserRepository userRepository;
 
     /** 마감일이 지난 모집중 글 id. 글마다 closeExpired를 따로 호출합니다 */
     @Transactional(readOnly = true)
@@ -77,6 +80,10 @@ public class PostDeadlineService {
                 RecruitStatus.OPEN, today.plusDays(1));
         int sent = 0;
         for (Post post : posts) {
+            // 팀장이 정지 중인 글은 아무에게도 보이지 않으므로 알리지 않음 (ADMN-04)
+            if (isLeaderSuspended(post)) {
+                continue;
+            }
             notificationService.notify(post.getLeaderId(), NotificationType.DEADLINE_SOON,
                     NotificationTargetType.POST, post.getId(), "'" + post.getTitle() + "' 마감이 내일이에요");
             List<Long> scrapperIds = scrapRepository.findUserIdsByPostId(post.getId());
@@ -85,5 +92,11 @@ public class PostDeadlineService {
             sent += 1 + scrapperIds.size();
         }
         return sent;
+    }
+
+    private boolean isLeaderSuspended(Post post) {
+        return userRepository.findById(post.getLeaderId())
+                .map(leader -> leader.getStatus() == UserStatus.SUSPENDED)
+                .orElse(false);
     }
 }

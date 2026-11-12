@@ -10,6 +10,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -22,6 +23,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(name = "blocks",
+        indexes = @Index(name = "idx_blocks_blocked", columnList = "blocked_id"),
         uniqueConstraints = @UniqueConstraint(name = "uq_blocks_blocker_blocked", columnNames = {"blocker_id", "blocked_id"}))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Block {

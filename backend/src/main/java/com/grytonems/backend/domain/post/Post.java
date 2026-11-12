@@ -12,6 +12,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -23,7 +24,12 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(name = "posts")
+@Table(name = "posts", indexes = {
+        // DB 설계서 9장. 최신순은 id로 정렬하므로 created_at 대신 기본키(id)가 뒤에 붙는 3열 인덱스로 둡니다
+        @Index(name = "idx_posts_status_hidden_deleted", columnList = "status, is_hidden, deleted_at"),
+        @Index(name = "idx_posts_status_deadline", columnList = "status, deadline"),
+        @Index(name = "idx_posts_leader_status", columnList = "leader_id, status")
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Post extends BaseTimeEntity {
 

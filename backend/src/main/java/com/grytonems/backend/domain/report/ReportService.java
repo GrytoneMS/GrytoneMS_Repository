@@ -22,6 +22,7 @@ import com.grytonems.backend.domain.report.dto.ReportResolveResponse;
 import com.grytonems.backend.domain.user.SuspensionService;
 import com.grytonems.backend.domain.user.User;
 import com.grytonems.backend.domain.user.UserRepository;
+import com.grytonems.backend.domain.user.UserStatus;
 import com.grytonems.backend.global.common.CursorPage;
 import com.grytonems.backend.global.error.BusinessException;
 import com.grytonems.backend.global.error.ErrorCode;
@@ -95,6 +96,9 @@ public class ReportService {
             case POST -> {
                 Post post = postRepository.findById(targetId)
                         .filter(p -> p.getDeletedAt() == null && !p.isHidden())
+                        // 팀장이 정지 중인 글은 안 보이는 글이라 신고 대상 아님 (ADMN-04)
+                        .filter(p -> userRepository.findById(p.getLeaderId())
+                                .map(leader -> leader.getStatus() != UserStatus.SUSPENDED).orElse(true))
                         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "모집글을 찾을 수 없어요"));
                 if (post.getLeaderId().equals(reporterId)) {
                     throw new BusinessException(ErrorCode.CANNOT_REPORT_SELF);

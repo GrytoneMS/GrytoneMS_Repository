@@ -130,21 +130,31 @@ public final class PostSpecs {
 
     // ===== 검색 (LIST-04) =====
 
-    /** 키워드: 제목·소개·행사명 중 하나에 포함된 글 */
+    /** LIKE 특수문자 이스케이프 문자. 역슬래시는 MySQL 문자열에서 특수 처리돼 쓰지 않습니다 */
+    private static final char LIKE_ESCAPE = '!';
+
+    /**
+     * 키워드: 제목·소개·행사명 중 하나에 포함된 글.
+     * 검색어의 %, _ 는 글자 그대로 찾도록 이스케이프합니다 ("100%"가 모든 글과 맞지 않게)
+     */
     public static Specification<Post> keywordContains(String keyword) {
         return (root, query, cb) -> {
-            String pattern = "%" + keyword + "%";
+            String pattern = "%" + escapeLike(keyword) + "%";
 
             Subquery<Long> eventSub = query.subquery(Long.class);
             Root<Event> event = eventSub.from(Event.class);
             eventSub.select(event.<Long>get("id"))
                     .where(cb.equal(event.get("post"), root),
-                            cb.like(event.get("name"), pattern));
+                            cb.like(event.get("name"), pattern, LIKE_ESCAPE));
 
             return cb.or(
-                    cb.like(root.get("title"), pattern),
-                    cb.like(root.get("description"), pattern),
+                    cb.like(root.get("title"), pattern, LIKE_ESCAPE),
+                    cb.like(root.get("description"), pattern, LIKE_ESCAPE),
                     cb.exists(eventSub));
         };
+    }
+
+    static String escapeLike(String value) {
+        return value.replace("!", "!!").replace("%", "!%").replace("_", "!_");
     }
 }

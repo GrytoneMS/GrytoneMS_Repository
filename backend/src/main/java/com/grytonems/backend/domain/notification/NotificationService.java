@@ -96,6 +96,12 @@ public class NotificationService {
                 .build();
     }
 
+    /** NOTI-02: 30일 지난 알림 삭제 (NotificationCleanupScheduler가 매일 새벽 호출) */
+    @Transactional
+    public int deleteExpired(LocalDateTime now) {
+        return notificationRepository.deleteCreatedBefore(now.minusDays(RETENTION_DAYS));
+    }
+
     private LocalDateTime retentionStart() {
         return LocalDateTime.now().minusDays(RETENTION_DAYS);
     }

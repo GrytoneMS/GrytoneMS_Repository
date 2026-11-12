@@ -15,6 +15,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -31,6 +32,11 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(name = "applications",
+        indexes = {
+                @Index(name = "idx_applications_role_status", columnList = "post_role_id, status"),
+                @Index(name = "idx_applications_applicant_status", columnList = "applicant_id, status"),
+                @Index(name = "idx_applications_status_created", columnList = "status, created_at")
+        },
         uniqueConstraints = @UniqueConstraint(name = "uq_applications_post_applicant",
                 columnNames = {"post_id", "applicant_id"}))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
