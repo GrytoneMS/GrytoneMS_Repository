@@ -41,6 +41,7 @@ public record PostDetailResponse(
         Leader leader,
         @JsonProperty("isMine") boolean isMine,
         MyApplication myApplication,
+        @JsonProperty("isScrapped") boolean isScrapped,
         LocalDateTime createdAt
 ) {
 
@@ -89,7 +90,8 @@ public record PostDetailResponse(
     }
 
     public static PostDetailResponse of(Post post, List<PostRole> roles, Event event, User leader,
-                                        boolean isMine, Application myApplication, LocalDate today) {
+                                        boolean isMine, Application myApplication, boolean isScrapped,
+                                        LocalDate today) {
         return new PostDetailResponse(
                 post.getId(),
                 post.getTitle(),
@@ -109,6 +111,7 @@ public record PostDetailResponse(
                 Leader.of(post.getLeaderId(), leader),
                 isMine,
                 MyApplication.from(myApplication),
+                isScrapped,
                 post.getCreatedAt()
         );
     }

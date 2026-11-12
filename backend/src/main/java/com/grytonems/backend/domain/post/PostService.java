@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -23,6 +24,7 @@ import com.grytonems.backend.domain.post.dto.PostCreateRequest;
 import com.grytonems.backend.domain.post.dto.PostCreateResponse;
 import com.grytonems.backend.domain.post.dto.PostDetailResponse;
 import com.grytonems.backend.domain.post.dto.PostSearchCondition;
+import com.grytonems.backend.domain.scrap.ScrapRepository;
 import com.grytonems.backend.domain.user.User;
 import com.grytonems.backend.domain.user.UserRepository;
 import com.grytonems.backend.global.common.CursorPage;
@@ -51,6 +53,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final ApplicationRepository applicationRepository;
     private final NotificationService notificationService;
+    private final ScrapRepository scrapRepository;
 
     /** POST-01: 모집글 작성 (글 + 역할 + 행사를 한 번에 저장) */
     @Transactional
@@ -108,7 +111,7 @@ public class PostService {
     }
 
     /** LIST-01~04: 모집글 목록 (커서 방식, 정렬·필터·검색) */
-    public CursorPage<PostCardResponse> getPosts(PostSearchCondition condition) {
+    public CursorPage<PostCardResponse> getPosts(PostSearchCondition condition, Long loginUserId) {
         PostSort postSort = PostSort.from(condition.sort());
         int pageSize = CursorPage.normalizeSize(condition.size());
         LocalDate today = LocalDate.now();
@@ -138,13 +141,18 @@ public class PostService {
         Map<Long, User> leadersById = userRepository.findAllById(leaderIds).stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
+        // ④-2 로그인했으면 이 글들 중 내가 스크랩한 글 (SCRP-01 북마크 표시, 비회원은 비어 있음)
+        Set<Long> scrappedPostIds = loginUserId == null ? Set.of()
+                : Set.copyOf(scrapRepository.findScrappedPostIds(loginUserId, postIds));
+
         // ⑤ 카드로 바꾸고 다음 커서 만들기 (CursorPage가 20개로 자르고 hasNext 판단)
         return CursorPage.of(posts, pageSize,
                 post -> nextCursorOf(postSort, post),
                 post -> PostCardResponse.of(post,
                         rolesByPostId.getOrDefault(post.getId(), List.of()),
                         leadersById.get(post.getLeaderId()),
-                        today));
+                        today,
+                        scrappedPostIds.contains(post.getId())));
     }
 
     /** 커서 블록: 최신순은 id, 마감 임박순은 "마감일_id" */
@@ -224,7 +232,10 @@ public class PostService {
                 : applicationRepository.findByPostIdAndApplicantId(postId, loginUserId).orElse(null);
 
         // ④ 한 상자에 담기
-        return PostDetailResponse.of(post, roles, event, leader, isMine, myApplication, LocalDate.now());
+        // ④ 내가 스크랩한 글인지 (SCRP-01 북마크 표시)
+        boolean isScrapped = loginUserId != null && scrapRepository.existsByUserIdAndPostId(loginUserId, postId);
+
+        return PostDetailResponse.of(post, roles, event, leader, isMine, myApplication, isScrapped, LocalDate.now());
     }
 
     /** POST-04: 수동 마감 (팀장만). 글·역할 마감 + 대기 지원 마감 + 대기자에게 알림 */

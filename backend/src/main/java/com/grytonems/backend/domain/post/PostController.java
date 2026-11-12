@@ -49,6 +49,7 @@ public class PostController {
      */
     @GetMapping("/api/posts")
     public ApiResponse<CursorPage<PostCardResponse>> getPosts(
+            @AuthenticationPrincipal AuthUser loginUser,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) String cursor,
             @RequestParam(required = false) Integer size,
@@ -62,7 +63,8 @@ public class PostController {
             @RequestParam(required = false) String keyword) {
         PostSearchCondition condition = new PostSearchCondition(sort, cursor, size, categories, roleCodes,
                 schoolIds, locationCodes, meetingTypes, period, openOnly, keyword);
-        return ApiResponse.ok(postService.getPosts(condition));
+        Long loginUserId = (loginUser == null) ? null : loginUser.id();
+        return ApiResponse.ok(postService.getPosts(condition, loginUserId));
     }
 
     /** LIST-05: 모집글 상세 (비회원도 가능) */

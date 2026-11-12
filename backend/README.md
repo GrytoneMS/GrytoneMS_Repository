@@ -44,6 +44,7 @@ com.grytonems.backend
     ├── application/         # 지원·수락·거절·연락 수단 (APPL)
     ├── profile/             # 프로필: 기본 정보·희망 역할·보유 기술·타인 프로필 (PROF-01~03, 12)
     ├── notification/        # 알림 생성·알림함 (NOTI-01, 02)
+    ├── scrap/               # 스크랩·내 스크랩 (SCRP-01, 02)
     └── school/              # 예시: 학교 목록·등록 (AUTH-06, ADMN-05)
         ├── School.java              # Entity
         ├── SchoolRepository.java    # DB 접근
@@ -128,7 +129,7 @@ notificationService.notify(받는사람Id, NotificationType.ACCEPTED, Notificati
 | 작업 | 시각 | 내용 |
 | --- | --- | --- |
 | 자동 마감 (POST-06) | 매시 정각 + 서버 시작 직후 | 마감일이 지난 모집중 글을 수동 마감과 똑같이 처리 (대기 지원 마감 + 대기자 알림) |
-| 마감 D-1 알림 | 매일 오전 9시 | 내일 마감인 모집중 글의 팀장에게 알림 |
+| 마감 D-1 알림 | 매일 오전 9시 | 내일 마감인 모집중 글의 팀장(`DEADLINE_SOON`)과 스크랩한 사람(`SCRAP_DEADLINE_SOON`)에게 알림 |
 
 테스트에서는 `app.scheduling.enabled: false`로 꺼져 있고, 스케줄러 메서드에 날짜를 넘겨 직접 호출합니다.
 
@@ -139,7 +140,7 @@ notificationService.notify(받는사람Id, NotificationType.ACCEPTED, Notificati
 | 구분 | 주소 | 실패 시 |
 | --- | --- | --- |
 | 비회원 가능 | `POST /api/auth/signup`, `POST /api/auth/login`, `GET /api/schools`, `GET /api/posts`, `GET /api/posts/{id}` | - |
-| 학교 인증 회원만 | `POST /api/posts`, `POST /api/posts/{id}/applications` | 미인증 403 `UNVERIFIED`, 정지 403 `SUSPENDED` |
+| 학교 인증 회원만 | `POST /api/posts`, `POST /api/posts/{id}/applications`, `PUT /api/posts/{id}/scrap` | 미인증 403 `UNVERIFIED`, 정지 403 `SUSPENDED` |
 | 관리자만 | `/api/admin/**` | 403 `FORBIDDEN` |
 | 그 밖의 `/api/**` | 로그인만 하면 가능 | 401 `UNAUTHORIZED` |
 
