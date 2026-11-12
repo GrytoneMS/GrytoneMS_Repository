@@ -105,4 +105,15 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
             group by a.postRole.id, a.status
             """)
     List<RoleApplicationCount> countByRoleAndStatus(@Param("postIds") List<Long> postIds);
+
+    /** SAFE-03: 두 사람 사이의 대기 지원(양쪽 방향)을 한 번에 마감. 알림은 보내지 않습니다 */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            update Application a set a.status = :closed
+            where a.status = :pending
+              and ((a.applicant.id = :userA and a.post.id in (select p.id from Post p where p.leaderId = :userB))
+                or (a.applicant.id = :userB and a.post.id in (select p.id from Post p where p.leaderId = :userA)))
+            """)
+    int closePendingBetween(@Param("userA") Long userA, @Param("userB") Long userB,
+            @Param("pending") ApplicationStatus pending, @Param("closed") ApplicationStatus closed);
 }

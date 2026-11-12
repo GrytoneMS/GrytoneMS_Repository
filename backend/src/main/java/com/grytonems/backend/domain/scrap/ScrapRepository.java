@@ -22,15 +22,20 @@ public interface ScrapRepository extends JpaRepository<Scrap, Long> {
     @Query("select s.post.id from Scrap s where s.user.id = :userId and s.post.id in :postIds")
     List<Long> findScrappedPostIds(@Param("userId") Long userId, @Param("postIds") Collection<Long> postIds);
 
-    /** SCRP-02 내 스크랩: 최신 스크랩순, 커서는 직전 페이지 마지막 스크랩 id. 삭제·숨김 글은 자동 제외 */
+    /**
+     * SCRP-02 내 스크랩: 최신 스크랩순, 커서는 직전 페이지 마지막 스크랩 id.
+     * 삭제·숨김 글, 차단 관계인 사람의 글(excludedLeaderIds)은 자동 제외. excludedLeaderIds는 비어 있으면 안 됩니다
+     */
     @Query("""
             select s from Scrap s
             join fetch s.post p
             where s.user.id = :userId and p.deletedAt is null and p.hidden = false
+              and p.leaderId not in :excludedLeaderIds
               and (:cursor is null or s.id < :cursor)
             order by s.id desc
             """)
-    List<Scrap> findMine(@Param("userId") Long userId, @Param("cursor") Long cursor, Pageable pageable);
+    List<Scrap> findMine(@Param("userId") Long userId, @Param("excludedLeaderIds") Collection<Long> excludedLeaderIds,
+            @Param("cursor") Long cursor, Pageable pageable);
 
     /** 스크랩 글 마감 D-1 알림 대상 */
     @Query("select s.user.id from Scrap s where s.post.id = :postId")

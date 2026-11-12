@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import com.grytonems.backend.domain.block.BlockPolicy;
 import com.grytonems.backend.domain.post.RoleCode;
 import com.grytonems.backend.domain.profile.dto.ProfileResponse;
 import com.grytonems.backend.domain.profile.dto.ProfileUpdateRequest;
@@ -35,10 +36,18 @@ public class ProfileService {
     private final UserRepository userRepository;
     private final UserRoleTagRepository roleTagRepository;
     private final UserSkillRepository skillRepository;
+    private final BlockPolicy blockPolicy;
 
-    /** 내 프로필·타인 프로필 조회. 탈퇴한 사용자는 없는 사용자로 취급 */
+    /** 내 프로필 조회. 탈퇴한 사용자는 없는 사용자로 취급 */
     public ProfileResponse getProfile(Long userId) {
         return toResponse(getUser(userId));
+    }
+
+    /** PROF-12 타인 프로필. 차단 관계면 못 봄 (내가 차단: 403 BLOCKED_USER, 나를 차단: 404) */
+    public ProfileResponse getOtherProfile(Long viewerId, Long userId) {
+        User user = getUser(userId);
+        blockPolicy.checkVisible(viewerId, userId, "사용자를 찾을 수 없어요");
+        return toResponse(user);
     }
 
     /** PROF-01 기본 정보 수정: 학과, 학년, 한 줄 소개 */

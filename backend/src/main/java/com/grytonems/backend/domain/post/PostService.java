@@ -23,6 +23,7 @@ import com.grytonems.backend.domain.post.dto.PostCardResponse;
 import com.grytonems.backend.domain.post.dto.PostCreateRequest;
 import com.grytonems.backend.domain.post.dto.PostCreateResponse;
 import com.grytonems.backend.domain.post.dto.PostDetailResponse;
+import com.grytonems.backend.domain.block.BlockPolicy;
 import com.grytonems.backend.domain.post.dto.PostSearchCondition;
 import com.grytonems.backend.domain.scrap.ScrapRepository;
 import com.grytonems.backend.domain.user.User;
@@ -54,6 +55,7 @@ public class PostService {
     private final ApplicationRepository applicationRepository;
     private final NotificationService notificationService;
     private final ScrapRepository scrapRepository;
+    private final BlockPolicy blockPolicy;
 
     /** POST-01: 모집글 작성 (글 + 역할 + 행사를 한 번에 저장) */
     @Transactional
@@ -120,6 +122,11 @@ public class PostService {
         Specification<Post> spec = PostSpecs.visible();
         spec = addCursor(spec, postSort, condition.cursor(), today);
         spec = addFilters(spec, condition);
+        // LIST-06: 차단 관계인 사람이 팀장인 글은 빼기 (비회원은 해당 없음)
+        Set<Long> blockedUserIds = blockPolicy.relatedUserIds(loginUserId);
+        if (!blockedUserIds.isEmpty()) {
+            spec = spec.and(PostSpecs.leaderNotIn(blockedUserIds));
+        }
 
         // ② 정렬 정하고 21개 꺼내기
         Sort order = (postSort == PostSort.LATEST)
@@ -219,6 +226,8 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .filter(p -> !p.isHidden() && p.getDeletedAt() == null)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        // 차단 관계면 못 봄 (내가 차단: 403 BLOCKED_USER, 나를 차단: 404)
+        blockPolicy.checkVisible(loginUserId, post.getLeaderId(), "모집글을 찾을 수 없어요");
 
         // ② 역할·행사·팀장 꺼내기
         List<PostRole> roles = postRoleRepository.findAllByPostIdOrderByIdAsc(postId);

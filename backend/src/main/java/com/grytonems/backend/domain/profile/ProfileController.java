@@ -53,7 +53,8 @@ public class ProfileController {
 
     /** PROF-12 타인 프로필 보기 */
     @GetMapping("/api/users/{userId}/profile")
-    public ApiResponse<ProfileResponse> getProfile(@PathVariable Long userId) {
-        return ApiResponse.ok(profileService.getProfile(userId));
+    public ApiResponse<ProfileResponse> getProfile(@AuthenticationPrincipal AuthUser loginUser,
+            @PathVariable Long userId) {
+        return ApiResponse.ok(profileService.getOtherProfile(loginUser.id(), userId));
     }
 }

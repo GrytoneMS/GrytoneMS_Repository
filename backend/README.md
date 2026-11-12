@@ -46,6 +46,7 @@ com.grytonems.backend
     ├── notification/        # 알림 생성·알림함 (NOTI-01, 02)
     ├── scrap/               # 스크랩·내 스크랩 (SCRP-01, 02)
     ├── report/              # 신고·신고 3건 자동 숨김·관리자 신고 처리 (SAFE-01, 02, ADMN-02)
+    ├── block/               # 차단·해제·차단 목록, 다른 기능에서 쓰는 BlockPolicy (SAFE-03, LIST-06)
     └── school/              # 예시: 학교 목록·등록 (AUTH-06, ADMN-05)
         ├── School.java              # Entity
         ├── SchoolRepository.java    # DB 접근

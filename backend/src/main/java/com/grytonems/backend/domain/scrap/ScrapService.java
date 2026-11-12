@@ -1,8 +1,10 @@
 package com.grytonems.backend.domain.scrap;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -11,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.grytonems.backend.domain.block.BlockPolicy;
 import com.grytonems.backend.domain.post.Post;
 import com.grytonems.backend.domain.post.PostRepository;
 import com.grytonems.backend.domain.post.PostRole;
@@ -38,6 +41,7 @@ public class ScrapService {
     private final PostRepository postRepository;
     private final PostRoleRepository postRoleRepository;
     private final UserRepository userRepository;
+    private final BlockPolicy blockPolicy;
 
     /**
      * 스크랩. 본인 글은 불가, 삭제·숨김 글은 404.
@@ -73,7 +77,10 @@ public class ScrapService {
     @Transactional(readOnly = true)
     public CursorPage<MyScrapResponse> getMyScraps(Long userId, Long cursor, Integer size) {
         int pageSize = CursorPage.normalizeSize(size);
-        List<Scrap> fetched = scrapRepository.findMine(userId, cursor, PageRequest.of(0, pageSize + 1));
+        // 차단 관계인 사람의 글은 빼기 (빈 목록은 쿼리에 넣을 수 없어 없는 id -1을 넣음)
+        Set<Long> excluded = new HashSet<>(blockPolicy.relatedUserIds(userId));
+        excluded.add(-1L);
+        List<Scrap> fetched = scrapRepository.findMine(userId, excluded, cursor, PageRequest.of(0, pageSize + 1));
         List<Scrap> page = fetched.size() > pageSize ? fetched.subList(0, pageSize) : fetched;
         if (page.isEmpty()) {
             return new CursorPage<>(List.of(), null, false);

@@ -20,6 +20,7 @@ import com.grytonems.backend.domain.application.dto.MyApplicationResponse;
 import com.grytonems.backend.domain.application.dto.RejectRequest;
 import com.grytonems.backend.domain.application.dto.RejectResponse;
 import com.grytonems.backend.domain.application.dto.RoleApplicantsResponse;
+import com.grytonems.backend.domain.block.BlockPolicy;
 import com.grytonems.backend.domain.notification.NotificationService;
 import com.grytonems.backend.domain.notification.NotificationTargetType;
 import com.grytonems.backend.domain.notification.NotificationType;
@@ -48,6 +49,7 @@ public class ApplicationService {
     private final PostRoleRepository postRoleRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final BlockPolicy blockPolicy;
 
     /**
      * APPL-01 지원하기.
@@ -60,6 +62,8 @@ public class ApplicationService {
         if (post.getLeaderId().equals(userId)) {
             throw new BusinessException(ErrorCode.CANNOT_APPLY_OWN_POST);
         }
+        // APPL-01: 차단 관계인 팀장의 글에는 지원 불가 (상세와 같은 오류)
+        blockPolicy.checkVisible(userId, post.getLeaderId(), "모집글을 찾을 수 없어요");
         PostRole role = postRoleRepository.findById(request.postRoleId())
                 .filter(r -> r.getPost().getId().equals(postId))
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT, "이 모집글의 역할이 아니에요"));
