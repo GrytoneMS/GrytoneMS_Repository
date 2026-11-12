@@ -19,6 +19,7 @@ import com.grytonems.backend.domain.report.dto.AdminReportResponse;
 import com.grytonems.backend.domain.report.dto.ReportCreateRequest;
 import com.grytonems.backend.domain.report.dto.ReportCreateResponse;
 import com.grytonems.backend.domain.report.dto.ReportResolveResponse;
+import com.grytonems.backend.domain.user.SuspensionService;
 import com.grytonems.backend.domain.user.User;
 import com.grytonems.backend.domain.user.UserRepository;
 import com.grytonems.backend.global.common.CursorPage;
@@ -48,6 +49,7 @@ public class ReportService {
     private final ApplicationRepository applicationRepository;
     private final PostModerationService postModerationService;
     private final NotificationService notificationService;
+    private final SuspensionService suspensionService;
 
     // ===== SAFE-01 신고 =====
 
@@ -151,9 +153,10 @@ public class ReportService {
 
     /**
      * 신고 처리: 대상에 조치를 하고, 같은 대상의 미처리 신고를 모두 처리완료로 바꾸고, 신고자들에게 알림.
-     * 1차 조치: 모집글 = 문제없음(숨겨져 있으면 복구) / 숨김, 사용자·지원 메시지 = 문제없음
+     * 조치: 문제없음(숨겨진 글이면 복구), 숨김(모집글만), 이용 정지(대상의 작성자, ADMN-04). 삭제는 POST-03이 생기면 연결
      */
-    public ReportResolveResponse resolve(Long adminId, Long reportId, ReportAction action) {
+    public ReportResolveResponse resolve(Long adminId, Long reportId, ReportAction action,
+                                         Integer suspendDays, String suspendReason) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신고를 찾을 수 없어요"));
         if (report.getStatus() == ReportStatus.RESOLVED) {
@@ -165,6 +168,14 @@ public class ReportService {
 
         // 알림 보낼 신고자를 먼저 기억 (아래 일괄 변경 뒤에는 RECEIVED가 사라짐)
         List<Long> reporterIds = reportRepository.findReporterIds(targetType, targetId, ReportStatus.RECEIVED);
+
+        // 이용 정지: 대상의 작성자(글의 팀장, 사용자 본인, 지원자)를 정지. 실패하면 신고도 처리되지 않습니다
+        if (action == ReportAction.SUSPEND) {
+            if (suspendReason == null || suspendReason.isBlank()) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT, "정지 사유를 입력해 주세요");
+            }
+            suspensionService.suspend(adminId, authorOf(targetType, targetId), suspendDays, suspendReason, reportId);
+        }
 
         // 대상에 조치 (삭제된 글이면 조치 없이 신고만 처리)
         if (targetType == ReportTargetType.POST) {
@@ -190,8 +201,21 @@ public class ReportService {
         return new ReportResolveResponse(reportId, action, resolved);
     }
 
+    /** 신고 대상의 작성자 id (정지 대상) */
+    private Long authorOf(ReportTargetType type, Long targetId) {
+        return switch (type) {
+            case POST -> postRepository.findById(targetId).map(Post::getLeaderId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "정지할 사용자를 찾을 수 없어요"));
+            case USER -> targetId;
+            case APPLICATION -> applicationRepository.findById(targetId)
+                    .map(application -> application.getApplicant().getId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "정지할 사용자를 찾을 수 없어요"));
+        };
+    }
+
     private void checkActionSupported(ReportTargetType targetType, ReportAction action) {
         boolean supported = action == ReportAction.NONE
+                || action == ReportAction.SUSPEND
                 || (targetType == ReportTargetType.POST && action == ReportAction.HIDE);
         if (!supported) {
             throw new BusinessException(ErrorCode.REPORT_ACTION_NOT_SUPPORTED);

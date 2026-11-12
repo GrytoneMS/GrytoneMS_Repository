@@ -132,6 +132,7 @@ notificationService.notify(받는사람Id, NotificationType.ACCEPTED, Notificati
 | --- | --- | --- |
 | 자동 마감 (POST-06) | 매시 정각 + 서버 시작 직후 | 마감일이 지난 모집중 글을 수동 마감과 똑같이 처리 (대기 지원 마감 + 대기자 알림) |
 | 마감 D-1 알림 | 매일 오전 9시 | 내일 마감인 모집중 글의 팀장(`DEADLINE_SOON`)과 스크랩한 사람(`SCRAP_DEADLINE_SOON`)에게 알림 |
+| 정지 기간 종료 (ADMN-04) | 매시 정각 10초 | 기간이 끝난 이용 정지를 풀어 이전 상태(인증·미인증)로 되돌림 |
 
 테스트에서는 `app.scheduling.enabled: false`로 꺼져 있고, 스케줄러 메서드에 날짜를 넘겨 직접 호출합니다.
 

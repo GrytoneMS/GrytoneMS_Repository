@@ -37,6 +37,7 @@ public class AdminReportController {
     @PatchMapping("/api/admin/reports/{reportId}/resolve")
     public ApiResponse<ReportResolveResponse> resolve(@AuthenticationPrincipal AuthUser loginUser,
             @PathVariable Long reportId, @Valid @RequestBody ReportResolveRequest request) {
-        return ApiResponse.ok(reportService.resolve(loginUser.id(), reportId, request.action()));
+        return ApiResponse.ok(reportService.resolve(loginUser.id(), reportId, request.action(),
+                request.suspendDays(), request.suspendReason()));
     }
 }

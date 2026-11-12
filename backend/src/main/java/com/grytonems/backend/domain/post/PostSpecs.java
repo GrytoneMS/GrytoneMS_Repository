@@ -8,6 +8,7 @@ import org.hibernate.query.criteria.HibernateCriteriaBuilder;
 import org.hibernate.query.sqm.TemporalUnit;
 
 import com.grytonems.backend.domain.user.User;
+import com.grytonems.backend.domain.user.UserStatus;
 
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Root;
@@ -88,6 +89,17 @@ public final class PostSpecs {
     }
 
     /** 팀장 학교: 팀장이 고른 학교 중 하나에 다니는 글 (users에서 찾기) */
+    /** ADMN-04: 팀장이 이용 정지 중인 글 제외 (정지가 풀리면 다시 보임) */
+    public static Specification<Post> leaderNotSuspended() {
+        return (root, query, cb) -> {
+            Subquery<Long> sub = query.subquery(Long.class);
+            Root<User> user = sub.from(User.class);
+            sub.select(user.<Long>get("id"))
+                    .where(cb.equal(user.get("status"), UserStatus.SUSPENDED));
+            return cb.not(root.get("leaderId").in(sub));
+        };
+    }
+
     /** LIST-06: 이 사람들이 팀장인 글 제외 (차단 관계) */
     public static Specification<Post> leaderNotIn(java.util.Collection<Long> userIds) {
         return (root, query, cb) -> cb.not(root.get("leaderId").in(userIds));

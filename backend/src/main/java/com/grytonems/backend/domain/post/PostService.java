@@ -27,6 +27,7 @@ import com.grytonems.backend.domain.block.BlockPolicy;
 import com.grytonems.backend.domain.post.dto.PostSearchCondition;
 import com.grytonems.backend.domain.scrap.ScrapRepository;
 import com.grytonems.backend.domain.user.User;
+import com.grytonems.backend.domain.user.UserStatus;
 import com.grytonems.backend.domain.user.UserRepository;
 import com.grytonems.backend.global.common.CursorPage;
 import com.grytonems.backend.global.error.BusinessException;
@@ -119,7 +120,7 @@ public class PostService {
         LocalDate today = LocalDate.now();
 
         // ① 조건 블록 조립 (기본 + 커서 + 고른 필터만)
-        Specification<Post> spec = PostSpecs.visible();
+        Specification<Post> spec = PostSpecs.visible().and(PostSpecs.leaderNotSuspended());
         spec = addCursor(spec, postSort, condition.cursor(), today);
         spec = addFilters(spec, condition);
         // LIST-06: 차단 관계인 사람이 팀장인 글은 빼기 (비회원은 해당 없음)
@@ -233,6 +234,10 @@ public class PostService {
         List<PostRole> roles = postRoleRepository.findAllByPostIdOrderByIdAsc(postId);
         Event event = eventRepository.findByPostId(postId).orElse(null);
         User leader = userRepository.findById(post.getLeaderId()).orElse(null);
+        // ADMN-04: 팀장이 정지 중이면 숨김 글처럼 404
+        if (leader != null && leader.getStatus() == UserStatus.SUSPENDED) {
+            throw new BusinessException(ErrorCode.NOT_FOUND);
+        }
 
         // ③ 로그인한 사람 기준 정보
         boolean isMine = loginUserId != null && loginUserId.equals(post.getLeaderId());
