@@ -284,7 +284,7 @@ class BlockApiTest {
 
         @Test
         @DisplayName("지원: 차단 관계인 팀장의 글에는 지원 불가 (상세와 같은 오류)")
-        void apply() throws Exception {
+        void applyBlocked() throws Exception {
             Post leaderPost = savePost(leaderId, "팀장이 올린 모집글");
             PostRole role = saveRole(leaderPost);
             block(aliceToken, leaderId).andExpect(status().isOk());
