@@ -135,7 +135,7 @@ try {
       ['/login', '로그인'], ['/signup', '회원가입'], ['/school-verification', '학교 인증'],
       ['/profile/setup', '초기 프로필 설정'], ['/me/profile', '내 프로필'],
       ['/me/profile/edit', '프로필 수정'], ['/users/1', '다른 사용자 프로필'],
-      ['/posts/new', '모집글 작성'], ['/posts/1/applicants', '모집글 지원자 관리'],
+      ['/posts/1/applicants', '모집글 지원자 관리'],
       ['/me/posts', '내 모집글'], ['/me/applications', '내 지원 내역'],
     ]) {
       const html = render(path)
@@ -145,6 +145,13 @@ try {
     }
     assert.ok(render('/posts').includes('class="posts-layout"'))
     assert.ok(render('/posts/1').includes('class="posts-layout"'))
+    const create = render('/posts/new')
+    assert.ok(create.includes('class="posts-layout"'))
+    assert.ok(create.includes('<h1>모집글 작성</h1>'))
+    assert.ok(create.includes('name="contactLink"'))
+    assert.ok(create.includes('개발 중 · 인증 연동 대기'))
+    assert.ok(!create.includes('로그인하기 (새 탭)'))
+    assert.ok(!create.includes('학교 인증하기 (새 탭)'))
   })
   // 별도 Vite 모듈 그래프로 mock 모드 분기를 검사합니다. HTTP 리스너는 열지 않습니다.
   process.env.VITE_POSTS_MOCK = 'true'
