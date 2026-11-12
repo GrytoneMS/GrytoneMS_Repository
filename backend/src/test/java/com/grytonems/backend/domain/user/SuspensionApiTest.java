@@ -51,6 +51,7 @@ import com.grytonems.backend.domain.report.ReportAction;
 import com.grytonems.backend.domain.report.ReportRepository;
 import com.grytonems.backend.domain.report.ReportStatus;
 import com.grytonems.backend.domain.school.Region;
+import com.grytonems.backend.domain.scrap.ScrapRepository;
 import com.grytonems.backend.domain.school.School;
 import com.grytonems.backend.domain.school.SchoolRepository;
 
@@ -74,6 +75,7 @@ class SuspensionApiTest {
     @Autowired ApplicationRepository applicationRepository;
     @Autowired NotificationRepository notificationRepository;
     @Autowired ReportRepository reportRepository;
+    @Autowired ScrapRepository scrapRepository;
 
     School school;
     String adminToken;
@@ -104,6 +106,7 @@ class SuspensionApiTest {
 
     @AfterEach
     void cleanUp() {
+        scrapRepository.deleteAll();
         suspensionRepository.deleteAll();
         reportRepository.deleteAll();
         notificationRepository.deleteAll();
