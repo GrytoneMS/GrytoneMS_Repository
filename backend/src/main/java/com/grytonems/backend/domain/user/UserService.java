@@ -15,11 +15,12 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final SuspensionService suspensionService;
 
     /** GET /api/users/me */
     public UserResponse getMe(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-        return UserResponse.from(user);
+        return UserResponse.from(user, suspensionService.currentSuspension(user));
     }
 }

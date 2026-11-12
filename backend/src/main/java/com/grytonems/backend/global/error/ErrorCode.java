@@ -53,6 +53,10 @@ public enum ErrorCode {
     REPORT_ALREADY_RESOLVED(HttpStatus.CONFLICT, "이미 처리된 신고예요"),
     REPORT_ACTION_NOT_SUPPORTED(HttpStatus.BAD_REQUEST, "이 대상에는 할 수 없는 조치예요"),
 
+    // 이용 정지 (ADMN-04)
+    ALREADY_SUSPENDED(HttpStatus.CONFLICT, "이미 이용 정지된 사용자예요"),
+    NOT_SUSPENDED(HttpStatus.CONFLICT, "이용 정지된 사용자가 아니에요"),
+
     // 차단 (SAFE-03)
     CANNOT_BLOCK_SELF(HttpStatus.BAD_REQUEST, "나 자신은 차단할 수 없어요"),
     ALREADY_BLOCKED(HttpStatus.CONFLICT, "이미 차단한 사용자예요"),

@@ -116,4 +116,22 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
             """)
     int closePendingBetween(@Param("userA") Long userA, @Param("userB") Long userB,
             @Param("pending") ApplicationStatus pending, @Param("closed") ApplicationStatus closed);
+
+    /** ADMN-04: 이 사람이 팀장인 글의 대기 지원자와 글 제목 */
+    @Query("""
+            select new com.grytonems.backend.domain.application.PendingApplicant(a.applicant.id, a.post.title)
+            from Application a
+            where a.status = :pending and a.post.leaderId = :leaderId
+            """)
+    List<PendingApplicant> findPendingApplicantsOfLeader(@Param("leaderId") Long leaderId,
+            @Param("pending") ApplicationStatus pending);
+
+    /** ADMN-04: 이 사람이 팀장인 글의 대기 지원을 한 번에 마감 */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            update Application a set a.status = :closed
+            where a.status = :pending and a.post.id in (select p.id from Post p where p.leaderId = :leaderId)
+            """)
+    int closePendingOfLeader(@Param("leaderId") Long leaderId, @Param("pending") ApplicationStatus pending,
+            @Param("closed") ApplicationStatus closed);
 }

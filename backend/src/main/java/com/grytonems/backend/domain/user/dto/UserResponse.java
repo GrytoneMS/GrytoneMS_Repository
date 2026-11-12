@@ -1,5 +1,7 @@
 package com.grytonems.backend.domain.user.dto;
 
+import java.time.LocalDateTime;
+
 import com.grytonems.backend.domain.school.School;
 import com.grytonems.backend.domain.user.User;
 import com.grytonems.backend.domain.user.UserRole;
@@ -15,8 +17,13 @@ public record UserResponse(
         UserStatus status,
         UserRole role,
         SchoolSummary school,
-        String profileImageUrl
+        String profileImageUrl,
+        Suspension suspension
 ) {
+
+    /** 정지 중일 때만 채워집니다. endsAt이 null이면 영구 정지 (ADMN-04) */
+    public record Suspension(String reason, LocalDateTime endsAt) {
+    }
 
     public record SchoolSummary(Long id, String name, String campus) {
 
@@ -26,13 +33,18 @@ public record UserResponse(
     }
 
     public static UserResponse from(User user) {
+        return from(user, null);
+    }
+
+    public static UserResponse from(User user, Suspension suspension) {
         return new UserResponse(
                 user.getId(),
                 user.getNickname(),
                 user.getStatus(),
                 user.getRole(),
                 SchoolSummary.from(user.getSchool()),
-                user.getProfileImageUrl()
+                user.getProfileImageUrl(),
+                suspension
         );
     }
 }

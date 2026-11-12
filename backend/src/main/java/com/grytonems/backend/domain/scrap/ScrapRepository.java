@@ -24,13 +24,14 @@ public interface ScrapRepository extends JpaRepository<Scrap, Long> {
 
     /**
      * SCRP-02 내 스크랩: 최신 스크랩순, 커서는 직전 페이지 마지막 스크랩 id.
-     * 삭제·숨김 글, 차단 관계인 사람의 글(excludedLeaderIds)은 자동 제외. excludedLeaderIds는 비어 있으면 안 됩니다
+     * 삭제·숨김 글, 차단 관계인 사람의 글(excludedLeaderIds), 팀장이 정지 중인 글은 자동 제외. excludedLeaderIds는 비어 있으면 안 됩니다
      */
     @Query("""
             select s from Scrap s
             join fetch s.post p
             where s.user.id = :userId and p.deletedAt is null and p.hidden = false
               and p.leaderId not in :excludedLeaderIds
+              and p.leaderId not in (select u.id from User u where u.status = com.grytonems.backend.domain.user.UserStatus.SUSPENDED)
               and (:cursor is null or s.id < :cursor)
             order by s.id desc
             """)

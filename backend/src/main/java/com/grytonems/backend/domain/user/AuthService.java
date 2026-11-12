@@ -28,6 +28,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
+    private final SuspensionService suspensionService;
 
     /** AUTH-01: 이메일 회원가입. 가입하면 바로 로그인 상태로 토큰을 돌려줍니다. */
     @Transactional
@@ -81,7 +82,9 @@ public class AuthService {
     }
 
     private LoginResponse toLoginResponse(User user) {
-        return new LoginResponse(jwtProvider.createAccessToken(user.getId()), UserResponse.from(user));
+        // 정지 중에도 로그인은 되고, suspension으로 사유·기간을 안내합니다 (ADMN-04)
+        return new LoginResponse(jwtProvider.createAccessToken(user.getId()),
+                UserResponse.from(user, suspensionService.currentSuspension(user)));
     }
 
     private BusinessException lockedException(User user) {

@@ -147,8 +147,13 @@ public class User extends BaseTimeEntity {
         this.bio = bio;
     }
 
-    /** 이용 정지 (ADMN-04에서 사용) */
+    /** 이용 정지 (ADMN-04) */
     public void suspend() {
         this.status = UserStatus.SUSPENDED;
+    }
+
+    /** 정지 해제 (ADMN-04): 학교 인증을 마친 적이 있으면 인증 회원, 아니면 미인증으로 돌아갑니다 */
+    public void liftSuspension() {
+        this.status = (verifiedAt != null && school != null) ? UserStatus.VERIFIED : UserStatus.UNVERIFIED;
     }
 }

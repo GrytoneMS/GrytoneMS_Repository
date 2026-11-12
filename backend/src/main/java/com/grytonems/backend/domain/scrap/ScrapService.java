@@ -23,6 +23,7 @@ import com.grytonems.backend.domain.scrap.dto.MyScrapResponse;
 import com.grytonems.backend.domain.scrap.dto.ScrapResponse;
 import com.grytonems.backend.domain.user.User;
 import com.grytonems.backend.domain.user.UserRepository;
+import com.grytonems.backend.domain.user.UserStatus;
 import com.grytonems.backend.global.common.CursorPage;
 import com.grytonems.backend.global.error.BusinessException;
 import com.grytonems.backend.global.error.ErrorCode;
@@ -50,6 +51,8 @@ public class ScrapService {
     public ScrapResponse scrap(Long userId, Long postId) {
         Post post = postRepository.findById(postId)
                 .filter(p -> p.getDeletedAt() == null && !p.isHidden())
+                .filter(p -> userRepository.findById(p.getLeaderId())
+                        .map(leader -> leader.getStatus() != UserStatus.SUSPENDED).orElse(true))
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "모집글을 찾을 수 없어요"));
         if (post.getLeaderId().equals(userId)) {
             throw new BusinessException(ErrorCode.CANNOT_SCRAP_OWN_POST);

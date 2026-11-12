@@ -31,6 +31,7 @@ import com.grytonems.backend.domain.post.PostRoleRepository;
 import com.grytonems.backend.domain.post.RecruitStatus;
 import com.grytonems.backend.domain.user.User;
 import com.grytonems.backend.domain.user.UserRepository;
+import com.grytonems.backend.domain.user.UserStatus;
 import com.grytonems.backend.global.common.CursorPage;
 import com.grytonems.backend.global.error.BusinessException;
 import com.grytonems.backend.global.error.ErrorCode;
@@ -64,6 +65,11 @@ public class ApplicationService {
         }
         // APPL-01: 차단 관계인 팀장의 글에는 지원 불가 (상세와 같은 오류)
         blockPolicy.checkVisible(userId, post.getLeaderId(), "모집글을 찾을 수 없어요");
+        // ADMN-04: 팀장이 정지 중인 글은 안 보이는 글이라 지원 불가
+        if (userRepository.findById(post.getLeaderId())
+                .map(leader -> leader.getStatus() == UserStatus.SUSPENDED).orElse(false)) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "모집글을 찾을 수 없어요");
+        }
         PostRole role = postRoleRepository.findById(request.postRoleId())
                 .filter(r -> r.getPost().getId().equals(postId))
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT, "이 모집글의 역할이 아니에요"));
