@@ -46,8 +46,20 @@ export function mockDetail(id: string, viewer: Viewer): PostDetail {
 }
 
 // mock 저장소만 커서를 해석합니다. UI와 실제 API 계층에서는 opaque 문자열로 취급합니다.
-export function mockList(sort: Sort, cursor?: string, size = 20): PostPage {
-  const sorted = [...mockPosts].sort((a, b) => sort === 'DEADLINE'
+export function mockList(sort: Sort, cursor?: string, size = 20, filters: Partial<import('./list-query').PostFilters> = {}): PostPage {
+  if (filters.schoolId?.length) throw new Error('예시 데이터에는 학교 ID가 없습니다. 학교 필터는 API 모드에서 확인해 주세요.')
+  const periods = { WEEK: [0, 7], MONTH: [0, 31], THREE_MONTHS: [0, 92], OVER_THREE_MONTHS: [93, 100000] }
+  const keyword = filters.keyword?.trim() ?? ''
+  const sorted = mockPosts.filter(post => {
+    const days = (Date.parse(post.periodEnd) - Date.parse(post.periodStart)) / 86400000
+    return (!filters.openOnly || post.status === 'OPEN')
+      && (!filters.category?.length || filters.category.includes(post.category))
+      && (!filters.roleCode?.length || post.roles.some(role => filters.roleCode!.includes(role.roleCode)))
+      && (!filters.locationCode?.length || post.locationCode !== null && filters.locationCode.includes(post.locationCode))
+      && (!filters.meetingType?.length || filters.meetingType.includes(post.meetingType))
+      && (!filters.period || days >= periods[filters.period][0] && days <= periods[filters.period][1])
+      && (!keyword || [post.title, post.description, post.event?.name ?? ''].some(text => text.includes(keyword)))
+  }).sort((a, b) => sort === 'DEADLINE'
     ? a.deadline.localeCompare(b.deadline) || b.createdAt.localeCompare(a.createdAt)
     : b.createdAt.localeCompare(a.createdAt))
   const offsets = new Map(sorted.map((post, index) => [`sample-after-${post.id}`, index + 1]))

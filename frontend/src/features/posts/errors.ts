@@ -11,5 +11,6 @@ export function postErrorMessage(error: unknown) {
       default: return error.message
     }
   }
+  if (error instanceof TypeError) return '서버에 연결하지 못했습니다. 서버 실행 상태와 API 주소를 확인한 뒤 다시 시도해 주세요.'
   return error instanceof Error ? error.message : '모집글을 불러오지 못했습니다.'
 }

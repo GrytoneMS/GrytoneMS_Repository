@@ -8,7 +8,7 @@ export type ApplicationStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELED'
 export type Viewer = 'guest' | 'other' | 'owner' | 'applied' | 'accepted' | 'rejected' | 'canceled' | 'applicationClosed' | 'left'
 export type RoleSummary = { roleCode: RoleCode; roleName: string; remaining: number }
 export type PostRole = { id: number; roleCode: RoleCode; roleName: string; headcount: number; filledCount: number; requirements: string | null; status: PostStatus }
-export type Leader = { id: number; nickname: string; schoolName: string }
+export type Leader = { id: number; nickname: string | null; schoolName: string | null }
 export type PostSummary = {
   id: number; title: string; category: Category; status: PostStatus; deadline: string; dDay: number;
   meetingType: MeetingType; leader: Leader; roles: RoleSummary[]; createdAt: string

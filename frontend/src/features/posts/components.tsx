@@ -17,7 +17,7 @@ export function PostCard({ post, index, search }: { post: PostSummary; index: nu
   return <article className="post-card">
     <Link to={`/posts/${post.id}${search}`} className="post-card-link">
       <div className={`post-card-cover post-tint-${index % 4}`}><span className="post-chip">{categoryLabels[post.category]}</span><StatusBadge status={post.status} daysLeft={post.dDay} /></div>
-      <div className="post-card-body"><h2>{post.title}</h2>{post.roles.map((role, roleIndex) => <RoleAvailability key={`${role.roleCode}-${roleIndex}`} role={role} />)}<p className="post-card-meta">{post.leader.schoolName} · {meetingLabels[post.meetingType]}</p></div>
+      <div className="post-card-body"><h2>{post.title}</h2>{post.roles.map((role, roleIndex) => <RoleAvailability key={`${role.roleCode}-${roleIndex}`} role={role} />)}<p className="post-card-meta">{[post.leader.schoolName, meetingLabels[post.meetingType]].filter(Boolean).join(' · ')}</p></div>
     </Link>
   </article>
 }
