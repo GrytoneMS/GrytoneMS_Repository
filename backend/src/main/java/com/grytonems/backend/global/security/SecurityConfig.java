@@ -53,7 +53,9 @@ public class SecurityConfig {
                         // 관리자만
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // 학교 인증 회원만 (글쓰기 POST-01, 지원 APPL-01, 스크랩 SCRP-01)
+                        // 학교 인증 회원만 (글쓰기 POST-01, 지원 APPL-01, 스크랩 SCRP-01, 신고 SAFE-01)
+                        // 신고는 가입만 한 계정 여러 개로 남의 글을 숨기지 못하게 인증 회원만 받습니다
+                        .requestMatchers(HttpMethod.POST, "/api/reports").hasAuthority(AuthUser.VERIFIED_AUTHORITY)
                         .requestMatchers(HttpMethod.POST, "/api/posts", "/api/posts/*/applications")
                                 .hasAuthority(AuthUser.VERIFIED_AUTHORITY)
                         .requestMatchers(HttpMethod.PUT, "/api/posts/*/scrap").hasAuthority(AuthUser.VERIFIED_AUTHORITY)

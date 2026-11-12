@@ -45,6 +45,7 @@ com.grytonems.backend
     ├── profile/             # 프로필: 기본 정보·희망 역할·보유 기술·타인 프로필 (PROF-01~03, 12)
     ├── notification/        # 알림 생성·알림함 (NOTI-01, 02)
     ├── scrap/               # 스크랩·내 스크랩 (SCRP-01, 02)
+    ├── report/              # 신고·신고 3건 자동 숨김·관리자 신고 처리 (SAFE-01, 02, ADMN-02)
     └── school/              # 예시: 학교 목록·등록 (AUTH-06, ADMN-05)
         ├── School.java              # Entity
         ├── SchoolRepository.java    # DB 접근
@@ -116,7 +117,7 @@ notificationService.notify(받는사람Id, NotificationType.ACCEPTED, Notificati
 
 ## 모집글 숨김 (SAFE-02, ADMN-02)
 
-숨김·복구는 `PostModerationService`의 `hide(postId)`, `restore(postId)` 한곳에서 처리합니다. 관리자는 `PATCH /api/admin/posts/{id}/hide`, `/restore`로 호출하고, 신고 기능을 만들 때는 신고 3건이 쌓이면 `hide`를 호출하면 됩니다.
+숨김·복구는 `PostModerationService`의 `hide(postId)`, `restore(postId)` 한곳에서 처리합니다. 관리자가 직접 `PATCH /api/admin/posts/{id}/hide`, `/restore`로 호출하거나, 신고(`ReportService`)가 미처리 신고 3건이 쌓이면 `hide`, 관리자가 "문제없음"으로 처리하면 `restore`를 호출합니다.
 
 - 숨김 글은 목록·상세에서 빠지고 팀장 본인에게도 404입니다. 모집 중인 글 3개 제한에서는 빠집니다.
 - 숨기면 대기 중인 지원은 마감되고, 팀장에게 숨김 알림(이동 대상 없음), 대기 지원자에게 마감 알림이 갑니다.
@@ -140,7 +141,7 @@ notificationService.notify(받는사람Id, NotificationType.ACCEPTED, Notificati
 | 구분 | 주소 | 실패 시 |
 | --- | --- | --- |
 | 비회원 가능 | `POST /api/auth/signup`, `POST /api/auth/login`, `GET /api/schools`, `GET /api/posts`, `GET /api/posts/{id}` | - |
-| 학교 인증 회원만 | `POST /api/posts`, `POST /api/posts/{id}/applications`, `PUT /api/posts/{id}/scrap` | 미인증 403 `UNVERIFIED`, 정지 403 `SUSPENDED` |
+| 학교 인증 회원만 | `POST /api/posts`, `POST /api/posts/{id}/applications`, `PUT /api/posts/{id}/scrap`, `POST /api/reports` | 미인증 403 `UNVERIFIED`, 정지 403 `SUSPENDED` |
 | 관리자만 | `/api/admin/**` | 403 `FORBIDDEN` |
 | 그 밖의 `/api/**` | 로그인만 하면 가능 | 401 `UNAUTHORIZED` |
 
