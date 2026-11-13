@@ -32,6 +32,11 @@ public enum ErrorCode {
     LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않아요"),
     LOGIN_LOCKED(HttpStatus.LOCKED, "로그인에 5회 실패해 잠시 잠겼어요"),
 
+    // 계정 (AUTH-03·05·09)
+    NICKNAME_CHANGE_TOO_SOON(HttpStatus.CONFLICT, "닉네임은 30일에 한 번 바꿀 수 있어요"),
+    PASSWORD_RESET_TOKEN_INVALID(HttpStatus.BAD_REQUEST, "링크가 만료됐거나 이미 사용됐어요. 다시 요청해 주세요"),
+    PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "비밀번호가 맞지 않아요"),
+
     // 학교 이메일 인증 (AUTH-06)
     SCHOOL_EMAIL_DOMAIN_MISMATCH(HttpStatus.BAD_REQUEST, "선택한 학교의 이메일 주소가 아니에요"),
     SCHOOL_EMAIL_IN_USE(HttpStatus.CONFLICT, "다른 계정에서 이미 인증한 학교 이메일이에요"),

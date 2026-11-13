@@ -143,4 +143,16 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
             """)
     int markLeft(@Param("id") Long id, @Param("now") LocalDateTime now,
             @Param("accepted") ApplicationStatus accepted, @Param("left") ApplicationStatus left);
+
+    /** AUTH-09: 수락돼 참여 중인 팀 수 */
+    long countByApplicantIdAndStatus(Long applicantId, ApplicationStatus status);
+
+    /** AUTH-09: 탈퇴하는 사람의 대기 지원을 모두 취소 */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            update Application a set a.status = :canceled, a.decidedAt = :now
+            where a.applicant.id = :applicantId and a.status = :pending
+            """)
+    int cancelAllPending(@Param("applicantId") Long applicantId, @Param("now") LocalDateTime now,
+            @Param("pending") ApplicationStatus pending, @Param("canceled") ApplicationStatus canceled);
 }

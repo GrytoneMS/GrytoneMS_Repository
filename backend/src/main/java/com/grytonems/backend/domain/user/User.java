@@ -1,5 +1,6 @@
 package com.grytonems.backend.domain.user;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.grytonems.backend.domain.school.School;
@@ -39,6 +40,10 @@ public class User extends BaseTimeEntity {
     public static final int MAX_LOGIN_FAIL = 5;
     /** 잠금 시간 (AUTH-04) */
     public static final int LOCK_MINUTES = 10;
+    /** 닉네임을 다시 바꿀 수 있기까지 걸리는 날 (AUTH-03) */
+    public static final int NICKNAME_CHANGE_DAYS = 30;
+    /** 탈퇴한 사용자의 닉네임 표시 (AUTH-09) */
+    public static final String WITHDRAWN_NICKNAME = "탈퇴한 사용자";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -155,5 +160,45 @@ public class User extends BaseTimeEntity {
     /** 정지 해제 (ADMN-04): 학교 인증을 마친 적이 있으면 인증 회원, 아니면 미인증으로 돌아갑니다 */
     public void liftSuspension() {
         this.status = (verifiedAt != null && school != null) ? UserStatus.VERIFIED : UserStatus.UNVERIFIED;
+    }
+
+    // ===== 계정 (AUTH-03·05·09) =====
+
+    /** 화면에 보일 닉네임. 탈퇴한 사용자는 "탈퇴한 사용자"로 보입니다 (DB에는 겹치지 않는 값이 남음) */
+    public String getNickname() {
+        return status == UserStatus.WITHDRAWN ? WITHDRAWN_NICKNAME : nickname;
+    }
+
+    /** 닉네임을 다시 바꿀 수 있는 날. 지금 바꿀 수 있으면 null (AUTH-03) */
+    public LocalDate nicknameChangeableAt(LocalDateTime now) {
+        if (nicknameChangedAt == null) {
+            return null;
+        }
+        LocalDate date = nicknameChangedAt.toLocalDate().plusDays(NICKNAME_CHANGE_DAYS);
+        return date.isAfter(now.toLocalDate()) ? date : null;
+    }
+
+    public void changeNickname(String nickname, LocalDateTime now) {
+        this.nickname = nickname;
+        this.nicknameChangedAt = now;
+    }
+
+    /** 비밀번호 재설정 (AUTH-05). 로그인 잠금도 풉니다 */
+    public void changePassword(String passwordHash) {
+        this.passwordHash = passwordHash;
+        recordLoginSuccess();
+    }
+
+    /** 회원 탈퇴 (AUTH-09): 개인정보를 비우고 탈퇴 상태로 둡니다. 닉네임은 겹치지 않는 값으로 바꿉니다 */
+    public void withdraw(LocalDateTime now) {
+        this.email = null;
+        this.schoolEmail = null;
+        this.nickname = "탈퇴#" + id;
+        this.major = null;
+        this.grade = null;
+        this.bio = null;
+        this.profileImageUrl = null;
+        this.status = UserStatus.WITHDRAWN;
+        this.deletedAt = now;
     }
 }
