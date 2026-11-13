@@ -220,6 +220,30 @@ class PostUpdateApiTest {
     }
 
     @Test
+    @DisplayName("지원자가 있는 역할은 역할 종류 변경 409, 이름·요구 조건 변경은 가능")
+    void roleCodeChangeBlocked() throws Exception {
+        Post post = savePost();
+        PostRole design = saveRole(post, RoleCode.DESIGN, 2);
+        applyOk(aliceToken, post.getId(), design.getId());
+
+        // 디자인 → 개발로 종류 변경: 막힘
+        update(leaderToken, post.getId(), body("수정한 모집글 제목", CONTACT, List.of(
+                role(design.getId(), RoleCode.DEV, 2))))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("ROLE_HAS_APPLICANTS"));
+
+        // 종류는 그대로, 이름·요구 조건만 변경: 가능
+        Map<String, Object> renamed = role(design.getId(), RoleCode.DESIGN, 2);
+        renamed.put("roleName", "UI 디자인");
+        renamed.put("requirements", "피그마 가능자");
+        update(leaderToken, post.getId(), body("수정한 모집글 제목", CONTACT, List.of(renamed)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.roles[0].roleCode").value("DESIGN"))
+                .andExpect(jsonPath("$.data.roles[0].roleName").value("UI 디자인"))
+                .andExpect(jsonPath("$.data.roles[0].requirements").value("피그마 가능자"));
+    }
+
+    @Test
     @DisplayName("꽉 차서 마감된 역할은 인원을 늘리면 다시 OPEN")
     void reopensRole() throws Exception {
         Post post = savePost();

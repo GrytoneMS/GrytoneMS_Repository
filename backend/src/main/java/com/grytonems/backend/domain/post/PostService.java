@@ -156,7 +156,7 @@ public class PostService {
 
     /**
      * POST-02 역할 정리. id가 있으면 기존 역할 수정, 없으면 새 역할, 안 보낸 기존 역할은 삭제.
-     * 지원자(취소 제외)가 있는 역할은 삭제하거나 인원을 줄일 수 없어요.
+     * 지원자(취소 제외)가 있는 역할은 삭제하거나 역할 종류를 바꿀 수 없고, 인원은 늘리기만 할 수 있어요.
      */
     private void updateRoles(Post post, List<PostCreateRequest.RoleRequest> requests) {
         // 지금 역할들을 id로 찾기 쉽게
@@ -210,9 +210,10 @@ public class PostService {
                 continue;
             }
 
-            // 기존 역할: 지원자가 있으면 인원은 늘리기만
+            // 기존 역할: 지원자가 있으면 인원은 늘리기만, 역할 종류는 그대로
             PostRole role = currentById.get(r.id());
-            if (r.headcount() < role.getHeadcount() && rolesWithApplicants.contains(role.getId())) {
+            if (rolesWithApplicants.contains(role.getId())
+                    && (r.headcount() < role.getHeadcount() || r.roleCode() != role.getRoleCode())) {
                 throw new BusinessException(ErrorCode.ROLE_HAS_APPLICANTS);
             }
             role.update(r.roleCode(), r.roleName(), r.headcount(), r.requirements());
