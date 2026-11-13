@@ -18,6 +18,7 @@ import com.grytonems.backend.domain.application.dto.ApplyRequest;
 import com.grytonems.backend.domain.application.dto.ApplyResponse;
 import com.grytonems.backend.domain.application.dto.CancelResponse;
 import com.grytonems.backend.domain.application.dto.ContactResponse;
+import com.grytonems.backend.domain.application.dto.LeaveResponse;
 import com.grytonems.backend.domain.application.dto.MyApplicationResponse;
 import com.grytonems.backend.domain.application.dto.RejectRequest;
 import com.grytonems.backend.domain.application.dto.RejectResponse;
@@ -63,6 +64,13 @@ public class ApplicationController {
     public ApiResponse<RejectResponse> reject(@AuthenticationPrincipal AuthUser loginUser,
             @PathVariable Long applicationId, @RequestBody(required = false) RejectRequest request) {
         return ApiResponse.ok(applicationService.reject(loginUser.id(), applicationId, request));
+    }
+
+    /** APPL-09 팀 나가기(지원자 본인)·내보내기(팀장) */
+    @PatchMapping("/api/applications/{applicationId}/leave")
+    public ApiResponse<LeaveResponse> leave(@AuthenticationPrincipal AuthUser loginUser,
+            @PathVariable Long applicationId) {
+        return ApiResponse.ok(applicationService.leave(loginUser.id(), applicationId));
     }
 
     /** APPL-03 지원 취소 (대기 상태만) */
