@@ -21,12 +21,14 @@ import com.grytonems.backend.domain.post.Post;
 import com.grytonems.backend.domain.post.PostDeadlineService;
 import com.grytonems.backend.domain.post.PostRepository;
 import com.grytonems.backend.domain.post.RecruitStatus;
+import com.grytonems.backend.domain.profile.ProfileItemRepository;
 import com.grytonems.backend.domain.profile.UserRoleTagRepository;
 import com.grytonems.backend.domain.profile.UserSkillRepository;
 import com.grytonems.backend.domain.user.dto.UserResponse;
 import com.grytonems.backend.domain.user.dto.WithdrawalCheckResponse;
 import com.grytonems.backend.global.error.BusinessException;
 import com.grytonems.backend.global.error.ErrorCode;
+import com.grytonems.backend.global.file.FileStorage;
 import com.grytonems.backend.global.mail.EmailSender;
 
 import lombok.RequiredArgsConstructor;
@@ -52,6 +54,8 @@ public class AccountService {
     private final ApplicationRepository applicationRepository;
     private final UserRoleTagRepository roleTagRepository;
     private final UserSkillRepository skillRepository;
+    private final ProfileItemRepository profileItemRepository;
+    private final FileStorage fileStorage;
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
@@ -138,8 +142,11 @@ public class AccountService {
         applicationRepository.cancelAllPending(userId, now, ApplicationStatus.PENDING, ApplicationStatus.CANCELED);
         roleTagRepository.deleteAllByUserId(userId);
         skillRepository.deleteAllByUserId(userId);
+        profileItemRepository.deleteAllByUserId(userId);
 
-        getActiveUser(userId).withdraw(now);
+        User withdrawing = getActiveUser(userId);
+        fileStorage.delete(fileStorage.relativeOfPublicUrl(withdrawing.getProfileImageUrl()));
+        withdrawing.withdraw(now);
         log.info("회원 탈퇴 userId={}", userId);
     }
 

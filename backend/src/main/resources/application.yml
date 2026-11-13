@@ -40,6 +40,12 @@ spring:
           timeout: 5000
           writetimeout: 5000
 
+  # 프로필 이미지·학교 인증 서류 업로드 (PROF-01, AUTH-07): 5MB 이하
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
   jackson:
     time-zone: Asia/Seoul
     date-format: yyyy-MM-dd'T'HH:mm:ss
@@ -58,6 +64,10 @@ app:
   cors:
     # 프론트 개발 서버 주소 (여러 개면 쉼표로 구분)
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  upload:
+    # 업로드 파일을 저장할 서버 디렉터리, 프로필 이미지 공개 주소의 앞부분
+    dir: ${UPLOAD_DIR:uploads}
+    public-url: ${UPLOAD_PUBLIC_URL:http://localhost:8080/files}
   mail:
     # 보내는 사람 주소. 비우면 SPRING_MAIL_USERNAME을 씁니다
     from: ${MAIL_FROM:}

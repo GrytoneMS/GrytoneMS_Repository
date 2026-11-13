@@ -1,12 +1,23 @@
 package com.grytonems.backend.domain.profile;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.grytonems.backend.domain.profile.dto.ActivityVisibilityRequest;
+import com.grytonems.backend.domain.profile.dto.ProfileImageResponse;
+import com.grytonems.backend.domain.profile.dto.ProfileItemRequest;
+import com.grytonems.backend.domain.profile.dto.ProfileItemResponse;
 import com.grytonems.backend.domain.profile.dto.ProfileResponse;
 import com.grytonems.backend.domain.profile.dto.ProfileUpdateRequest;
 import com.grytonems.backend.domain.profile.dto.RoleTagsUpdateRequest;
@@ -56,5 +67,52 @@ public class ProfileController {
     public ApiResponse<ProfileResponse> getProfile(@AuthenticationPrincipal AuthUser loginUser,
             @PathVariable Long userId) {
         return ApiResponse.ok(profileService.getOtherProfile(loginUser.id(), userId));
+    }
+
+    /** PROF-01 프로필 이미지 올리기 (jpg·png, 5MB 이하) */
+    @PutMapping(value = "/api/users/me/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<ProfileImageResponse> changeImage(@AuthenticationPrincipal AuthUser loginUser,
+            @RequestPart("file") MultipartFile file) {
+        return ApiResponse.ok(profileService.changeImage(loginUser.id(), file));
+    }
+
+    /** PROF-01 프로필 이미지 지우기 */
+    @DeleteMapping("/api/users/me/profile-image")
+    public ApiResponse<ProfileImageResponse> deleteImage(@AuthenticationPrincipal AuthUser loginUser) {
+        return ApiResponse.ok(profileService.deleteImage(loginUser.id()));
+    }
+
+    /** PROF-04~07, 09 이력 항목 추가 */
+    @PostMapping("/api/users/me/profile-items")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<ProfileItemResponse> addItem(@AuthenticationPrincipal AuthUser loginUser,
+            @Valid @RequestBody ProfileItemRequest request) {
+        return ApiResponse.ok(profileService.addItem(loginUser.id(), request));
+    }
+
+    @PutMapping("/api/users/me/profile-items/{itemId}")
+    public ApiResponse<ProfileItemResponse> updateItem(@AuthenticationPrincipal AuthUser loginUser,
+            @PathVariable Long itemId, @Valid @RequestBody ProfileItemRequest request) {
+        return ApiResponse.ok(profileService.updateItem(loginUser.id(), itemId, request));
+    }
+
+    @DeleteMapping("/api/users/me/profile-items/{itemId}")
+    public ApiResponse<Void> deleteItem(@AuthenticationPrincipal AuthUser loginUser, @PathVariable Long itemId) {
+        profileService.deleteItem(loginUser.id(), itemId);
+        return ApiResponse.ok();
+    }
+
+    /** PROF-08 서비스 활동 이력 노출 여부 */
+    @PutMapping("/api/users/me/activity-visibility")
+    public ApiResponse<ProfileResponse> changeActivityVisibility(@AuthenticationPrincipal AuthUser loginUser,
+            @Valid @RequestBody ActivityVisibilityRequest request) {
+        return ApiResponse.ok(profileService.changeActivityVisibility(loginUser.id(), request.showActivity()));
+    }
+
+    /** APPL-02 지원자 프로필 (그 글의 팀장만) */
+    @GetMapping("/api/applications/{applicationId}/profile")
+    public ApiResponse<ProfileResponse> getApplicantProfile(@AuthenticationPrincipal AuthUser loginUser,
+            @PathVariable Long applicationId) {
+        return ApiResponse.ok(profileService.getApplicantProfile(loginUser.id(), applicationId));
     }
 }
