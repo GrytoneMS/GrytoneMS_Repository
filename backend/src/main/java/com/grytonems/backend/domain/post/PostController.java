@@ -4,15 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.grytonems.backend.domain.post.dto.PostCardResponse;
 import com.grytonems.backend.domain.post.dto.PostCreateRequest;
@@ -75,6 +67,15 @@ public class PostController {
             @PathVariable Long postId) {
         Long loginUserId = (loginUser == null) ? null : loginUser.id();
         return ApiResponse.ok(postService.getPost(postId, loginUserId));
+    }
+
+    /** POST-02: 모집글 수정 (팀장만). 응답은 상세와 같은 모양 */
+    @PutMapping("/api/posts/{postId}")
+    public ApiResponse<PostDetailResponse> updatePost(
+            @AuthenticationPrincipal AuthUser loginUser,
+            @PathVariable Long postId,
+            @Valid @RequestBody PostCreateRequest request) {
+        return ApiResponse.ok(postService.updatePost(loginUser.id(), postId, request));
     }
 
     /** POST-04: 모집 수동 마감 (팀장만) */

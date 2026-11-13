@@ -78,6 +78,19 @@ public class PostRole extends BaseTimeEntity {
         return headcount - filledCount;
     }
 
+    /** POST-02: 역할 수정 */
+    public void update(RoleCode roleCode, String roleName, int headcount, String requirements) {
+        this.roleCode = roleCode;
+        this.roleName = roleName;
+        this.headcount = headcount;
+        this.requirements = requirements;
+    }
+
+    /** POST-02: 인원을 늘려 자리가 생기면 다시 모집중 */
+    public void reopen() {
+        this.status = RecruitStatus.OPEN;
+    }
+
     /** POST-04: 글을 수동 마감하면 역할도 마감 */
     public void close() {
         this.status = RecruitStatus.CLOSED;

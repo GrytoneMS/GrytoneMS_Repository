@@ -18,6 +18,7 @@ import jakarta.validation.constraints.Size;
 
 /**
  * POST-01 모집글 작성 요청 (API 명세서 POST /api/posts)
+ * POST-02 모집글 수정(PUT /api/posts/{postId})도 같은 본문을 씁니다.
  * 여러 칸을 함께 봐야 하는 규칙(장소·행사 필수 여부, 날짜 순서)은 Service에서 검사합니다.
  */
 public record PostCreateRequest(
@@ -65,8 +66,10 @@ public record PostCreateRequest(
         String contactLink
 ) {
 
-    /** 역할 하나 */
+    /** 역할 하나 (id: 수정 때 기존 역할이면 보내고, 새 역할이면 비움. 작성 때는 안 씀) */
     public record RoleRequest(
+            Long id,
+
             @NotNull(message = "역할을 선택해 주세요")
             RoleCode roleCode,
 
