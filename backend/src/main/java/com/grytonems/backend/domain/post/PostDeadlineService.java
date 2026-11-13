@@ -52,6 +52,17 @@ public class PostDeadlineService {
             return false;
         }
 
+        closeWithApplicants(post);
+        return true;
+    }
+
+    /**
+     * 글 하나를 지금 마감합니다: 글·역할 마감, 대기 지원 마감, 대기자에게 POST_CLOSED.
+     * 자동 마감(POST-06)과 탈퇴(AUTH-09)에서 씁니다. 호출하는 쪽 트랜잭션 안에서 실행됩니다.
+     */
+    @Transactional
+    public void closeWithApplicants(Post post) {
+        Long postId = post.getId();
         // 글·역할 마감을 먼저 해야 아래 일괄 변경 전에 저장됩니다
         List<PostRole> roles = postRoleRepository.findAllByPostIdOrderByIdAsc(postId);
         post.close();
@@ -67,7 +78,6 @@ public class PostDeadlineService {
 
         notificationService.notifyAll(waitingApplicantIds, NotificationType.POST_CLOSED,
                 NotificationTargetType.POST, postId, "'" + post.getTitle() + "' 모집이 마감되었어요");
-        return true;
     }
 
     /**

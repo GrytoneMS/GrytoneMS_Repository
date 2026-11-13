@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.grytonems.backend.domain.user.dto.LoginRequest;
 import com.grytonems.backend.domain.user.dto.LoginResponse;
+import com.grytonems.backend.domain.user.dto.PasswordResetConfirmRequest;
+import com.grytonems.backend.domain.user.dto.PasswordResetRequest;
 import com.grytonems.backend.domain.user.dto.SignupRequest;
 import com.grytonems.backend.global.common.ApiResponse;
 
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
     private final AuthService authService;
+    private final AccountService accountService;
 
     /** AUTH-01 회원가입 */
     @PostMapping("/api/auth/signup")
@@ -40,6 +43,20 @@ public class AuthController {
      */
     @PostMapping("/api/auth/logout")
     public ApiResponse<Void> logout() {
+        return ApiResponse.ok();
+    }
+
+    /** AUTH-05 비밀번호 재설정 메일. 가입 여부와 상관없이 항상 200 */
+    @PostMapping("/api/auth/password-reset")
+    public ApiResponse<Void> requestPasswordReset(@Valid @RequestBody PasswordResetRequest request) {
+        accountService.requestPasswordReset(request.email());
+        return ApiResponse.ok();
+    }
+
+    /** AUTH-05 새 비밀번호 저장 */
+    @PostMapping("/api/auth/password-reset/confirm")
+    public ApiResponse<Void> confirmPasswordReset(@Valid @RequestBody PasswordResetConfirmRequest request) {
+        accountService.confirmPasswordReset(request.token(), request.newPassword());
         return ApiResponse.ok();
     }
 }
