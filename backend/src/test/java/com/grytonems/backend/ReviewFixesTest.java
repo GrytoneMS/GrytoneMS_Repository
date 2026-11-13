@@ -20,9 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -68,6 +68,7 @@ class ReviewFixesTest {
     @Autowired ApplicationRepository applicationRepository;
     @Autowired NotificationRepository notificationRepository;
     @Autowired ReportRepository reportRepository;
+    @Autowired JdbcTemplate jdbcTemplate;
 
     School school;
     String leaderToken;
@@ -166,8 +167,9 @@ class ReviewFixesTest {
         notificationService.notify(leaderId, NotificationType.NEW_APPLICATION, NotificationTargetType.POST, 1L, "최근 알림");
         Notification old = notificationRepository.findAll().stream()
                 .filter(n -> n.getMessage().equals("오래된 알림")).findFirst().orElseThrow();
-        ReflectionTestUtils.setField(old, "createdAt", LocalDateTime.now().minusDays(31));
-        notificationRepository.save(old);
+        // created_at은 저장 후 바뀌지 않게 막혀 있어서(updatable=false) SQL로 직접 31일 전으로 옮깁니다
+        jdbcTemplate.update("update notifications set created_at = ? where id = ?",
+                LocalDateTime.now().minusDays(31), old.getId());
 
         assertThat(notificationService.deleteExpired(LocalDateTime.now())).isEqualTo(1);
         assertThat(notificationRepository.findAll()).extracting(Notification::getMessage).containsExactly("최근 알림");
