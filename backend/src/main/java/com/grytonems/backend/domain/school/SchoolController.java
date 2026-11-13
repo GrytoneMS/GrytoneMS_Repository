@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.grytonems.backend.domain.school.dto.AdminSchoolResponse;
 import com.grytonems.backend.domain.school.dto.SchoolCreateRequest;
+import com.grytonems.backend.domain.school.dto.SchoolUpdateRequest;
 import com.grytonems.backend.domain.school.dto.SchoolResponse;
 import com.grytonems.backend.global.common.ApiResponse;
 
@@ -49,5 +51,12 @@ public class SchoolController {
     public ApiResponse<Void> deactivateSchool(@PathVariable Long schoolId) {
         schoolService.deactivateSchool(schoolId);
         return ApiResponse.ok();
+    }
+
+    /** 관리자: 학교 수정·비활성화 (ADMN-05). 바꿀 값만 보냅니다 */
+    @PatchMapping("/api/admin/schools/{schoolId}")
+    public ApiResponse<AdminSchoolResponse> updateSchool(@PathVariable Long schoolId,
+            @Valid @RequestBody SchoolUpdateRequest request) {
+        return ApiResponse.ok(schoolService.updateSchool(schoolId, request));
     }
 }

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +53,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleUploadSize(MaxUploadSizeExceededException e) {
         return ResponseEntity.badRequest().body(ErrorResponse.of(ErrorCode.INVALID_FILE, "5MB 이하 파일만 올릴 수 있어요"));
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ErrorResponse> handleMissingPart(MissingServletRequestPartException e) {
+        return ResponseEntity.badRequest().body(ErrorResponse.of(ErrorCode.INVALID_FILE, "파일을 선택해 주세요"));
     }
 
     @ExceptionHandler(MultipartException.class)

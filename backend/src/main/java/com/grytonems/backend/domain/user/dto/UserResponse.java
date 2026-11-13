@@ -7,6 +7,7 @@ import com.grytonems.backend.domain.school.School;
 import com.grytonems.backend.domain.user.User;
 import com.grytonems.backend.domain.user.UserRole;
 import com.grytonems.backend.domain.user.UserStatus;
+import com.grytonems.backend.domain.verification.ReverifyPolicy;
 
 /**
  * 로그인 응답의 user, GET /api/users/me 응답.
@@ -51,7 +52,7 @@ public record UserResponse(
                 user.getProfileImageUrl(),
                 suspension,
                 user.nicknameChangeableAt(LocalDateTime.now()),
-                null
+                ReverifyPolicy.dueDateOf(user, LocalDate.now())
         );
     }
 }

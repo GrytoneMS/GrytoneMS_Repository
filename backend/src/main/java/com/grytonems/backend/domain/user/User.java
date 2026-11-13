@@ -211,4 +211,15 @@ public class User extends BaseTimeEntity {
     public void changeShowActivity(boolean showActivity) {
         this.showActivity = showActivity;
     }
+
+    // ===== 서류 인증·재인증 (AUTH-07·08) =====
+
+    /** 서류 인증 승인. 학교 이메일은 그대로 두고, 정지·탈퇴 중이면 상태는 바꾸지 않습니다 */
+    public void verifyByDocument(School school, LocalDateTime now) {
+        this.school = school;
+        this.verifiedAt = now;
+        if (status == UserStatus.UNVERIFIED || status == UserStatus.VERIFIED) {
+            this.status = UserStatus.VERIFIED;
+        }
+    }
 }
