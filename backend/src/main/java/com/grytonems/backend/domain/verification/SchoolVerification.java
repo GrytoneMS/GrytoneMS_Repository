@@ -86,4 +86,33 @@ public class SchoolVerification {
         verification.semester = semester;
         return verification;
     }
+
+    /** 서류 인증 신청 (AUTH-07): 관리자 심사 대기 */
+    public static SchoolVerification documentPending(User user, School school, String documentPath, String semester) {
+        SchoolVerification verification = new SchoolVerification();
+        verification.user = user;
+        verification.school = school;
+        verification.method = VerificationMethod.DOCUMENT;
+        verification.status = VerificationStatus.PENDING;
+        verification.documentUrl = documentPath;
+        verification.semester = semester;
+        return verification;
+    }
+
+    /** ADMN-03 승인. 사진 경로는 비웁니다 (파일 삭제는 서비스에서) */
+    public void approve(User admin, LocalDateTime now) {
+        this.status = VerificationStatus.APPROVED;
+        this.reviewedBy = admin;
+        this.reviewedAt = now;
+        this.documentUrl = null;
+    }
+
+    /** ADMN-03 반려 */
+    public void reject(User admin, String reason, LocalDateTime now) {
+        this.status = VerificationStatus.REJECTED;
+        this.rejectReason = reason;
+        this.reviewedBy = admin;
+        this.reviewedAt = now;
+        this.documentUrl = null;
+    }
 }

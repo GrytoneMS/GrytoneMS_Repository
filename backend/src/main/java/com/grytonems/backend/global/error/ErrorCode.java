@@ -45,6 +45,11 @@ public enum ErrorCode {
     VERIFICATION_CODE_MISMATCH(HttpStatus.BAD_REQUEST, "인증 코드가 맞지 않아요"),
     EMAIL_SEND_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요"),
 
+    // 서류 인증 (AUTH-07, ADMN-03)
+    ALREADY_VERIFIED(HttpStatus.CONFLICT, "이미 학교 인증을 마쳤어요"),
+    VERIFICATION_PENDING(HttpStatus.CONFLICT, "심사 중인 서류 인증이 있어요"),
+    VERIFICATION_ALREADY_REVIEWED(HttpStatus.CONFLICT, "이미 처리된 인증 신청이에요"),
+
     // 지원 (APPL)
     CANNOT_APPLY_OWN_POST(HttpStatus.BAD_REQUEST, "내가 올린 모집글에는 지원할 수 없어요"),
     ALREADY_APPLIED(HttpStatus.CONFLICT, "이미 지원한 모집글이에요"),

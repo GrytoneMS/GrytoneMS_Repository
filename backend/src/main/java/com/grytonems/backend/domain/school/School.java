@@ -59,4 +59,20 @@ public class School extends BaseTimeEntity {
     public void deactivate() {
         this.active = false;
     }
+
+    /** ADMN-05: 학교 정보 수정. null인 값은 그대로 둡니다. 비활성 학교는 다시 활성화할 수 있습니다 */
+    public void update(String name, String campus, String emailDomain, Boolean active) {
+        if (name != null) {
+            this.name = name;
+        }
+        if (campus != null) {
+            this.campus = campus.isBlank() ? null : campus;
+        }
+        if (emailDomain != null) {
+            this.emailDomain = emailDomain;
+        }
+        if (active != null) {
+            this.active = active;
+        }
+    }
 }

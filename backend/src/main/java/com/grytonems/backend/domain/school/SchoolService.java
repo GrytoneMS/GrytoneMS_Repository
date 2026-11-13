@@ -5,7 +5,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.grytonems.backend.domain.school.dto.AdminSchoolResponse;
 import com.grytonems.backend.domain.school.dto.SchoolCreateRequest;
+import com.grytonems.backend.domain.school.dto.SchoolUpdateRequest;
 import com.grytonems.backend.domain.school.dto.SchoolResponse;
 import com.grytonems.backend.global.error.BusinessException;
 import com.grytonems.backend.global.error.ErrorCode;
@@ -47,5 +49,23 @@ public class SchoolService {
         School school = schoolRepository.findById(schoolId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SCHOOL_NOT_FOUND));
         school.deactivate(); // 트랜잭션이 끝나면 변경 내용이 자동으로 DB에 반영됩니다
+    }
+
+    /** ADMN-05: 학교 수정·비활성화. 이미 인증한 회원은 그대로입니다 */
+    @Transactional
+    public AdminSchoolResponse updateSchool(Long schoolId, SchoolUpdateRequest request) {
+        School school = schoolRepository.findById(schoolId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SCHOOL_NOT_FOUND));
+        String domain = request.emailDomain() == null ? null : request.emailDomain().trim().toLowerCase(java.util.Locale.ROOT);
+        if (domain != null && !domain.equalsIgnoreCase(school.getEmailDomain())
+                && schoolRepository.existsByEmailDomain(domain)) {
+            throw new BusinessException(ErrorCode.SCHOOL_DOMAIN_DUPLICATED);
+        }
+        String name = request.name() == null ? null : request.name().trim();
+        if (name != null && name.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "학교명을 입력해 주세요");
+        }
+        school.update(name, request.campus() == null ? null : request.campus().trim(), domain, request.active());
+        return AdminSchoolResponse.from(school);
     }
 }
