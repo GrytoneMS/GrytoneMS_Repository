@@ -36,18 +36,20 @@ com.grytonems.backend
 │   ├── common/              # ApiResponse(성공 응답), CursorPage(목록 페이지), BaseTimeEntity(created_at·updated_at)
 │   ├── config/              # 설정 (CORS 등)
 │   ├── error/               # ErrorCode, BusinessException, 공통 예외 처리
+│   ├── file/                # 업로드 파일 저장(FileStorage), 프로필 이미지 공개 주소(/files/profiles/**)
+│   ├── mail/                # 메일 발송 (서버 미설정이면 로그로 출력)
 │   └── security/            # 로그인 토큰(JWT), 주소별 권한(SecurityConfig)
 └── domain/                  # 기능별 폴더 (기능 명세서 영역 단위)
-    ├── user/                # 회원가입·로그인·내 정보 (AUTH-01, AUTH-04)
-    ├── verification/        # 학교 이메일 인증 (AUTH-06)
+    ├── user/                # 회원가입·로그인·내 정보·닉네임 변경·비밀번호 재설정·탈퇴·이용 정지 (AUTH-01·03·04·05·09, ADMN-04)
+    ├── verification/        # 학교 이메일 인증·서류 인증·관리자 심사·학기 재인증 (AUTH-06~08, ADMN-03)
     ├── post/                # 모집글 (POST)
     ├── application/         # 지원·수락·거절·연락 수단 (APPL)
-    ├── profile/             # 프로필: 기본 정보·희망 역할·보유 기술·타인 프로필 (PROF-01~03, 12)
-    ├── notification/        # 알림 생성·알림함 (NOTI-01, 02)
+    ├── profile/             # 프로필: 기본 정보·이미지·희망 역할·보유 기술·이력 항목·활동 이력·완성도·타인·지원자 프로필 (PROF-01~12, APPL-02)
+    ├── notification/        # 알림 생성·알림함·알림 설정 (NOTI-01~03)
     ├── scrap/               # 스크랩·내 스크랩 (SCRP-01, 02)
     ├── report/              # 신고·신고 3건 자동 숨김·관리자 신고 처리 (SAFE-01, 02, ADMN-02)
     ├── block/               # 차단·해제·차단 목록, 다른 기능에서 쓰는 BlockPolicy (SAFE-03, LIST-06)
-    └── school/              # 예시: 학교 목록·등록 (AUTH-06, ADMN-05)
+    └── school/              # 예시: 학교 목록·등록·수정 (AUTH-06, ADMN-05)
         ├── School.java              # Entity
         ├── SchoolRepository.java    # DB 접근
         ├── SchoolService.java       # 규칙·예외 처리
@@ -134,6 +136,9 @@ notificationService.notify(받는사람Id, NotificationType.ACCEPTED, Notificati
 | 마감 D-1 알림 | 매일 오전 9시 | 내일 마감인 모집중 글의 팀장(`DEADLINE_SOON`)과 스크랩한 사람(`SCRAP_DEADLINE_SOON`)에게 알림 |
 | 정지 기간 종료 (ADMN-04) | 매시 정각 10초 | 기간이 끝난 이용 정지를 풀어 이전 상태(인증·미인증)로 되돌림 |
 | 알림 정리 (NOTI-02) | 매일 새벽 3시 | 30일 지난 알림 삭제 |
+| 대기 지원 리마인드 (APPL-12) | 매일 오전 9시 | 3일 넘게 대기 중인 지원이 있는 글의 팀장에게 글마다 `APPLICATION_REMINDER` 한 건 (같은 지원은 한 번만) |
+| 학기 재인증 요청 (AUTH-08) | 3월 1일·9월 1일 오전 9시 | 학기 시작 전에 인증한 회원에게 `REVERIFY_REQUIRED` (기한 3/14·9/14) |
+| 재인증 기한 경과 (AUTH-08) | 매일 자정 + 서버 시작 직후 | 기한까지 다시 인증하지 않은 회원을 미인증으로 (글·지원은 그대로) |
 
 테스트에서는 `app.scheduling.enabled: false`로 꺼져 있고, 스케줄러 메서드에 날짜를 넘겨 직접 호출합니다.
 
@@ -143,7 +148,7 @@ notificationService.notify(받는사람Id, NotificationType.ACCEPTED, Notificati
 
 | 구분 | 주소 | 실패 시 |
 | --- | --- | --- |
-| 비회원 가능 | `POST /api/auth/signup`, `POST /api/auth/login`, `GET /api/schools`, `GET /api/posts`, `GET /api/posts/{id}` | - |
+| 비회원 가능 | `POST /api/auth/signup`, `POST /api/auth/login`, `POST /api/auth/password-reset(/confirm)`, `GET /api/schools`, `GET /api/posts`, `GET /api/posts/{id}`, `GET /files/profiles/**` | - |
 | 학교 인증 회원만 | `POST /api/posts`, `POST /api/posts/{id}/applications`, `PUT /api/posts/{id}/scrap`, `POST /api/reports` | 미인증 403 `UNVERIFIED`, 정지 403 `SUSPENDED` |
 | 관리자만 | `/api/admin/**` | 403 `FORBIDDEN` |
 | 그 밖의 `/api/**` | 로그인만 하면 가능 | 401 `UNAUTHORIZED` |
@@ -180,8 +185,21 @@ SPRING_MAIL_PASSWORD=앱비밀번호16자리
 
 **인증할 학교 등록:** 학교 목록은 비어 있습니다. 관리자 계정으로 `POST /api/admin/schools`에 학교명·캠퍼스·학생 이메일 도메인을 등록해야 그 학교로 인증할 수 있어요. 관리자 계정은 지금 DB에서 `users.role`을 `ADMIN`으로 바꿔 만듭니다.
 
+## 파일 업로드 (PROF-01, AUTH-07)
+
+프로필 이미지와 학교 인증 서류는 서버 디렉터리에 저장합니다 (jpg·png, 5MB 이하).
+
+| 환경 변수 | 기본값 | 설명 |
+| --- | --- | --- |
+| `UPLOAD_DIR` | `uploads` | 저장 폴더. 배포 서버에서는 지워지지 않는 경로로 지정 |
+| `UPLOAD_PUBLIC_URL` | `http://localhost:8080/files` | 프로필 이미지 주소 앞부분 (배포 주소로 바꾸기) |
+| `FRONTEND_URL` | `http://localhost:5173` | 비밀번호 재설정 메일의 링크 주소 앞부분 |
+
+- `profiles/`: `/files/profiles/**`로 누구나 볼 수 있습니다.
+- `documents/`: 공개하지 않고, 관리자만 `GET /api/admin/verifications/{id}/document`로 받습니다. 승인·반려하면 바로 지웁니다.
+
 ## 아직 없는 것
 
-- 서류 인증 (AUTH-07), 학기 재인증 (AUTH-08)
+- 앱 푸시 (알림 설정은 저장·조회만 됨)
 - 9개 학교의 학생 이메일 도메인 확인 및 등록
 - DB 설계서 기준 `schema.sql`
