@@ -37,4 +37,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update Notification n set n.read = true where n.user.id = :userId and n.read = false")
     int markAllRead(@Param("userId") Long userId);
+
+    /** NOTI-02: 보관 기간(30일)이 지난 알림 삭제. 지운 수를 돌려줍니다 */
+    @Modifying(clearAutomatically = true)
+    @Query("delete from Notification n where n.createdAt < :before")
+    int deleteCreatedBefore(@Param("before") LocalDateTime before);
 }

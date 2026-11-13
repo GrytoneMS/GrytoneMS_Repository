@@ -146,7 +146,7 @@ public class PostService {
 
         // ④ 팀장들을 한 번에 꺼내서 id로 찾기 쉽게 만들기
         List<Long> leaderIds = posts.stream().map(Post::getLeaderId).distinct().toList();
-        Map<Long, User> leadersById = userRepository.findAllById(leaderIds).stream()
+        Map<Long, User> leadersById = userRepository.findAllWithSchoolByIdIn(leaderIds).stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
         // ④-2 로그인했으면 이 글들 중 내가 스크랩한 글 (SCRP-01 북마크 표시, 비회원은 비어 있음)
