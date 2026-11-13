@@ -134,4 +134,13 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
             """)
     int closePendingOfLeader(@Param("leaderId") Long leaderId, @Param("pending") ApplicationStatus pending,
             @Param("closed") ApplicationStatus closed);
+
+    /** APPL-09: 수락 → 나감. 수락 상태일 때만 바뀌고 바뀐 행 수를 돌려줍니다 */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            update Application a set a.status = :left, a.leftAt = :now
+            where a.id = :id and a.status = :accepted
+            """)
+    int markLeft(@Param("id") Long id, @Param("now") LocalDateTime now,
+            @Param("accepted") ApplicationStatus accepted, @Param("left") ApplicationStatus left);
 }

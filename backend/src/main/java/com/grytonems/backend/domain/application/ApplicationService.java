@@ -16,6 +16,7 @@ import com.grytonems.backend.domain.application.dto.ApplyRequest;
 import com.grytonems.backend.domain.application.dto.ApplyResponse;
 import com.grytonems.backend.domain.application.dto.CancelResponse;
 import com.grytonems.backend.domain.application.dto.ContactResponse;
+import com.grytonems.backend.domain.application.dto.LeaveResponse;
 import com.grytonems.backend.domain.application.dto.MyApplicationResponse;
 import com.grytonems.backend.domain.application.dto.RejectRequest;
 import com.grytonems.backend.domain.application.dto.RejectResponse;
@@ -195,6 +196,54 @@ public class ApplicationService {
             throw new BusinessException(ErrorCode.INVALID_APPLICATION_STATUS);
         }
         return new CancelResponse(applicationId, ApplicationStatus.CANCELED);
+    }
+
+    /**
+     * APPL-09 팀 나가기·내보내기. 수락된 지원만 대상입니다.
+     * 지원자 본인이면 나가기(팀장에게 MEMBER_LEFT), 그 글의 팀장이면 내보내기(팀원에게 MEMBER_REMOVED).
+     * 자리가 하나 비고, 마감일 전이면 역할과 글이 다시 모집중이 됩니다 (기능 명세서 8장 상태 규칙).
+     */
+    @Transactional
+    public LeaveResponse leave(Long userId, Long applicationId) {
+        Application application = getApplication(applicationId);
+        Post post = application.getPost();
+        boolean self = application.getApplicant().getId().equals(userId);
+        boolean leader = post.getLeaderId().equals(userId);
+        if (!self && !leader) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "팀원 본인이나 팀장만 할 수 있어요");
+        }
+        Long postId = post.getId();
+        Long roleId = application.getPostRole().getId();
+        Long memberId = application.getApplicant().getId();
+        Long leaderId = post.getLeaderId();
+        String nickname = application.getApplicant().getNickname();
+        String postTitle = post.getTitle();
+
+        if (applicationRepository.markLeft(applicationId, LocalDateTime.now(),
+                ApplicationStatus.ACCEPTED, ApplicationStatus.LEFT) == 0) {
+            throw new BusinessException(ErrorCode.INVALID_APPLICATION_STATUS);
+        }
+        roleSeatRepository.freeOneSeat(roleId);
+
+        // 마감일 전이면 역할·글을 다시 모집중으로 (마감일이 지났으면 그대로)
+        LocalDate today = LocalDate.now();
+        boolean beforeDeadline = !post.getDeadline().isBefore(today);
+        boolean roleReopened = beforeDeadline
+                && roleSeatRepository.reopenRole(roleId, RecruitStatus.OPEN, RecruitStatus.CLOSED) == 1;
+        boolean postReopened = beforeDeadline
+                && roleSeatRepository.reopenPost(postId, today, RecruitStatus.OPEN, RecruitStatus.CLOSED) == 1;
+
+        if (self) {
+            String message = beforeDeadline
+                    ? nickname + "님이 팀을 나갔어요. 자리가 다시 열렸어요"
+                    : nickname + "님이 팀을 나갔어요";
+            notificationService.notify(leaderId, NotificationType.MEMBER_LEFT, NotificationTargetType.POST, postId,
+                    message);
+        } else {
+            notificationService.notify(memberId, NotificationType.MEMBER_REMOVED, NotificationTargetType.POST,
+                    postId, "'" + postTitle + "' 팀에서 나오게 됐어요");
+        }
+        return new LeaveResponse(applicationId, ApplicationStatus.LEFT, roleReopened, postReopened);
     }
 
     /** APPL-07 연락 수단: 팀장이거나 이 글에 수락된 지원자만 */

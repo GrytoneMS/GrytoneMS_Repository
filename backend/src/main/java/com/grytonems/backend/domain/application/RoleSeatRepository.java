@@ -1,5 +1,7 @@
 package com.grytonems.backend.domain.application;
 
+import java.time.LocalDate;
+
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
@@ -38,4 +40,26 @@ public interface RoleSeatRepository extends Repository<PostRole, Long> {
     /** 글에 아직 모집중인 역할이 몇 개인지 */
     @Query("select count(r) from PostRole r where r.post.id = :postId and r.status = :open")
     long countOpenRoles(@Param("postId") Long postId, @Param("open") RecruitStatus open);
+
+    /** APPL-09 팀 나가기: 자리 하나 비우기 */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update PostRole r set r.filledCount = r.filledCount - 1 where r.id = :id and r.filledCount > 0")
+    int freeOneSeat(@Param("id") Long id);
+
+    /** APPL-09: 자리가 생긴 마감 역할을 다시 모집중으로. 열었으면 1 */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            update PostRole r set r.status = :open
+            where r.id = :id and r.status = :closed and r.filledCount < r.headcount
+            """)
+    int reopenRole(@Param("id") Long id, @Param("open") RecruitStatus open, @Param("closed") RecruitStatus closed);
+
+    /** APPL-09: 마감일 전인 마감 글을 다시 모집중으로 (삭제된 글 제외). 열었으면 1 */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            update Post p set p.status = :open, p.closedAt = null
+            where p.id = :id and p.status = :closed and p.deadline >= :today and p.deletedAt is null
+            """)
+    int reopenPost(@Param("id") Long id, @Param("today") LocalDate today,
+            @Param("open") RecruitStatus open, @Param("closed") RecruitStatus closed);
 }
