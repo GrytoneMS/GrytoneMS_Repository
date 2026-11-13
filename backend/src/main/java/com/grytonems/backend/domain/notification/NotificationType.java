@@ -15,5 +15,6 @@ public enum NotificationType {
     REPORT_RESOLVED,       // 신고자: 신고 처리 완료
     VERIFY_RESULT,         // 서류 인증 결과
     POST_HIDDEN,           // 팀장: 내 모집글 숨김 (1차 추가)
-    POST_RESTORED          // 팀장: 내 모집글 복구 (1차 추가)
+    POST_RESTORED,         // 팀장: 내 모집글 복구 (1차 추가)
+    POST_DELETED           // 팀장: 관리자가 신고 처리로 내 모집글 삭제 (1차 추가)
 }
