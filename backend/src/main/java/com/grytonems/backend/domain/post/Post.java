@@ -126,4 +126,9 @@ public class Post extends BaseTimeEntity {
     public void restore() {
         this.hidden = false;
     }
+
+    /** POST-03: 삭제 (DB에는 남기고 삭제 표시만. 신고 확인용) */
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
 }

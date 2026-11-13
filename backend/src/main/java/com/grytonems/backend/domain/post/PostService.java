@@ -223,10 +223,13 @@ public class PostService {
 
     /** LIST-05: 모집글 상세 (비회원도 가능. 로그인했으면 isMine·myApplication 채움) */
     public PostDetailResponse getPost(Long postId, Long loginUserId) {
-        // ① 글 꺼내기 (없거나 숨김·삭제된 글이면 404)
+        // ① 글 꺼내기 (없거나 숨김 글이면 NOT_FOUND, 삭제된 글이면 POST_DELETED)
         Post post = postRepository.findById(postId)
-                .filter(p -> !p.isHidden() && p.getDeletedAt() == null)
+                .filter(p -> !p.isHidden())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        if (post.getDeletedAt() != null) {
+            throw new BusinessException(ErrorCode.POST_DELETED);
+        }
         // 차단 관계면 못 봄 (내가 차단: 403 BLOCKED_USER, 나를 차단: 404)
         blockPolicy.checkVisible(loginUserId, post.getLeaderId(), "모집글을 찾을 수 없어요");
 
@@ -283,6 +286,28 @@ public class PostService {
         // ④ 대기자들에게 알림 (현찬님 수락 자동 마감과 같은 문구)
         notificationService.notifyAll(waitingApplicantIds, NotificationType.POST_CLOSED,
                 NotificationTargetType.POST, postId, "'" + post.getTitle() + "' 모집이 마감되었어요");
+    }
+
+    /** POST-03: 삭제 (팀장만, 지원자가 없을 때만). DB에는 삭제 표시로 남깁니다 */
+    @Transactional
+    public void deletePost(Long loginUserId, Long postId) {
+        // ① 글 꺼내기 + 팀장인지 확인 (이미 삭제됐거나 숨김 글이면 404)
+        Post post = postRepository.findById(postId)
+                .filter(p -> !p.isHidden() && p.getDeletedAt() == null)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        if (!post.getLeaderId().equals(loginUserId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        // ② 지원자(취소한 사람 제외)가 한 명이라도 있으면 삭제 불가 → 마감 안내
+        boolean hasApplicants = applicationRepository.countByRoleAndStatus(List.of(postId)).stream()
+                .anyMatch(row -> row.status() != ApplicationStatus.CANCELED);
+        if (hasApplicants) {
+            throw new BusinessException(ErrorCode.POST_HAS_APPLICANTS);
+        }
+
+        // ③ 삭제 표시
+        post.delete();
     }
 
     private String nextCursorOf(PostSort sort, Post post) {

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -82,6 +83,15 @@ public class PostController {
             @AuthenticationPrincipal AuthUser loginUser,
             @PathVariable Long postId) {
         postService.closePost(loginUser.id(), postId);
+        return ApiResponse.ok();
+    }
+
+    /** POST-03: 모집글 삭제 (팀장만, 지원자가 없을 때만) */
+    @DeleteMapping("/api/posts/{postId}")
+    public ApiResponse<Void> deletePost(
+            @AuthenticationPrincipal AuthUser loginUser,
+            @PathVariable Long postId) {
+        postService.deletePost(loginUser.id(), postId);
         return ApiResponse.ok();
     }
 }

@@ -71,6 +71,8 @@ public enum ErrorCode {
     POST_ALREADY_CLOSED(HttpStatus.CONFLICT, "이미 마감된 모집글이에요"),
     POST_ALREADY_HIDDEN(HttpStatus.CONFLICT, "이미 숨김 처리된 모집글이에요"),
     POST_NOT_HIDDEN(HttpStatus.CONFLICT, "숨김 처리된 모집글이 아니에요"),
+    POST_HAS_APPLICANTS(HttpStatus.CONFLICT, "지원자가 있어 삭제할 수 없어요. 마감해 주세요"),
+    POST_DELETED(HttpStatus.NOT_FOUND, "삭제된 모집글이에요"),
 
     // 스크랩 (SCRP)
     CANNOT_SCRAP_OWN_POST(HttpStatus.BAD_REQUEST, "내가 올린 모집글은 스크랩할 수 없어요");
