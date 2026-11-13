@@ -166,4 +166,23 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
             """)
     List<Application> findActivities(@Param("applicantId") Long applicantId,
             @Param("statuses") List<ApplicationStatus> statuses);
+
+    /**
+     * APPL-12: 리마인드 대상. 대기 상태로 기준 시각(3일 전) 이전에 들어왔고 아직 리마인드하지 않은 지원.
+     * 숨김·삭제된 글은 빼고, 팀장 정지 여부는 서비스에서 거릅니다.
+     */
+    @Query("""
+            select a from Application a
+            join fetch a.post p
+            where a.status = :pending and a.remindedAt is null and a.createdAt <= :before
+              and p.deletedAt is null and p.hidden = false
+            order by p.id asc, a.id asc
+            """)
+    List<Application> findToRemind(@Param("pending") ApplicationStatus pending,
+            @Param("before") LocalDateTime before);
+
+    /** APPL-12: 리마인드 보낸 시각 기록 (같은 지원으로는 한 번만) */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update Application a set a.remindedAt = :now where a.id in :ids")
+    int markReminded(@Param("ids") List<Long> ids, @Param("now") LocalDateTime now);
 }

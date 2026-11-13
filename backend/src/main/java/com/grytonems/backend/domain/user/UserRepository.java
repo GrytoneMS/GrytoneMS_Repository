@@ -1,10 +1,12 @@
 package com.grytonems.backend.domain.user;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -22,4 +24,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /** 목록 카드의 팀장 정보용: 학교까지 한 번에 (학교 이름을 꺼낼 때 추가 쿼리가 나가지 않게) */
     @Query("select u from User u left join fetch u.school where u.id in :ids")
     List<User> findAllWithSchoolByIdIn(@Param("ids") Collection<Long> ids);
+
+    /** AUTH-08: 학기 시작 전에 인증한 인증 회원 (재인증 대상) */
+    @Query("select u.id from User u where u.status = :verified and u.verifiedAt < :semesterStart")
+    List<Long> findIdsToReverify(@Param("verified") UserStatus verified,
+            @Param("semesterStart") LocalDateTime semesterStart);
+
+    /** AUTH-08: 재인증 기한이 지난 회원을 미인증으로 (글·지원은 그대로) */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            update User u set u.status = :unverified
+            where u.status = :verified and u.verifiedAt < :semesterStart
+            """)
+    int expireVerification(@Param("semesterStart") LocalDateTime semesterStart,
+            @Param("verified") UserStatus verified, @Param("unverified") UserStatus unverified);
 }
