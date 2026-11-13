@@ -127,6 +127,23 @@ public class Post extends BaseTimeEntity {
         this.hidden = false;
     }
 
+    /** POST-02: 수정 (모든 항목을 새 값으로. 모집 상태·숨김은 그대로) */
+    public void update(String title, PostCategory category, String description,
+                       LocalDate periodStart, LocalDate periodEnd, LocalDate deadline,
+                       MeetingType meetingType, LocationCode locationCode, String locationText,
+                       String meetingFreq, String contactLink) {
+        this.title = title;
+        this.category = category;
+        this.description = description;
+        this.periodStart = periodStart;
+        this.periodEnd = periodEnd;
+        this.deadline = deadline;
+        this.meetingType = meetingType;
+        this.locationCode = locationCode;
+        this.locationText = locationText;
+        this.meetingFreq = meetingFreq;
+        this.contactLink = contactLink;
+    }
     /** POST-03: 삭제 (DB에는 남기고 삭제 표시만. 신고 확인용) */
     public void delete() {
         this.deletedAt = LocalDateTime.now();

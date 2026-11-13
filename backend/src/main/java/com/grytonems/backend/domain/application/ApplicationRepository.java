@@ -97,6 +97,11 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     int cancelPending(@Param("id") Long id, @Param("applicantId") Long applicantId, @Param("now") LocalDateTime now,
             @Param("pending") ApplicationStatus pending, @Param("canceled") ApplicationStatus canceled);
 
+    /** POST-02: 연락 링크가 바뀌면 알림을 보낼 대상 (이 글에 특정 상태(수락)인 지원자 id) */
+    @Query("select a.applicant.id from Application a where a.post.id = :postId and a.status = :status")
+    List<Long> findApplicantIdsByPostIdAndStatus(@Param("postId") Long postId,
+                                                 @Param("status") ApplicationStatus status);
+
     /** APPL-11: 글 여러 개의 역할별·상태별 지원 수 */
     @Query("""
             select new com.grytonems.backend.domain.application.RoleApplicationCount(a.postRole.id, a.status, count(a))

@@ -61,4 +61,12 @@ public class Event extends BaseTimeEntity {
         this.officialUrl = officialUrl;
         this.applyDeadline = applyDeadline;
     }
+
+    /** POST-02: 행사 정보 수정 */
+    public void update(String name, String host, String officialUrl, LocalDate applyDeadline) {
+        this.name = name;
+        this.host = host;
+        this.officialUrl = officialUrl;
+        this.applyDeadline = applyDeadline;
+    }
 }
