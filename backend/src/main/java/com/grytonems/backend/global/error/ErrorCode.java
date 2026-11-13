@@ -80,7 +80,13 @@ public enum ErrorCode {
     POST_DELETED(HttpStatus.NOT_FOUND, "삭제된 모집글이에요"),
 
     // 스크랩 (SCRP)
-    CANNOT_SCRAP_OWN_POST(HttpStatus.BAD_REQUEST, "내가 올린 모집글은 스크랩할 수 없어요");
+    CANNOT_SCRAP_OWN_POST(HttpStatus.BAD_REQUEST, "내가 올린 모집글은 스크랩할 수 없어요"),
+
+    // 파일 업로드 (PROF-01, AUTH-07)
+    INVALID_FILE(HttpStatus.BAD_REQUEST, "jpg·png 이미지(5MB 이하)만 올릴 수 있어요"),
+
+    // 프로필 2단계 (PROF-04~09)
+    PORTFOLIO_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "포트폴리오 링크는 최대 5개까지 등록할 수 있어요");
 
     private final HttpStatus status;
     private final String message;

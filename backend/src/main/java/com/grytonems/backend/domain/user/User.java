@@ -201,4 +201,14 @@ public class User extends BaseTimeEntity {
         this.status = UserStatus.WITHDRAWN;
         this.deletedAt = now;
     }
+
+    // ===== 프로필 2단계 (PROF-01·08) =====
+
+    public void changeProfileImage(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public void changeShowActivity(boolean showActivity) {
+        this.showActivity = showActivity;
+    }
 }

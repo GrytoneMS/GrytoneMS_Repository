@@ -155,4 +155,15 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
             """)
     int cancelAllPending(@Param("applicantId") Long applicantId, @Param("now") LocalDateTime now,
             @Param("pending") ApplicationStatus pending, @Param("canceled") ApplicationStatus canceled);
+
+    /** PROF-08 서비스 활동 이력: 수락됐거나 중간에 나간 팀 (삭제된 글 제외), 최근 수락순 */
+    @Query("""
+            select a from Application a
+            join fetch a.post p
+            join fetch a.postRole r
+            where a.applicant.id = :applicantId and a.status in :statuses and p.deletedAt is null
+            order by a.decidedAt desc, a.id desc
+            """)
+    List<Application> findActivities(@Param("applicantId") Long applicantId,
+            @Param("statuses") List<ApplicationStatus> statuses);
 }
