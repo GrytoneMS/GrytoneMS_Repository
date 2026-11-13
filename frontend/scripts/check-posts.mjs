@@ -135,7 +135,6 @@ try {
       ['/login', '로그인'], ['/signup', '회원가입'], ['/school-verification', '학교 인증'],
       ['/profile/setup', '초기 프로필 설정'], ['/me/profile', '내 프로필'],
       ['/me/profile/edit', '프로필 수정'], ['/users/1', '다른 사용자 프로필'],
-      ['/posts/1/applicants', '모집글 지원자 관리'],
       ['/me/posts', '내 모집글'], ['/me/applications', '내 지원 내역'],
     ]) {
       const html = render(path)
@@ -145,6 +144,8 @@ try {
     }
     assert.ok(render('/posts').includes('class="posts-layout"'))
     assert.ok(render('/posts/1').includes('class="posts-layout"'))
+    assert.ok(render('/posts/1/applicants').includes('class="posts-layout"'))
+    assert.ok(render('/posts/1/applicants').includes('모집글 지원자 관리'))
     const create = render('/posts/new')
     assert.ok(create.includes('class="posts-layout"'))
     assert.ok(create.includes('<h1>모집글 작성</h1>'))

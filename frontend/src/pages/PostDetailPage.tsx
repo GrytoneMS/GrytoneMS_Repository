@@ -58,9 +58,9 @@ function PostDetailContent() {
           <p>{role.status === 'CLOSED' ? '역할 모집 마감' : '역할 모집 중'} · 총 {role.headcount}명 중 {role.filledCount}명 충원</p>
           <RoleRequirements requirements={role.requirements} /><progress max={role.headcount} value={role.filledCount} aria-label={`${role.roleName} 모집 ${role.headcount}명 중 ${role.filledCount}명 충원`} />
         </section>)}
-        <Button disabled>{postActionLabel(post)}</Button>
+        {post.isMine ? <Link className="button" to={`/posts/${post.id}/applicants${isPostMock ? `?${params}` : ''}`}>지원자 관리</Link> : <Button disabled>{postActionLabel(post)}</Button>}
         {post.isMine && <Button disabled>{post.status === 'CLOSED' ? '모집 마감됨' : '모집 마감하기 · 준비 중'}</Button>}
-        <p className="post-note">{post.isMine ? '지원자 관리·마감 동작은 후속 작업입니다.' : post.myApplication ? '지원 상태는 조회 결과입니다. 지원 변경·연락처 조회는 이번 구현 범위에 포함되지 않습니다.' : '지원 모달과 로그인·학교 인증 연결은 후속 작업입니다.'}{isPostMock && ' 현재는 개발용 예시 상태입니다.'}</p>
+        <p className="post-note">{post.isMine ? '지원자 관리 화면에서 지원자를 조회하고 수락·거절할 수 있습니다. 모집 마감 동작은 후속 작업입니다.' : post.myApplication ? '지원 상태는 조회 결과입니다. 지원 변경·연락처 조회는 이번 구현 범위에 포함되지 않습니다.' : '지원 모달과 로그인·학교 인증 연결은 후속 작업입니다.'}{isPostMock && ' 현재는 개발용 예시 상태입니다.'}</p>
         <div className="post-secondary-actions"><Button disabled>스크랩 · 준비 중</Button><Button disabled>신고 · 준비 중</Button></div>
         <div className="post-contact-note"><img src={`${import.meta.env.BASE_URL}posts/lock.svg`} width="18" height="18" alt="" /><p>연락 수단은 별도 권한 확인 후 제공돼요. 이 화면에서는 조회하지 않습니다.</p></div>
       </aside>
