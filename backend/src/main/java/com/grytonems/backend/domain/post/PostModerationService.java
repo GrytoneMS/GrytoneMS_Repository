@@ -74,6 +74,30 @@ public class PostModerationService {
                 "'" + post.getTitle() + "' 모집글이 운영자 확인 후 다시 공개됐어요");
     }
 
+    /**
+     * ADMN-02 신고 처리 "삭제": 지원자가 있어도 삭제 표시합니다 (팀장의 직접 삭제 POST-03과 달리).
+     * 대기 지원은 마감하고 지원자에게 알림, 팀장에게는 삭제 알림. 숨김 글도 삭제할 수 있습니다.
+     */
+    public void deleteByAdmin(Long postId) {
+        Post post = getExistingPost(postId);
+        post.delete();
+
+        // 글 삭제 표시를 먼저 해야 아래 일괄 변경 전에 저장됩니다
+        List<Long> waitingApplicantIds = new ArrayList<>();
+        for (PostRole role : postRoleRepository.findAllByPostIdOrderByIdAsc(postId)) {
+            waitingApplicantIds.addAll(applicationRepository
+                    .findApplicantIdsByPostRoleIdAndStatus(role.getId(), ApplicationStatus.PENDING));
+            applicationRepository.closePendingByPostRoleId(role.getId(),
+                    ApplicationStatus.PENDING, ApplicationStatus.CLOSED);
+        }
+
+        // 삭제된 글은 열 수 없으므로 이동 대상 없이 문구만 보냅니다
+        notificationService.notify(post.getLeaderId(), NotificationType.POST_DELETED, null, null,
+                "'" + post.getTitle() + "' 모집글이 운영 정책에 따라 삭제됐어요");
+        notificationService.notifyAll(waitingApplicantIds, NotificationType.POST_CLOSED, null, null,
+                "'" + post.getTitle() + "' 모집이 마감되었어요");
+    }
+
     /** 삭제된 글은 없는 글로 취급 */
     private Post getExistingPost(Long postId) {
         return postRepository.findById(postId)

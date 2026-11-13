@@ -448,7 +448,7 @@ class ReportApiTest {
             Long postReport = reportOk(aliceToken, "POST", post.getId());
             Long userReport = reportOk(aliceToken, "USER", leaderId);
 
-            resolve(adminToken, postReport, "DELETE")
+            resolve(adminToken, userReport, "DELETE")
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value("REPORT_ACTION_NOT_SUPPORTED"));
             resolve(adminToken, userReport, "HIDE").andExpect(status().isBadRequest());

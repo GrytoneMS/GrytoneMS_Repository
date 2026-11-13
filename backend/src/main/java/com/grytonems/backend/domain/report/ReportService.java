@@ -157,7 +157,7 @@ public class ReportService {
 
     /**
      * 신고 처리: 대상에 조치를 하고, 같은 대상의 미처리 신고를 모두 처리완료로 바꾸고, 신고자들에게 알림.
-     * 조치: 문제없음(숨겨진 글이면 복구), 숨김(모집글만), 이용 정지(대상의 작성자, ADMN-04). 삭제는 POST-03이 생기면 연결
+     * 조치: 문제없음(숨겨진 글이면 복구), 숨김·삭제(모집글만), 이용 정지(대상의 작성자, ADMN-04)
      */
     public ReportResolveResponse resolve(Long adminId, Long reportId, ReportAction action,
                                          Integer suspendDays, String suspendReason) {
@@ -190,6 +190,8 @@ public class ReportService {
                             postModerationService.restore(post.getId());   // SAFE-02 문제없음 → 복구
                         } else if (action == ReportAction.HIDE && !post.isHidden()) {
                             postModerationService.hide(post.getId());
+                        } else if (action == ReportAction.DELETE) {
+                            postModerationService.deleteByAdmin(post.getId());
                         }
                     });
         }
@@ -220,7 +222,8 @@ public class ReportService {
     private void checkActionSupported(ReportTargetType targetType, ReportAction action) {
         boolean supported = action == ReportAction.NONE
                 || action == ReportAction.SUSPEND
-                || (targetType == ReportTargetType.POST && action == ReportAction.HIDE);
+                || (targetType == ReportTargetType.POST
+                    && (action == ReportAction.HIDE || action == ReportAction.DELETE));
         if (!supported) {
             throw new BusinessException(ErrorCode.REPORT_ACTION_NOT_SUPPORTED);
         }
