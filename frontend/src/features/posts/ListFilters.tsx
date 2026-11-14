@@ -83,7 +83,7 @@ export function ListFilters({ conditions, change }: { conditions: PostListCondit
           {([['', '전체 기간'], ...Object.entries(periodLabels)] as [string, string][]).map(([value, text]) => <label key={value}><input type="radio" name="post-period" checked={(conditions.period ?? '') === value} onChange={() => change(previous => ({ ...previous, period: value ? value as Period : undefined }))} />{text}</label>)}
         </fieldset></div>
       </details>
-      <Button className="post-open-only" aria-pressed={conditions.openOnly} onClick={() => change(previous => ({ ...previous, openOnly: !previous.openOnly }))}>모집 중만 보기 · {conditions.openOnly ? 'ON' : 'OFF'}</Button>
+      <Button className="post-open-only" aria-pressed={conditions.openOnly} onClick={() => change(previous => ({ ...previous, openOnly: !previous.openOnly }))}>모집중만 보기 {conditions.openOnly ? 'ON' : 'OFF'}</Button>
       <Button disabled={!hasFilters} onClick={() => change(resetFilters)}>필터 초기화</Button>
     </div>
     <div className="post-selected" aria-label="선택한 검색·필터 조건">

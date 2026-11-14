@@ -97,9 +97,9 @@ function PostDetailContent() {
           <RoleRequirements requirements={role.requirements} /><progress max={role.headcount} value={role.filledCount} aria-label={`${role.roleName} 모집 ${role.headcount}명 중 ${role.filledCount}명 충원`} />
           <Button disabled={!!applicationBlock(post) || !roleOpen(role)} onClick={() => setModal({ roleId: role.id })}>{roleOpen(role) ? `${role.roleName} 지원하기` : '역할 모집 마감'}</Button>
         </section>)}
-        <Button disabled={!!applicationBlock(post)} onClick={() => setModal({ roleId: null })}>{post.myApplication || post.isMine ? postActionLabel(post) : applicationBlock(post) || '지원하기'}</Button>
+        {post.isMine ? <Link className="button" to={`/posts/${post.id}/applicants${isPostMock ? `?${params}` : ''}`}>지원자 관리</Link> : <Button disabled={!!applicationBlock(post)} onClick={() => setModal({ roleId: null })}>{post.myApplication ? postActionLabel(post) : applicationBlock(post) || '지원하기'}</Button>}
         {post.isMine && <Button disabled>{post.status === 'CLOSED' ? '모집 마감됨' : '모집 마감하기 · 준비 중'}</Button>}
-        <p className="post-note">{post.isMine ? '지원자 관리·마감 동작은 후속 작업입니다.' : post.myApplication ? '지원 이력이 있어 재지원할 수 없습니다. 지원 변경·연락처 조회는 후속 작업입니다.' : '지원 전 역할과 참여 가능한 시간을 확인해 주세요.'}{isPostMock && ' 현재는 개발용 예시 상태입니다.'}</p>
+        <p className="post-note">{post.isMine ? '지원자 관리 화면에서 지원자를 조회하고 수락·거절할 수 있습니다. 모집 마감 동작은 후속 작업입니다.' : post.myApplication ? '지원 이력이 있어 재지원할 수 없습니다. 지원 변경·연락처 조회는 후속 작업입니다.' : '지원 전 역할과 참여 가능한 시간을 확인해 주세요.'}{isPostMock && ' 현재는 개발용 예시 상태입니다.'}</p>
         <div className="post-secondary-actions"><Button disabled>스크랩 · 준비 중</Button><Button disabled>신고 · 준비 중</Button></div>
         <div className="post-contact-note"><img src={`${import.meta.env.BASE_URL}posts/lock.svg`} width="18" height="18" alt="" /><p>연락 수단은 별도 권한 확인 후 제공돼요. 이 화면에서는 조회하지 않습니다.</p></div>
       </aside>

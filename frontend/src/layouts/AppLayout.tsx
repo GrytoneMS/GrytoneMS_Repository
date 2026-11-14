@@ -19,7 +19,7 @@ const links = [
 
 export function AppLayout() {
   const { pathname } = useLocation()
-  const isRecruitment = pathname === '/posts' || /^\/posts\/[^/]+$/.test(pathname)
+  const isRecruitment = pathname === '/posts' || /^\/posts\/[^/]+(?:\/applicants)?$/.test(pathname)
   if (isRecruitment) return (
     <div className="posts-layout">
       <a className="post-skip" href="#main-content">본문으로 건너뛰기</a>
