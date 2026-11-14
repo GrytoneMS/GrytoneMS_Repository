@@ -11,6 +11,7 @@ import { applicationBlock, roleOpen } from '../features/posts/application-model'
 import type { ApplicationDraft, ApplyResponse } from '../features/posts/application-model'
 import { mockApplicationSender } from '../features/posts/application-mock'
 import { refreshAppliedPost } from '../features/posts/application-submit'
+import { PostActions } from '../features/posts/PostActions'
 
 export default function PostDetailPage() {
   const { postId } = useParams()
@@ -71,6 +72,14 @@ function PostDetailContent() {
     {isPostMock && <div className="application-examples"><label>개발용 지원 결과 예시<select value={outcome ?? 'success'} onChange={event => update('application', event.target.value)}>
       {Object.entries({ success: '지원 성공', failure: '서버 실패', refreshFailure: '성공 후 상세 재조회 실패', expired: '인증 만료', unverified: '학교 미인증', duplicate: '중복 지원', closed: '제출 직전 모집 마감', blocked: '삭제·숨김·차단', suspended: '이용 정지' }).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
     </select></label><label><input type="checkbox" checked={firstRoleClosed} onChange={event => update('roles', event.target.checked ? 'closed' : 'open')} />첫 번째 역할 모집 마감 예시</label><p>예시 모드에서는 실제 API 요청·DB 저장을 하지 않습니다.</p></div>}
+    {isPostMock && <div className="application-examples" aria-label="개발용 마감·연락 수단 예시">
+      <label>마감 결과<select value={params.get('closing') ?? 'success'} onChange={event => update('closing', event.target.value)}>
+        {Object.entries({ success: '마감 성공', failure: '서버 실패', refreshFailure: '마감 성공 후 재조회 실패', alreadyClosed: '처리 직전 이미 마감', forbidden: '권한 변경', expired: '인증 만료', missing: '삭제된 글' }).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+      </select></label>
+      <label>연락 수단 결과<select value={params.get('contact') ?? 'success'} onChange={event => update('contact', event.target.value)}>
+        {Object.entries({ success: '조회 성공', failure: '서버 실패', forbidden: '조회 권한 변경', expired: '인증 만료', missing: '삭제된 글' }).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+      </select></label>
+    </div>}
     <Link className="post-back" to={back}>← 목록으로 돌아가기</Link>
     {notice && <p role="status" className="post-safety" tabIndex={-1} data-application-notice>{notice}</p>}
     {refreshFailed && post && <div className="post-message" role="status"><p>지원은 완료됐지만 최신 상세 정보를 불러오지 못했어요. 다시 지원할 필요는 없습니다.</p><Button disabled={refreshing} onClick={() => void refreshApplication(post)}>{refreshing ? '상세 갱신 중…' : '상세 정보만 다시 불러오기'}</Button></div>}
@@ -98,10 +107,9 @@ function PostDetailContent() {
           <Button disabled={!!applicationBlock(post) || !roleOpen(role)} onClick={() => setModal({ roleId: role.id })}>{roleOpen(role) ? `${role.roleName} 지원하기` : '역할 모집 마감'}</Button>
         </section>)}
         <Button disabled={!!applicationBlock(post)} onClick={() => setModal({ roleId: null })}>{post.myApplication || post.isMine ? postActionLabel(post) : applicationBlock(post) || '지원하기'}</Button>
-        {post.isMine && <Button disabled>{post.status === 'CLOSED' ? '모집 마감됨' : '모집 마감하기 · 준비 중'}</Button>}
-        <p className="post-note">{post.isMine ? '지원자 관리·마감 동작은 후속 작업입니다.' : post.myApplication ? '지원 이력이 있어 재지원할 수 없습니다. 지원 변경·연락처 조회는 후속 작업입니다.' : '지원 전 역할과 참여 가능한 시간을 확인해 주세요.'}{isPostMock && ' 현재는 개발용 예시 상태입니다.'}</p>
+        <p className="post-note">{post.isMine ? '모집 마감과 연락 수단은 아래에서 확인할 수 있어요. 지원자 관리 연결은 후속 연동 예정입니다.' : post.myApplication ? '지원 이력이 있어 재지원할 수 없습니다. 연락 수단은 수락된 지원자만 확인할 수 있어요.' : '지원 전 역할과 참여 가능한 시간을 확인해 주세요.'}{isPostMock && ' 현재는 개발용 예시 상태입니다.'}</p>
         <div className="post-secondary-actions"><Button disabled>스크랩 · 준비 중</Button><Button disabled>신고 · 준비 중</Button></div>
-        <div className="post-contact-note"><img src={`${import.meta.env.BASE_URL}posts/lock.svg`} width="18" height="18" alt="" /><p>연락 수단은 별도 권한 확인 후 제공돼요. 이 화면에서는 조회하지 않습니다.</p></div>
+        <PostActions post={post} onPost={setPost} viewer={viewer} scenario={scenario} closing={params.get('closing')} contact={params.get('contact')} />
       </aside>
     </div>}
     {modal && post && <ApplicationModal post={post} initialRoleId={modal.roleId} onClose={() => setModal(null)} onSuccess={applicationSucceeded}
