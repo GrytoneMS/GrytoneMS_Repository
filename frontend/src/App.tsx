@@ -7,6 +7,7 @@ import ProfileSetupPage from './pages/ProfileSetupPage'
 import PostListPage from './pages/PostListPage'
 import PostDetailPage from './pages/PostDetailPage'
 import PostCreatePage from './pages/PostCreatePage'
+import PostEditPage from './pages/PostEditPage'
 import PostApplicantsPage from './pages/PostApplicantsPage'
 import MyProfilePage from './pages/MyProfilePage'
 import ProfileEditPage from './pages/ProfileEditPage'
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="/posts" element={<PostListPage />} />
         <Route path="/posts/:postId" element={<PostDetailPage />} />
         <Route path="/posts/new" element={<PostCreatePage />} />
+        <Route path="/posts/:postId/edit" element={<PostEditPage />} />
         <Route path="/posts/:postId/applicants" element={<PostApplicantsPage />} />
         <Route path="/me/profile" element={<MyProfilePage />} />
         <Route path="/me/profile/edit" element={<ProfileEditPage />} />

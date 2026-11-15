@@ -154,6 +154,22 @@ try {
     assert.ok(!create.includes('로그인하기 (새 탭)'))
     assert.ok(!create.includes('학교 인증하기 (새 탭)'))
   })
+  await check('수정 경로도 모집 전용 레이아웃 적용·쿼리 무관·관계없는 하위 경로 제외', async () => {
+    const { default: App } = await server.ssrLoadModule('/src/App.tsx')
+    const render = path => renderToStaticMarkup(createElement(MemoryRouter, { initialEntries: [path] }, createElement(App)))
+    for (const path of ['/posts/1/edit', '/posts/42/edit?editExample=success']) {
+      const html = render(path)
+      assert.ok(html.includes('class="posts-layout"'), path)
+      assert.ok(html.includes('class="posts-main"'), path)
+      assert.ok(html.includes('class="posts-header"'), path)
+      assert.ok(!html.includes('class="app-layout"'), path)
+    }
+    for (const path of ['/posts/1/delete', '/posts/1/editor', '/posts/1/edit/extra', '/posts/1/applicants/edit', '/posts/1/extra/edit', '/users/1/edit']) {
+      const html = render(path)
+      assert.ok(html.includes('class="app-layout"'), path)
+      assert.ok(!html.includes('class="posts-layout"'), path)
+    }
+  })
   // 별도 Vite 모듈 그래프로 mock 모드 분기를 검사합니다. HTTP 리스너는 열지 않습니다.
   process.env.VITE_POSTS_MOCK = 'true'
   mockServer = await createServer({ server: { middlewareMode: true, hmr: false, ws: false, watch: null }, appType: 'custom' })
