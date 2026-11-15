@@ -1,5 +1,5 @@
-import { PagePlaceholder } from '../components/PagePlaceholder'
+import { AuthPage } from '../features/auth/AuthPage'
 
 export default function SignupPage() {
-  return <PagePlaceholder title="회원가입" />
+  return <AuthPage mode="signup" />
 }
