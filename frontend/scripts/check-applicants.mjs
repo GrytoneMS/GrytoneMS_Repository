@@ -95,6 +95,18 @@ try {
     await assert.rejects(api.decideApplication(501, 'reject', null, token))
     assert.equal(model.managementFailure(new TypeError('offline')).reconcile, true)
   })
+  await check('최초 조회 실패·응답 형식 오류는 처리 결과 불명확 안내와 구분·재시도 복구', async () => {
+    for (const error of [new TypeError('offline'), new ReferenceError('structuredClone is not defined'), failure(200, 'INVALID_RESPONSE')]) {
+      let state, failed = true, decisions = 0
+      const controller = createManagementController({ load: async () => { if (failed) throw error; return clone(snapshot) }, decide: async () => { decisions++; return rejected } }, next => { state = next })
+      await controller.load()
+      assert.equal(state.snapshot, null); assert.equal(state.loading, false); assert.equal(state.needsRefresh, false)
+      assert.ok(state.error.message.includes('목록')); assert.ok(!state.error.message.includes('처리됐을'))
+      assert.equal(state.error.reconcile, false); assert.equal(decisions, 0)
+      failed = false; await controller.load(); assert.deepEqual(state.snapshot, snapshot); assert.equal(state.error, null)
+      controller.dispose()
+    }
+  })
   await check('6개 상태별 버튼 규칙·본인 아님·정원/역할 마감·글 마감 규칙', () => {
     for (const status of Object.keys(model.statusLabels)) {
       const value = clone(snapshot); value.roles[0].applications[0].status = status
@@ -138,6 +150,7 @@ try {
     const controller = createManagementController({ load: async () => { if (failRefresh) throw new Error('refresh failed'); return clone(live) }, decide: async () => { calls++; live = model.applyDecision(live, rejected); failRefresh = true; return rejected } }, next => { state = next })
     await controller.load(); await controller.decide(501, 'reject', 'SCHEDULE')
     assert.equal(state.snapshot.roles[0].applications[0].status, 'REJECTED'); assert.ok(state.notice.includes('거절')); assert.equal(state.needsRefresh, true)
+    assert.ok(state.error.message.includes('처리는 완료')); assert.ok(!state.error.message.includes('처리됐을'))
     await controller.decide(501, 'reject', null); await controller.decide(502, 'accept', null); assert.equal(calls, 1)
     failRefresh = false; await controller.load()
     assert.equal(state.needsRefresh, false); assert.equal(calls, 1); controller.dispose()
@@ -187,6 +200,28 @@ try {
   process.env.VITE_POSTS_MOCK = 'true'
   mockServer = await createServer(config)
   const { managementService: mockService } = await mockServer.ssrLoadModule('/src/features/applicants/source.ts')
+  await check('structuredClone 없는 브라우저 환경: 정상 목록·역할별 렌더·복사 격리·처리 후 재조회', async () => {
+    const originalClone = globalThis.structuredClone
+    globalThis.structuredClone = undefined
+    globalThis.fetch = assert.fail
+    try {
+      const service = mockService('1', new URLSearchParams('viewer=owner&manage=normal&result=success'))
+      const signal = new AbortController().signal
+      const first = await service.load(signal)
+      assert.deepEqual(first.roles.map(role => role.applications.length), [6, 1])
+      const { ApplicantsView } = await mockServer.ssrLoadModule('/src/features/applicants/ApplicantsView.tsx')
+      const html = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(ApplicantsView, { snapshot: first, state: { ...initialManagementState(), snapshot: first }, reason: null, onReason() {}, onAction() {}, onRefresh() {}, search: '' })))
+      assert.ok(html.includes('서연')); assert.ok(html.includes('지우')); assert.ok(html.includes('영상 편집')); assert.ok(html.includes('디자인'))
+      first.roles[0].applications[0].applicant.nickname = 'changed'
+      first.post.roles[0].filledCount = 99; first.post.leader.nickname = 'changed'
+      const second = await service.load(signal)
+      assert.equal(second.roles[0].applications[0].applicant.nickname, '서연'); assert.equal(second.post.roles[0].filledCount, 0)
+      assert.notEqual(second.post.leader.nickname, 'changed')
+      await service.decide(501, 'accept', null)
+      assert.equal((await service.load(signal)).roles[0].applications[0].status, 'ACCEPTED')
+      assert.equal((await mockService('1', new URLSearchParams()).load(signal)).post.roles[0].filledCount, 0)
+    } finally { globalThis.structuredClone = originalClone }
+  })
   await check('개발 예시: 여러 역할·상태·빈 목록·다른 사용자/비회원·조회 실패', async () => {
     globalThis.fetch = assert.fail
     const signal = new AbortController().signal

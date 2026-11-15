@@ -31,7 +31,7 @@ export function createManagementController(service: ManagementService, change: (
       update({ snapshot, needsRefresh: false, error: null, revision: state.revision + 1 })
     } catch (error) {
       if (disposed || generation !== sequence) return
-      const failure = managementFailure(error)
+      const failure = managementFailure(error, confirmed.size ? 'refresh' : 'load')
       update({ error: failure, needsRefresh: !!state.snapshot, ...(failure.access ? { snapshot: null } : {}) })
     } finally { if (generation === sequence) update({ loading: false }) }
   }
