@@ -39,7 +39,10 @@ export function applyDecision(snapshot: Snapshot, result: DecisionResult): Snaps
     })),
   }
 }
-export function managementFailure(error: unknown) {
+export function managementFailure(error: unknown, operation: 'load' | 'refresh' | 'decide' = 'decide') {
+  const queryMessage = operation === 'refresh'
+    ? '처리는 완료됐지만 최신 목록을 불러오지 못했어요. 처리를 반복하지 말고 목록을 다시 조회해 주세요.'
+    : '지원자 목록을 불러오지 못했어요. 목록을 다시 조회해 주세요.'
   if (error instanceof ApiError) {
     const messages: Record<string, string> = {
       AUTH_PENDING: '공통 인증 연동을 기다리고 있어요. 로그인·학교 인증 화면은 준비 중이며 관리 요청을 보내지 않았습니다.',
@@ -49,9 +52,9 @@ export function managementFailure(error: unknown) {
       ROLE_CLOSED: '역할 모집이 마감됐어요. 최신 현황을 다시 확인해 주세요.',
       INVALID_APPLICATION_STATUS: '이미 처리된 지원이에요. 최신 목록을 다시 확인해 주세요.',
     }
-    return { code: error.code, message: messages[error.code] ?? error.message,
+    return { code: error.code, message: messages[error.code] ?? (operation !== 'decide' && error.code === 'INVALID_RESPONSE' ? queryMessage : error.message),
       access: error.status === 401 || error.status === 403 || error.status === 404,
-      reconcile: error.status >= 500 || ['ROLE_FULL', 'ROLE_CLOSED', 'INVALID_APPLICATION_STATUS', 'INVALID_RESPONSE'].includes(error.code) }
+      reconcile: operation !== 'load' && (error.status >= 500 || ['ROLE_FULL', 'ROLE_CLOSED', 'INVALID_APPLICATION_STATUS', 'INVALID_RESPONSE'].includes(error.code)) }
   }
-  return { code: 'NETWORK', message: '서버 응답을 확인하지 못했어요. 처리됐을 수 있으니 목록을 다시 조회해 주세요.', access: false, reconcile: true }
+  return { code: operation === 'decide' ? 'NETWORK' : 'LOAD_FAILED', message: operation === 'decide' ? '서버 응답을 확인하지 못했어요. 처리됐을 수 있으니 목록을 다시 조회해 주세요.' : queryMessage, access: false, reconcile: operation !== 'load' }
 }

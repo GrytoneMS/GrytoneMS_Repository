@@ -2,9 +2,20 @@ import { ApiError } from '../../api/client'
 import { mockDetail } from '../posts/mock'
 import { isPostMock } from '../posts/source'
 import { applyDecision, decisionBlock, type Application, type Snapshot } from './model'
+import type { PostDetail } from '../posts/model'
 import type { ManagementService } from './controller'
 
 function fail(status: number, code: string): never { throw new ApiError(status, { success: false, code, message: '개발용 처리 오류 예시입니다.' }) }
+// 개발 예시의 DTO만 복사합니다. 임베디드 브라우저에서도 secure-context API에 의존하지 않습니다.
+function copyPost(post: PostDetail): PostDetail {
+  return { ...post, leader: { ...post.leader }, roles: post.roles.map(role => ({ ...role })),
+    event: post.event ? { ...post.event } : null, myApplication: post.myApplication ? { ...post.myApplication } : null }
+}
+function copySnapshot(snapshot: Snapshot): Snapshot {
+  return { post: copyPost(snapshot.post), roles: snapshot.roles.map(role => ({ ...role,
+    applications: role.applications.map(item => ({ ...item, applicant: { ...item.applicant } })),
+  })) }
+}
 export function createMockManagement(postId: string, query: URLSearchParams): ManagementService {
   if (!isPostMock) throw new Error('명시적인 개발용 모집글 예시 모드에서만 사용할 수 있어요.')
   let snapshot: Snapshot | null = null, processed = false
@@ -12,7 +23,7 @@ export function createMockManagement(postId: string, query: URLSearchParams): Ma
   const outcome = query.get('result') ?? 'success'
   const viewer = query.get('viewer') ?? 'owner'
   function initial(): Snapshot {
-    const post = structuredClone(mockDetail(postId, viewer === 'owner' ? 'owner' : 'other'))
+    const post = copyPost(mockDetail(postId, viewer === 'owner' ? 'owner' : 'other'))
     const statuses = ['PENDING', 'PENDING', 'PENDING', 'ACCEPTED', 'REJECTED', 'CLOSED', 'LEFT'] as const
     const names = ['서연', '도현', '하은', '지우', '지원자 5', '지원자 6', '지원자 7']
     const applications: Application[] = statuses.map((status, index) => ({
@@ -44,7 +55,7 @@ export function createMockManagement(postId: string, query: URLSearchParams): Ma
       if (scenario === 'error' || processed && outcome === 'refreshFailure') fail(500, 'INTERNAL_ERROR')
       if (scenario === 'notFound') fail(404, 'NOT_FOUND')
       snapshot ??= initial()
-      return structuredClone(snapshot)
+      return copySnapshot(snapshot)
     },
     async decide(id, decision, _reason) {
       await new Promise(resolve => setTimeout(resolve, 500))
