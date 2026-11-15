@@ -1,0 +1,36 @@
+.my-posts { --my-role-bg: #f3f7ff; --my-count-bg: #e8f1ff; --my-accepted-bg: #e5f6ed; --my-accepted-ink: #008448; --my-urgent: #ef3328; max-width: 864px; margin: 0 auto; padding: 0 0 48px; }
+.posts-layout .my-posts h1 { font-size: 28px; line-height: 1.4; font-weight: 800; margin-bottom: 20px; }
+.my-post-tabs { display: flex; gap: var(--space-2); margin: 20px 0 14px; padding: 0; border: 0; }
+.my-posts .my-post-tabs .button { background: var(--post-soft); color: var(--post-ink); min-height: 28px; padding: 6px 16px; }
+.my-posts .my-post-tabs .button[aria-pressed="true"] { background: var(--post-ink); color: white; }
+.my-edit-note { color: var(--post-muted); font-size: 12px; margin-bottom: 14px !important; }
+.my-post-list { display: grid; gap: 16px; margin-top: 16px; }
+.my-post-card { min-width: 0; border: 1px solid var(--post-line); border-radius: 24px; padding: var(--space-6) 18px 14px; background: var(--color-background); }
+.my-post-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 8px 10px; }
+.my-posts .my-post-heading h2 { min-width: 0; font-size: 16px; font-weight: 800; }
+.my-post-heading a { color: var(--post-ink); text-decoration: none; }
+.my-post-heading a:hover { text-decoration: underline; }
+.my-deadline { flex: 0 0 auto; border: 1px solid var(--post-line); border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
+.my-deadline.urgent { background: var(--my-urgent); color: white; border-color: transparent; }
+.my-deadline.closed { background: var(--post-soft); color: var(--post-muted); }
+.my-role-list { display: grid; gap: 8px; }
+.my-role-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 10px 6px 16px; border-radius: 24px; background: var(--my-role-bg); }
+.my-role-row strong { flex: 1 1 140px; min-width: 0; font-size: 14px; font-weight: 600; }
+.my-role-row > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.my-role-row span { border-radius: 999px; padding: 6px 16px; font-size: 14px; font-weight: 700; }
+.my-applicant-count { background: var(--my-count-bg); color: var(--post-blue); }
+.my-filled-count { background: var(--my-accepted-bg); color: var(--my-accepted-ink); }
+.my-post-footer { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: flex-end; margin: 16px 6px 0; }
+.my-post-footer p { flex: 1 1 260px; color: var(--post-muted); font-size: 12px; }
+.my-card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.my-posts .my-card-actions .button { min-height: 40px; padding: 10px 20px; font-size: 14px; }
+.my-posts .my-card-actions .my-soft-button, .my-posts .my-card-actions .button:disabled { background: var(--post-soft); color: var(--post-ink); }
+.my-posts .my-card-actions .my-delete-button { background: white; color: var(--post-ink); border: 1px solid var(--post-line); }
+.my-more { text-align: center; margin-top: 24px; }
+@media (max-width: 540px) {
+  .my-post-card { padding: 18px 12px; border-radius: 20px; }
+  .my-post-footer { justify-content: flex-start; margin-inline: 0; }
+  .my-card-actions { width: 100%; }
+  .my-posts .my-card-actions .button { flex: 1 1 auto; padding-inline: 12px; }
+  .my-role-row > div { margin-left: auto; }
+}
