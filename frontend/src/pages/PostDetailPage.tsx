@@ -106,8 +106,8 @@ function PostDetailContent() {
           <RoleRequirements requirements={role.requirements} /><progress max={role.headcount} value={role.filledCount} aria-label={`${role.roleName} 모집 ${role.headcount}명 중 ${role.filledCount}명 충원`} />
           <Button disabled={!!applicationBlock(post) || !roleOpen(role)} onClick={() => setModal({ roleId: role.id })}>{roleOpen(role) ? `${role.roleName} 지원하기` : '역할 모집 마감'}</Button>
         </section>)}
-        <Button disabled={!!applicationBlock(post)} onClick={() => setModal({ roleId: null })}>{post.myApplication || post.isMine ? postActionLabel(post) : applicationBlock(post) || '지원하기'}</Button>
-        <p className="post-note">{post.isMine ? '모집 마감과 연락 수단은 아래에서 확인할 수 있어요. 지원자 관리 연결은 후속 연동 예정입니다.' : post.myApplication ? '지원 이력이 있어 재지원할 수 없습니다. 연락 수단은 수락된 지원자만 확인할 수 있어요.' : '지원 전 역할과 참여 가능한 시간을 확인해 주세요.'}{isPostMock && ' 현재는 개발용 예시 상태입니다.'}</p>
+        {post.isMine ? <Link className="button" to={`/posts/${post.id}/applicants${isPostMock ? `?${params}` : ''}`}>지원자 관리</Link> : <Button disabled={!!applicationBlock(post)} onClick={() => setModal({ roleId: null })}>{post.myApplication ? postActionLabel(post) : applicationBlock(post) || '지원하기'}</Button>}
+        <p className="post-note">{post.isMine ? '지원자 관리 화면에서 지원자를 조회하고 수락·거절할 수 있습니다. 모집 마감과 연락 수단은 아래에서 확인할 수 있어요.' : post.myApplication ? '지원 이력이 있어 재지원할 수 없습니다. 연락 수단은 수락된 지원자만 확인할 수 있어요.' : '지원 전 역할과 참여 가능한 시간을 확인해 주세요.'}{isPostMock && ' 현재는 개발용 예시 상태입니다.'}</p>
         <div className="post-secondary-actions"><Button disabled>스크랩 · 준비 중</Button><Button disabled>신고 · 준비 중</Button></div>
         <PostActions post={post} onPost={setPost} viewer={viewer} scenario={scenario} closing={params.get('closing')} contact={params.get('contact')} />
       </aside>

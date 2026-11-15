@@ -91,4 +91,12 @@ frontend 기준 아래 명령 통과. API는 fetch 가로채기, 상태/표시�
 | `node scripts/check-post-filters.mjs` | 14개 통과 |
 | `node scripts/check-post-create.mjs` | 14개 통과 |
 
-`check-applicants.mjs`는 현재 dev에 없으므로 실행 대상이 아닙니다. 기존 PR #34의 코드를 가져와 실행하지 않았습니다. `git diff --check` 및 충돌 표시 검색도 통과했습니다.
+위 표는 최초 구현 당시 결과입니다. 최신 dev 병합 후 검증은 아래 기록을 참고하세요.
+
+## PR #36 dev 충돌 해결 (2026-11-15)
+
+- 시작 브랜치는 기존 `feature/front-POST-04`, 작업 트리는 깨끗했습니다. fetch 후 PR #34의 병합(2026-11-14)과 최신 `origin/dev`의 `98976e1`을 확인하고 해당 커밋을 merge했습니다.
+- `PostDetailPage.tsx`의 충돌 영역을 통합했습니다. 팀장에게 지원자 관리 링크를 유지하고, 비활성 모집 마감 버튼과 후속 작업 안내를 제거했습니다. 실제 마감·연락 수단은 기존 `PostActions`를 사용합니다.
+- 비팀장 지원 버튼·안내, 지원 모달·역할 선택·지원 상태별 차단, 마감 후 갱신 및 연락 수단 권한 처리를 보존했습니다. dev의 목록 문구와 기존 역할 카드 간격 수정도 유지했습니다.
+- frontend에서 build·lint 및 post-actions 17개/API·17개/mock, applicants 15개, applications 10개/API·11개/mock, posts 11개, post-filters 14개, post-create 14개로 총 109개 자동 검증을 통과했습니다. `--mock`은 post-actions와 applications에 적용했습니다. 충돌 표시 검색과 `git diff --check`도 통과했습니다.
+- 브라우저 연결은 `The browser access host is unavailable`로 실패했습니다. 이번 병합 후 팀장 관리 링크·마감 버튼, 비팀장 지원·연락처 표시의 브라우저 확인은 미완료입니다. 자동 검증의 권한별 정적 렌더·컨트롤러 검증과 구분합니다. 실제 백엔드/JWT/CORS 검증도 수행하지 않았습니다.

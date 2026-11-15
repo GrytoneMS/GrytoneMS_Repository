@@ -10,14 +10,14 @@ export function RoleRequirements({ requirements }: Pick<PostRole, 'requirements'
 export function StatusBadge({ status, daysLeft }: { status: PostStatus; daysLeft: number }) {
   return <span className={`post-chip ${status === 'CLOSED' ? 'post-chip-closed' : daysLeft <= 3 ? 'post-chip-urgent' : ''}`}>{status === 'CLOSED' ? '모집 마감' : daysLeft === 0 ? 'D-Day' : daysLeft < 0 ? `마감일 ${Math.abs(daysLeft)}일 경과` : `D-${daysLeft}`}</span>
 }
-export function RoleAvailability({ role }: { role: Pick<RoleSummary, 'roleName' | 'remaining'> }) {
-  return <div className="post-role-line"><span>{role.roleName}</span><span className="post-chip post-chip-blue">남은 {role.remaining}명</span></div>
+export function RoleAvailability({ role, label = '남은' }: { role: Pick<RoleSummary, 'roleName' | 'remaining'>; label?: string }) {
+  return <div className="post-role-line"><span>{role.roleName}</span><span className="post-chip post-chip-blue">{label} {role.remaining}명</span></div>
 }
 export function PostCard({ post, index, search }: { post: PostSummary; index: number; search: string }) {
   return <article className="post-card">
     <Link to={`/posts/${post.id}${search}`} className="post-card-link">
       <div className={`post-card-cover post-tint-${index % 4}`}><span className="post-chip">{categoryLabels[post.category]}</span><StatusBadge status={post.status} daysLeft={post.dDay} /></div>
-      <div className="post-card-body"><h2>{post.title}</h2>{post.roles.map((role, roleIndex) => <RoleAvailability key={`${role.roleCode}-${roleIndex}`} role={role} />)}<p className="post-card-meta">{[post.leader.schoolName, meetingLabels[post.meetingType]].filter(Boolean).join(' · ')}</p></div>
+      <div className="post-card-body"><h2>{post.title}</h2>{post.roles.map((role, roleIndex) => <RoleAvailability key={`${role.roleCode}-${roleIndex}`} role={role} label="남은 인원" />)}<p className="post-card-meta">{[post.leader.schoolName, meetingLabels[post.meetingType]].filter(Boolean).join(' · ')}</p></div>
     </Link>
   </article>
 }
