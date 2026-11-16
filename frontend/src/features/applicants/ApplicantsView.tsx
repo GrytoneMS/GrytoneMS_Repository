@@ -24,6 +24,7 @@ export function ApplicantsView({ snapshot, state, reason, onReason, onAction, on
       {state.loading && <p role="status">최신 지원자 목록과 모집 현황을 불러오는 중…</p>}
       {!role ? <p className="post-message">모집 역할이 없어요.</p> : <section aria-label={`${role.roleName} 지원자`}>
         <h3 className="applicants-role-title">{role.roleName} <span>선발 {role.filledCount} / 모집 {role.headcount}명</span></h3>
+        {snapshot.post.roles.find(item => item.id === role.postRoleId)?.status === 'CLOSED' && <p className="applicant-meta">현재 이 역할은 모집 마감 상태여서 수락할 수 없어요. 빈자리가 생겨도 마감일이 지난 경우에는 서버가 마감 상태를 유지합니다.</p>}
         {role.applications.length === 0 ? <p className="post-message">아직 이 역할에 지원한 사람이 없어요.</p> : role.applications.map(item => <article className="applicant-card" key={item.id} aria-label={`${item.applicant.nickname ?? '이름 미등록'} 지원 내역`}>
           <div className="applicant-header"><Avatar applicant={item.applicant} />
             <div className="applicant-identity"><h3>{item.applicant.nickname ?? '이름 미등록'}</h3><p>{[item.applicant.schoolName, item.applicant.major, item.applicant.grade == null ? null : `${item.applicant.grade}학년`].filter(Boolean).join(' · ') || '공개된 기본 정보가 없어요'}</p></div>
@@ -34,7 +35,7 @@ export function ApplicantsView({ snapshot, state, reason, onReason, onAction, on
           <p className="applicant-meta">가능 시간: {item.availableTime}</p>
           <p className="applicant-meta">지원 일시: <time dateTime={item.createdAt}>{item.createdAt.replace('T', ' ')}</time></p>
           <div className="applicant-actions"><Button className="applicants-soft" disabled={locked || !!decisionBlock(snapshot, item.id, 'reject')} onClick={() => onAction(item.id, 'reject')}>거절</Button><Button disabled={locked || !!decisionBlock(snapshot, item.id, 'accept')} onClick={() => onAction(item.id, 'accept')}>수락</Button></div>
-          {item.status === 'PENDING' && decisionBlock(snapshot, item.id, 'accept') && <p className="applicant-meta">{decisionBlock(snapshot, item.id, 'accept')}</p>}
+          {(item.status === 'PENDING' || item.status === 'CLOSED') && decisionBlock(snapshot, item.id, 'accept') && <p className="applicant-meta">{decisionBlock(snapshot, item.id, 'accept')}</p>}
         </article>)}
       </section>}
     </div>
@@ -44,7 +45,7 @@ export function ApplicantsView({ snapshot, state, reason, onReason, onAction, on
         {Object.entries(reasonLabels).map(([value, label]) => <label key={value} className={reason === value ? 'selected' : ''}><input type="radio" name="rejectReason" checked={reason === value} onChange={() => onReason(value as Reason)} />{label}</label>)}
       </div></fieldset><p className="applicant-meta">거절 전 확인창에서 대상과 선택한 사유를 확인할 수 있어요.</p></section>
       <section className="applicant-panel"><h2>모집 현황</h2><ul className="applicants-summary">{snapshot.roles.map(role => <li key={role.postRoleId}><strong>{role.roleName}</strong><span>선발 {role.filledCount} / 모집 {role.headcount}명</span><span>{snapshot.post.roles.find(item => item.id === role.postRoleId)?.status === 'CLOSED' ? '역할 마감' : '역할 모집 중'}</span></li>)}</ul></section>
-      <section className="applicant-panel"><h2>수락된 팀원</h2>{accepted.length === 0 ? <p className="applicant-meta">아직 수락된 팀원이 없어요.</p> : <ul className="applicants-members">{accepted.map(item => <li key={item.id}><Avatar applicant={item.applicant} small /><div><Link to={`/users/${item.applicant.id}`}>{item.applicant.nickname ?? '이름 미등록'}</Link><p className="applicant-meta">{item.roleName}</p></div><span className="post-chip status-accepted">수락됨</span></li>)}</ul>}</section>
+      <section className="applicant-panel"><h2>수락된 팀원</h2>{accepted.length === 0 ? <p className="applicant-meta">아직 수락된 팀원이 없어요.</p> : <ul className="applicants-members">{accepted.map(item => <li key={item.id}><Avatar applicant={item.applicant} small /><div><Link to={`/users/${item.applicant.id}`}>{item.applicant.nickname ?? '이름 미등록'}</Link><p className="applicant-meta">{item.roleName}</p></div><span className="post-chip status-accepted">수락됨</span><Button className="applicants-soft" disabled={locked || !!decisionBlock(snapshot, item.id, 'remove')} onClick={() => onAction(item.id, 'remove')} aria-label={`${item.applicant.nickname ?? '이름 미등록'} ${item.roleName} 팀원 내보내기`}>내보내기</Button></li>)}</ul>}</section>
       <Link className="applicants-profile-link" to={`/posts/${snapshot.post.id}${search}`}>모집글 상세로 돌아가기</Link>
     </aside>
   </div>

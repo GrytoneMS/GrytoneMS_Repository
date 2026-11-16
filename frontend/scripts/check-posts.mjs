@@ -174,6 +174,7 @@ try {
     assert.ok(render('/posts/1').includes('class="posts-layout"'))
     assert.ok(render('/posts/1/applicants').includes('class="posts-layout"'))
     assert.ok(render('/posts/1/applicants').includes('모집글 지원자 관리'))
+    assert.ok(render('/posts/1/applicants').includes('로그인 후 이용할 수 있어요.'))
     assert.ok(render('/me/posts').includes('class="posts-layout"'))
     assert.ok(render('/me/posts').includes('<h1>내 모집글</h1>'))
     assert.ok(render('/me/posts').includes('로그인 후 이용할 수 있어요.'))

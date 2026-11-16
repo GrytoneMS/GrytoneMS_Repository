@@ -14,12 +14,23 @@ import ProfileEditPage from './pages/ProfileEditPage'
 import UserProfilePage from './pages/UserProfilePage'
 import MyPostsPage from './pages/MyPostsPage'
 import MyApplicationsPage from './pages/MyApplicationsPage'
+import MyScrapsPage from './pages/MyScrapsPage'
+import { ScrapProvider } from './features/scraps/ScrapContext'
 import NotFoundPage from './pages/NotFoundPage'
 import { AuthProvider } from './features/auth/AuthContext'
+import { useAuth } from './features/auth/useAuth'
+import AdminPage from './features/admin/AdminPage'
 
 export default function App() {
+  return <AuthProvider><SessionRoutes /></AuthProvider>
+}
+
+function SessionRoutes() {
+  const auth = useAuth()
   return (
-    <AuthProvider><Routes>
+    <ScrapProvider session={auth.session} authScope={auth.scope} store={auth.store}><Routes>
+      <Route path="/admin" element={<AdminPage />} />
+      <Route path="/admin/:section" element={<AdminPage />} />
       <Route element={<AppLayout />}>
         <Route index element={<Navigate to="/posts" replace />} />
         <Route path="/login" element={<LoginPage />} />
@@ -36,8 +47,9 @@ export default function App() {
         <Route path="/users/:userId" element={<UserProfilePage />} />
         <Route path="/me/posts" element={<MyPostsPage />} />
         <Route path="/me/applications" element={<MyApplicationsPage />} />
+        <Route path="/me/scraps" element={<MyScrapsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
-    </Routes></AuthProvider>
+    </Routes></ScrapProvider>
   )
 }

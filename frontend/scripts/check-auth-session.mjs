@@ -142,11 +142,13 @@ try {
     const { AuthContext } = await server.ssrLoadModule('/src/features/auth/context.ts')
     const { default: MyPostsPage } = await server.ssrLoadModule('/src/pages/MyPostsPage.tsx')
     const { default: MyApplicationsPage } = await server.ssrLoadModule('/src/pages/MyApplicationsPage.tsx')
+    const { default: MyScrapsPage } = await server.ssrLoadModule('/src/pages/MyScrapsPage.tsx')
+    const { default: PostApplicantsPage } = await server.ssrLoadModule('/src/pages/PostApplicantsPage.tsx')
     let token = 'synthetic', pending = deferred(); const store = createAuthStore(() => token, () => pending.promise)
     const render = Component => renderToStaticMarkup(createElement(MemoryRouter, null, createElement(AuthContext.Provider, { value: store }, createElement(Component))))
-    for (const Component of [MyPostsPage, MyApplicationsPage]) { const html = render(Component); assert.ok(html.includes('확인 중')); assert.ok(!html.includes('https://example.com/contact')) }
+    for (const Component of [MyPostsPage, MyApplicationsPage, MyScrapsPage, PostApplicantsPage]) { const html = render(Component); assert.ok(html.includes('확인 중')); assert.ok(!html.includes('https://example.com/contact')) }
     token = null; await store.sync()
-    for (const Component of [MyPostsPage, MyApplicationsPage]) { const html = render(Component); assert.ok(html.includes('로그인')); assert.ok(!html.includes('my-post-card')); assert.ok(!html.includes('my-application-card')) }
+    for (const Component of [MyPostsPage, MyApplicationsPage, MyScrapsPage, PostApplicantsPage]) { const html = render(Component); assert.ok(html.includes('로그인')); assert.ok(!html.includes('my-post-card')); assert.ok(!html.includes('my-application-card')) }
     store.dispose()
     const signedIn = await ready()
     const html = renderToStaticMarkup(createElement(MemoryRouter, { initialEntries: ['/me/posts?status=CLOSED'] }, createElement(AuthContext.Provider, { value: signedIn }, createElement(MyPostsPage))))
@@ -157,6 +159,52 @@ try {
     const store = createAuthStore(() => 'synthetic', async () => ++loads === 1 ? pending.promise : user)
     const old = store.refresh(); store.dispose(); store.resume(); await store.refresh(); pending.resolve({ ...user, id: 999 }); await old
     assert.equal(store.requireSession().userId, '7'); store.dispose()
+  })
+  await check('스크랩·지원자 관리 공통 세션 Bearer 재사용·사용자 중복 조회 없음', async () => {
+    const { authenticatedScraps } = await server.ssrLoadModule('/src/features/scraps/source.ts')
+    const { authenticatedManagement } = await server.ssrLoadModule('/src/features/applicants/source.ts')
+    let lookups = 0
+    const store = createAuthStore(() => 'synthetic', async () => { lookups++; return user }); await store.refresh()
+    const signal = new AbortController().signal, paths = []
+    const post = mockDetail('1', 'owner')
+    globalThis.fetch = async (url, options) => {
+      assert.ok(options.headers.get('Authorization')); const path = new URL(url).pathname; paths.push(path)
+      return json(path.endsWith('/scraps') ? empty : path.endsWith('/scrap') ? { postId: 1, isScrapped: options.method === 'PUT' }
+        : path.endsWith('/leave') ? { applicationId: 10, status: 'LEFT', roleReopened: true, postReopened: false }
+        : path.endsWith('/applications') ? post.roles.map(r => ({ postRoleId: r.id, roleName: r.roleName, headcount: r.headcount, filledCount: r.filledCount, applications: [] })) : post)
+    }
+    const scraps = authenticatedScraps(store), management = authenticatedManagement('1', store)
+    await scraps.load(undefined, signal); await scraps.change(1, true, signal); await scraps.change(1, false, signal); await scraps.read(1, signal)
+    await management.load(signal); await management.decide(10, 'remove', null, signal)
+    assert.equal(paths.length, 7); assert.equal(lookups, 1); store.dispose()
+  })
+  await check('새 보호 기능도 인증 확인 전 차단·로그아웃 이후 늦은 응답 폐기', async () => {
+    const { authenticatedScraps } = await server.ssrLoadModule('/src/features/scraps/source.ts')
+    const { authenticatedManagement } = await server.ssrLoadModule('/src/features/applicants/source.ts')
+    let token = 'synthetic', calls = 0; const pending = deferred()
+    const store = createAuthStore(() => token, async () => user), signal = new AbortController().signal
+    globalThis.fetch = async () => { calls++; return pending.promise }
+    await assert.rejects(authenticatedScraps(store).load(undefined, signal), e => e.code === 'AUTH_CHECKING')
+    await assert.rejects(authenticatedManagement('1', store).load(signal), e => e.code === 'AUTH_CHECKING'); assert.equal(calls, 0)
+    await store.refresh()
+    const request = authenticatedScraps(store).load(undefined, signal)
+    const rejected = assert.rejects(request, e => e.name === 'AbortError')
+    token = null; await store.sync(); pending.resolve(json(empty)); await rejected
+    await assert.rejects(authenticatedManagement('1', store).decide(10, 'remove', null, signal), e => e.code === 'UNAUTHORIZED')
+    assert.equal(calls, 1); store.dispose()
+  })
+  await check('관리자 실제 role 재사용·중복 사용자 조회 없음·일반 사용자 요청 차단', async () => {
+    const { authenticatedAdmin } = await server.ssrLoadModule('/src/features/admin/source.ts')
+    let calls = 0
+    globalThis.fetch = async (_, options) => { calls++; assert.ok(options.headers.get('Authorization')); return json(empty) }
+    const signal = new AbortController().signal, store = await ready({ ...user, role: 'ADMIN' })
+    const service = authenticatedAdmin(store)
+    assert.equal((await service.account(signal)).role, 'ADMIN'); assert.equal(calls, 0)
+    await service.list('reports', 'RECEIVED', undefined, signal); assert.equal(calls, 1); store.dispose()
+    const ordinary = await ready(), denied = authenticatedAdmin(ordinary)
+    assert.equal((await denied.account(signal)).role, 'USER')
+    await assert.rejects(denied.list('reports', 'RECEIVED', undefined, signal), e => e.status === 403)
+    assert.equal(calls, 1); ordinary.dispose()
   })
   console.log(`${passed} auth session checks passed (intercepted API/state/static render; no real backend/browser).`)
 } finally { globalThis.fetch = originalFetch; await server.close() }
