@@ -115,4 +115,12 @@ public class SchoolVerification {
         this.reviewedAt = now;
         this.documentUrl = null;
     }
+
+    /** AUTH-09 탈퇴: 심사 대기 중인 서류 인증을 반려로 닫습니다 (처리한 관리자 없음). 사진은 서비스에서 지웁니다 */
+    public void cancelByWithdrawal(LocalDateTime now) {
+        this.status = VerificationStatus.REJECTED;
+        this.rejectReason = "회원 탈퇴로 신청이 취소됐어요";
+        this.reviewedAt = now;
+        this.documentUrl = null;
+    }
 }

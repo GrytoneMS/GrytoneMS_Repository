@@ -25,6 +25,10 @@ import com.grytonems.backend.domain.profile.ProfileItemRepository;
 import com.grytonems.backend.domain.profile.UserRoleTagRepository;
 import com.grytonems.backend.domain.profile.UserSkillRepository;
 import com.grytonems.backend.domain.user.dto.UserResponse;
+import com.grytonems.backend.domain.verification.SchoolVerification;
+import com.grytonems.backend.domain.verification.SchoolVerificationRepository;
+import com.grytonems.backend.domain.verification.VerificationMethod;
+import com.grytonems.backend.domain.verification.VerificationStatus;
 import com.grytonems.backend.domain.user.dto.WithdrawalCheckResponse;
 import com.grytonems.backend.global.error.BusinessException;
 import com.grytonems.backend.global.error.ErrorCode;
@@ -56,6 +60,7 @@ public class AccountService {
     private final UserSkillRepository skillRepository;
     private final ProfileItemRepository profileItemRepository;
     private final FileStorage fileStorage;
+    private final SchoolVerificationRepository verificationRepository;
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
@@ -143,6 +148,14 @@ public class AccountService {
         roleTagRepository.deleteAllByUserId(userId);
         skillRepository.deleteAllByUserId(userId);
         profileItemRepository.deleteAllByUserId(userId);
+
+        // 심사 대기 중인 서류 인증은 반려로 닫고 사진을 지웁니다 (관리자 목록에 이메일 없는 신청이 남지 않도록)
+        for (SchoolVerification pending : verificationRepository.findAllByUserIdAndMethodAndStatus(userId,
+                VerificationMethod.DOCUMENT, VerificationStatus.PENDING)) {
+            String path = pending.getDocumentUrl();
+            pending.cancelByWithdrawal(now);
+            fileStorage.delete(path);
+        }
 
         User withdrawing = getActiveUser(userId);
         fileStorage.delete(fileStorage.relativeOfPublicUrl(withdrawing.getProfileImageUrl()));
