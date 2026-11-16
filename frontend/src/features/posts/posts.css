@@ -11,8 +11,8 @@
 .posts-layout .button { background: var(--post-blue); border-color: transparent; border-radius: 99px; padding: 12px 22px; font-size: 14px; line-height: 20px; font-weight: 700; }
 .posts-layout .button:disabled { opacity: 0.65; }
 .posts-header { display: flex; align-items: center; gap: 36px; padding: 16px 40px; background: white; border-bottom: 1px solid var(--post-line); }
-.posts-header .post-logo { color: var(--post-ink); font-size: 20px; font-weight: 700; white-space: nowrap; }
-.post-logo span { color: var(--color-primary); }
+.posts-header .post-logo { display: inline-flex; align-items: center; flex-shrink: 0; }
+.post-logo img { display: block; width: 148px; height: auto; }
 .posts-header nav { border: 0; padding: 0; gap: 36px; align-items: center; }
 .posts-header nav a, .posts-header nav button { color: var(--post-muted); font-size: 14px; font-weight: 500; }
 .posts-header nav a[aria-current] { color: var(--color-primary); }
@@ -100,6 +100,7 @@
 }
 @media (max-width: 760px) {
   .posts-header { padding: 16px 20px; gap: 16px; flex-wrap: wrap; }
+  .post-logo img { width: 124px; }
   .posts-header nav { gap: 12px 20px; }
   .posts-main { padding: 24px 20px 40px; }
   .posts-layout h1 { font-size: 28px; line-height: 38px; }

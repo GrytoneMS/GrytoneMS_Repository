@@ -23,7 +23,7 @@ export function AppLayout() {
   if (isRecruitment) return (
     <div className="posts-layout">
       <a className="post-skip" href="#main-content">본문으로 건너뛰기</a>
-      <header className="posts-header"><Link className="post-logo" to="/posts" aria-label="TEAM:ON 홈">TEAM<span>:ON</span></Link>
+      <header className="posts-header"><Link className="post-logo" to="/posts" aria-label="TEAM:ON 홈"><img src="/brand/team-on.png" alt="TEAM:ON" width={659} height={115} /></Link>
         <nav aria-label="주 메뉴"><NavLink to="/posts" end>홈</NavLink><NavLink to="/posts/new">모집글 작성</NavLink><button disabled title="알림 기능 준비 중">알림 · 준비 중</button><Link to="/me/profile" aria-current={pathname === '/me/posts' ? 'page' : undefined}>마이페이지</Link></nav>
       </header>
       <main id="main-content" className="posts-main"><Outlet /></main>
