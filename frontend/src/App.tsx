@@ -15,10 +15,13 @@ import UserProfilePage from './pages/UserProfilePage'
 import MyPostsPage from './pages/MyPostsPage'
 import MyApplicationsPage from './pages/MyApplicationsPage'
 import NotFoundPage from './pages/NotFoundPage'
+import AdminPage from './features/admin/AdminPage'
 
 export default function App() {
   return (
     <Routes>
+      <Route path="/admin" element={<AdminPage />} />
+      <Route path="/admin/:section" element={<AdminPage />} />
       <Route element={<AppLayout />}>
         <Route index element={<Navigate to="/posts" replace />} />
         <Route path="/login" element={<LoginPage />} />
