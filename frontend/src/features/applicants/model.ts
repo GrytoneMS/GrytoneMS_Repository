@@ -5,9 +5,9 @@ export type Applicant = { id: number; nickname: string | null; schoolName: strin
 export type Application = { id: number; status: ApplicationStatus; message: string; availableTime: string; createdAt: string; applicant: Applicant }
 export type ApplicantRole = { postRoleId: number; roleName: string; headcount: number; filledCount: number; applications: Application[] }
 export type Snapshot = { post: PostDetail; roles: ApplicantRole[] }
-export type Decision = 'accept' | 'reject'
+export type Decision = 'accept' | 'reject' | 'remove'
 export type Reason = 'ROLE_MISMATCH' | 'SCHEDULE' | 'FILLED' | 'ETC'
-export type DecisionResult = { applicationId: number; status: 'ACCEPTED' | 'REJECTED'; roleClosed?: boolean; postClosed?: boolean }
+export type DecisionResult = { applicationId: number; status: 'ACCEPTED' | 'REJECTED' | 'LEFT'; roleClosed?: boolean; postClosed?: boolean; roleReopened?: boolean; postReopened?: boolean }
 export const reasonLabels: Record<Reason, string> = { ROLE_MISMATCH: '역할 조건 불일치', SCHEDULE: '일정 불일치', FILLED: '다른 지원자 선정', ETC: '기타' }
 export const statusLabels: Record<ApplicationStatus, string> = { PENDING: '대기 중', ACCEPTED: '수락됨', REJECTED: '거절됨', CANCELED: '지원 취소', CLOSED: '지원 마감', LEFT: '팀에서 나감' }
 export function findApplication(snapshot: Snapshot, id: number) {
@@ -18,6 +18,8 @@ export function decisionBlock(snapshot: Snapshot, id: number, decision: Decision
   if (!snapshot.post.isMine) return '이 모집글의 팀장만 처리할 수 있어요.'
   const item = findApplication(snapshot, id)
   if (!item) return '지원 내역을 찾을 수 없어요.'
+  if (decision === 'remove') return item.application.status === 'ACCEPTED' ? '' : '수락된 팀원만 내보낼 수 있어요.'
+  if (item.application.status === 'CLOSED') return '모집 마감으로 종료된 지원입니다. 빈자리가 생겨 역할이 다시 열려도 이 지원은 다시 수락할 수 없어요.'
   if (item.application.status !== 'PENDING') return '이미 처리된 지원이에요.'
   if (decision === 'accept') {
     const role = snapshot.post.roles.find(role => role.id === item.role.postRoleId)
@@ -28,6 +30,10 @@ export function decisionBlock(snapshot: Snapshot, id: number, decision: Decision
 }
 export function applyDecision(snapshot: Snapshot, result: DecisionResult): Snapshot {
   const target = findApplication(snapshot, result.applicationId)!
+  // 내보내기 성공 직후에는 인원·모집 상태를 추측하지 않고 서버 재조회를 기다립니다.
+  if (result.status === 'LEFT') return { ...snapshot, roles: snapshot.roles.map(role => ({ ...role,
+    applications: role.applications.map(item => item.id === result.applicationId ? { ...item, status: 'LEFT' } : item),
+  })) }
   const accepted = result.status === 'ACCEPTED'
   return {
     post: { ...snapshot.post, status: result.postClosed ? 'CLOSED' : snapshot.post.status,
@@ -45,14 +51,14 @@ export function managementFailure(error: unknown, operation: 'load' | 'refresh' 
     : '지원자 목록을 불러오지 못했어요. 목록을 다시 조회해 주세요.'
   if (error instanceof ApiError) {
     const messages: Record<string, string> = {
-      AUTH_PENDING: '공통 인증 연동을 기다리고 있어요. 로그인·학교 인증 화면은 준비 중이며 관리 요청을 보내지 않았습니다.',
+      AUTH_PENDING: '로그인이 필요해요. 토큰 없는 관리 요청은 보내지 않았습니다.',
       UNAUTHORIZED: '로그인이 필요하거나 만료됐어요.', FORBIDDEN: '이 모집글의 팀장만 지원자를 관리할 수 있어요.',
       NOT_FOUND: '모집글 또는 지원 내역을 찾을 수 없어요.', SUSPENDED: '이용이 정지된 계정은 처리할 수 없어요.',
       UNVERIFIED: '학교 인증이 필요해요.', ROLE_FULL: '역할이 마감됐거나 정원이 찼어요. 최신 현황을 다시 확인해 주세요.',
       ROLE_CLOSED: '역할 모집이 마감됐어요. 최신 현황을 다시 확인해 주세요.',
       INVALID_APPLICATION_STATUS: '이미 처리된 지원이에요. 최신 목록을 다시 확인해 주세요.',
     }
-    return { code: error.code, message: messages[error.code] ?? (operation !== 'decide' && error.code === 'INVALID_RESPONSE' ? queryMessage : error.message),
+    return { code: error.code, message: messages[error.code] ?? (operation !== 'decide' ? queryMessage : error.message),
       access: error.status === 401 || error.status === 403 || error.status === 404,
       reconcile: operation !== 'load' && (error.status >= 500 || ['ROLE_FULL', 'ROLE_CLOSED', 'INVALID_APPLICATION_STATUS', 'INVALID_RESPONSE'].includes(error.code)) }
   }

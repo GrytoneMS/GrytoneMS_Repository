@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { Button } from '../components/Button'
 import { isPostMock } from '../features/posts/source'
+import { readAccessToken } from '../features/auth/api'
 import { createManagementController, initialManagementState } from '../features/applicants/controller'
 import { managementService } from '../features/applicants/source'
 import { ApplicantsView } from '../features/applicants/ApplicantsView'
@@ -12,9 +13,17 @@ import '../features/applicants/applicants.css'
 export default function PostApplicantsPage() {
   const { postId = '' } = useParams()
   const [params] = useSearchParams()
-  return <ApplicantsContent key={`${postId}:${isPostMock ? params.toString() : 'real'}`} postId={postId} />
+  const [token, setToken] = useState(() => typeof window === 'undefined' ? null : readAccessToken())
+  useEffect(() => {
+    const sync = () => setToken(readAccessToken())
+    window.addEventListener('storage', sync)
+    window.addEventListener('focus', sync)
+    const timer = window.setInterval(sync, 500)
+    return () => { window.removeEventListener('storage', sync); window.removeEventListener('focus', sync); window.clearInterval(timer) }
+  }, [])
+  return <ApplicantsContent key={`${postId}:${isPostMock ? params.toString() : token}`} postId={postId} token={token} />
 }
-function ApplicantsContent({ postId }: { postId: string }) {
+function ApplicantsContent({ postId, token }: { postId: string; token: string | null }) {
   const [params, setParams] = useSearchParams()
   const [state, setState] = useState(initialManagementState)
   const [reason, setReason] = useState<Reason | null>(null)
@@ -24,12 +33,12 @@ function ApplicantsContent({ postId }: { postId: string }) {
   const errorNotice = useRef<HTMLDivElement>(null)
   const query = isPostMock ? params.toString() : ''
   useEffect(() => {
-    // 공통 인증 컨텍스트가 아직 없습니다. 임시 토큰이나 저장 정책을 만들지 않습니다.
-    const manager = createManagementController(managementService(postId, new URLSearchParams(query)), setState)
+    const manager = createManagementController(managementService(postId, new URLSearchParams(query), { token: token ?? undefined }), setState,
+      () => isPostMock || readAccessToken() === token)
     controller.current = manager
     void manager.load()
     return () => manager.dispose()
-  }, [postId, query])
+  }, [postId, query, token])
   useEffect(() => { if (state.notice) resultNotice.current?.focus() }, [state.revision, state.notice])
   useEffect(() => { if (state.error) errorNotice.current?.focus() }, [state.error])
   const target = confirmation && state.snapshot ? findApplication(state.snapshot, confirmation.id) : null
@@ -39,8 +48,8 @@ function ApplicantsContent({ postId }: { postId: string }) {
     <h1 className="applicants-page-title">모집글 지원자 관리</h1>
     {isPostMock && <aside className="post-dev" aria-label="지원자 관리 개발 예시"><strong>개발용 예시 · 실제 인증·지원자·처리 요청이 아닙니다</strong><div>
       <label>사용자<select value={params.get('viewer') ?? 'owner'} disabled={state.busy} onChange={event => update('viewer', event.target.value)}><option value="owner">팀장</option><option value="other">다른 사용자</option><option value="guest">비로그인</option></select></label>
-      <label>조회 상태<select value={params.get('manage') ?? 'normal'} disabled={state.busy} onChange={event => update('manage', event.target.value)}>{Object.entries({ normal: '여러 역할·지원 상태', empty: '지원자 없음', slow: '느린 조회', error: '조회 실패', notFound: '없는 모집글', full: '역할 마감·정원 도달', closedPost: '글 마감·역할 열림', canceled: '취소 상태 방어 표시' }).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-      <label>처리 결과<select value={params.get('result') ?? 'success'} disabled={state.busy} onChange={event => update('result', event.target.value)}>{Object.entries({ success: '처리 성공', failure: '처리 실패', refreshFailure: '성공 후 재조회 실패', full: '정원 초과 오류', processed: '이미 처리됨', expired: '인증 만료', forbidden: '권한 없음', notFound: '지원 없음', network: '네트워크 응답 실패' }).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+      <label>조회 상태<select value={params.get('manage') ?? 'normal'} disabled={state.busy} onChange={event => update('manage', event.target.value)}>{Object.entries({ normal: '여러 역할·지원 상태', replacement: 'A 수락·내보내기 후 새 지원자 B', empty: '지원자 없음', slow: '느린 조회', error: '조회 실패', notFound: '없는 모집글', full: '역할 마감·정원 도달', closedPost: '글 마감·역할 열림', canceled: '취소 상태 방어 표시', reopen: '마감일 전 마감 글·역할 재모집', expiredClosed: '마감일 경과·마감 유지' }).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+      <label>처리 결과<select value={params.get('result') ?? 'success'} disabled={state.busy} onChange={event => update('result', event.target.value)}>{Object.entries({ success: '처리 성공', failure: '처리 실패', refreshFailure: '성공 후 재조회 실패', full: '정원 초과 오류', processed: '이미 처리됨', expired: '인증 만료', forbidden: '권한 없음', notFound: '지원 없음', network: '네트워크 응답 실패', responseLost: '내보내기 후 응답 유실', alreadyLeft: '이미 나간 팀원' }).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
     </div><p>조건 변경·새로고침 시 예시 처리는 초기화됩니다. 취소 지원은 현재 서버 조회에서 제외됩니다.</p></aside>}
     {state.notice && <p className="post-safety" role="status" tabIndex={-1} ref={resultNotice}>{state.notice}{isPostMock && ' (개발 예시이며 실제 변경 없음)'}</p>}
     {state.busy && !state.notice && <p className="post-message" role="status">처리 요청을 보내는 중이에요. 결과 확인까지 기다려 주세요.</p>}

@@ -23,13 +23,13 @@ export const mockPosts: PostDetail[] = titles.map((title, index) => ({
   periodStart: dateAfter(21), periodEnd: dateAfter(50),
   locationCode: index === 1 ? null : 'CHEONAN_TERMINAL', locationText: null, meetingFreq: index === 1 ? null : '주 1회',
   event: ['CONTEST', 'COMPETITION'].includes(categories[index % 4]) ? { name: index === 0 ? '○○ 대학생 영상 공모전' : `개발용 예시 행사 ${index + 1}`, host: '○○ 재단', applyDeadline: dateAfter(25), officialUrl: 'https://example.com/contest' } : null,
-  isMine: false, myApplication: null,
+  isMine: false, myApplication: null, isScrapped: false,
 }))
 
 function summary(post: PostDetail): PostSummary {
   // 상세 전용 정보(위치·총 정원·권한 등)가 목록에 섞이지 않도록 명시적으로 선택합니다.
   return {
-    id: post.id, title: post.title, category: post.category, status: post.status,
+    id: post.id, title: post.title, category: post.category, status: post.status, isScrapped: post.isScrapped,
     deadline: post.deadline, dDay: post.dDay, meetingType: post.meetingType, createdAt: post.createdAt,
     leader: { id: post.leader.id, nickname: post.leader.nickname, schoolName: post.leader.schoolName },
     roles: post.roles.map(role => ({ roleCode: role.roleCode, roleName: role.roleName, remaining: role.headcount - role.filledCount })),
