@@ -13,6 +13,10 @@ public interface SchoolVerificationRepository extends JpaRepository<SchoolVerifi
     /** GET /api/verifications/me: 가장 최근 신청 */
     Optional<SchoolVerification> findFirstByUserIdOrderByIdDesc(Long userId);
 
+    /** AUTH-09: 탈퇴하는 사람의 심사 대기 서류 */
+    List<SchoolVerification> findAllByUserIdAndMethodAndStatus(Long userId, VerificationMethod method,
+            VerificationStatus status);
+
     boolean existsByUserIdAndMethodAndStatus(Long userId, VerificationMethod method, VerificationStatus status);
 
     /** ADMN-03 대기 목록: 오래된 순 (24시간 처리 목표) */

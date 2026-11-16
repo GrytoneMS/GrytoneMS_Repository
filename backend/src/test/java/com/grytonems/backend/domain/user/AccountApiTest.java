@@ -5,11 +5,13 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -26,6 +28,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -52,7 +55,11 @@ import com.grytonems.backend.domain.school.Region;
 import com.grytonems.backend.domain.school.School;
 import com.grytonems.backend.domain.school.SchoolRepository;
 import com.grytonems.backend.domain.user.AccountTestConfig.InMemoryResetTokenStore;
+import com.grytonems.backend.domain.verification.SchoolVerification;
+import com.grytonems.backend.domain.verification.SchoolVerificationRepository;
+import com.grytonems.backend.domain.verification.VerificationStatus;
 import com.grytonems.backend.domain.verification.VerificationTestConfig;
+import com.grytonems.backend.global.file.FileStorage;
 import com.grytonems.backend.domain.verification.VerificationTestConfig.RecordingEmailSender;
 
 /** 닉네임 변경(AUTH-03), 비밀번호 재설정(AUTH-05), 회원 탈퇴(AUTH-09) */
@@ -77,6 +84,8 @@ class AccountApiTest {
     @Autowired UserSkillRepository skillRepository;
     @Autowired RecordingEmailSender mailSender;
     @Autowired InMemoryResetTokenStore tokenStore;
+    @Autowired SchoolVerificationRepository verificationRepository;
+    @Autowired FileStorage fileStorage;
 
     School school;
 
@@ -91,6 +100,7 @@ class AccountApiTest {
 
     @AfterEach
     void cleanUp() {
+        verificationRepository.deleteAll();
         notificationRepository.deleteAll();
         applicationRepository.deleteAll();
         eventRepository.deleteAll();
@@ -303,5 +313,28 @@ class AccountApiTest {
         as(aliceToken, get("/api/users/me")).andExpect(status().isUnauthorized());
         login("alice@example.com", "abcd1234").andExpect(status().isUnauthorized());
         signup("alice@example.com", "새앨리스", false);
+    }
+
+    @Test
+    @DisplayName("탈퇴: 심사 대기 중인 서류 인증은 반려로 닫히고 사진이 지워짐")
+    void withdrawCancelsPendingDocument() throws Exception {
+        String token = signup("doc@example.com", "서류신청", false);
+        byte[] jpg = { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 1, 2, 3 };
+        as(token, multipart("/api/verifications/document")
+                        .file(new MockMultipartFile("file", "card.jpg", "image/jpeg", jpg))
+                        .param("schoolId", String.valueOf(school.getId())))
+                .andExpect(status().isCreated());
+        SchoolVerification pending = verificationRepository.findAll().get(0);
+        String path = pending.getDocumentUrl();
+        assertThat(Files.exists(fileStorage.root().resolve(path))).isTrue();
+
+        as(token, json(delete("/api/users/me"), Map.of("password", "abcd1234"))).andExpect(status().isOk());
+
+        SchoolVerification closed = verificationRepository.findById(pending.getId()).orElseThrow();
+        assertThat(closed.getStatus()).isEqualTo(VerificationStatus.REJECTED);
+        assertThat(closed.getRejectReason()).isEqualTo("회원 탈퇴로 신청이 취소됐어요");
+        assertThat(closed.getDocumentUrl()).isNull();
+        assertThat(closed.getReviewedAt()).isNotNull();
+        assertThat(Files.exists(fileStorage.root().resolve(path))).isFalse();
     }
 }
