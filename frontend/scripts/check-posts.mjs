@@ -135,7 +135,6 @@ try {
       ['/login', '로그인'], ['/signup', '회원가입'], ['/school-verification', '학교 인증'],
       ['/profile/setup', '초기 프로필 설정'], ['/me/profile', '내 프로필'],
       ['/me/profile/edit', '프로필 수정'], ['/users/1', '다른 사용자 프로필'],
-      ['/me/applications', '내 지원 내역'],
     ]) {
       const html = render(path)
       assert.ok(html.includes(`<h1>${title}</h1>`), path)
@@ -143,6 +142,11 @@ try {
       assert.ok(!html.includes('class="posts-layout"'), path)
     }
     assert.ok(render('/posts').includes('class="posts-layout"'))
+    const myApplications = render('/me/applications')
+    assert.ok(myApplications.includes('class="posts-layout"'))
+    assert.ok(myApplications.includes('<h1>내 지원 내역</h1>'))
+    assert.ok(myApplications.includes('공통 인증 연동 대기 중'))
+    assert.ok(render('/me/applications/other').includes('class="app-layout"'))
     assert.ok(render('/posts/1').includes('class="posts-layout"'))
     assert.ok(render('/posts/1/applicants').includes('class="posts-layout"'))
     assert.ok(render('/posts/1/applicants').includes('모집글 지원자 관리'))
@@ -168,7 +172,7 @@ try {
       assert.ok(html.includes('class="posts-header"'), path)
       assert.ok(!html.includes('class="app-layout"'), path)
     }
-    for (const path of ['/posts/1/delete', '/posts/1/editor', '/posts/1/edit/extra', '/posts/1/applicants/edit', '/posts/1/extra/edit', '/users/1/edit']) {
+    for (const path of ['/posts/1/delete', '/posts/1/editor', '/posts/1/edit/extra', '/posts/1/applicants/edit', '/posts/1/extra/edit', '/users/1/edit', '/me/posts/other', '/me/applications/other', '/me/posts-extra', '/me/applications-extra']) {
       const html = render(path)
       assert.ok(html.includes('class="app-layout"'), path)
       assert.ok(!html.includes('class="posts-layout"'), path)
