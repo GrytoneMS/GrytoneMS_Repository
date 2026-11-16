@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router'
+import { Link, useLocation, useParams, useSearchParams } from 'react-router'
 import { Button } from '../components/Button'
 import { MockControls, PostError, RoleAvailability, RoleRequirements, StatusBadge } from '../features/posts/components'
 import { categoryLabels, locationLabel, meetingLabels, postActionLabel } from '../features/posts/model'
@@ -20,6 +20,8 @@ export default function PostDetailPage() {
 }
 
 function PostDetailContent() {
+  const location = useLocation()
+  const editSaved = location.state?.postEditSaved === true
   const { postId = '' } = useParams()
   const [params, setParams] = useSearchParams()
   const scenario = readScenario(params.get('scenario'))
@@ -81,6 +83,7 @@ function PostDetailContent() {
       </select></label>
     </div>}
     <Link className="post-back" to={back}>← 목록으로 돌아가기</Link>
+    {editSaved && <p className="post-safety" role="status">{location.state?.example ? '개발용 예시 수정이 완료됐어요.' : '모집글 수정이 완료됐어요.'}{error ? ' 저장은 완료됐지만 최신 상세 조회에 실패했어요. 다시 저장할 필요 없이 아래에서 조회를 재시도해 주세요.' : ' 최신 상세 정보를 조회합니다.'}</p>}
     {notice && <p role="status" className="post-safety" tabIndex={-1} data-application-notice>{notice}</p>}
     {refreshFailed && post && <div className="post-message" role="status"><p>지원은 완료됐지만 최신 상세 정보를 불러오지 못했어요. 다시 지원할 필요는 없습니다.</p><Button disabled={refreshing} onClick={() => void refreshApplication(post)}>{refreshing ? '상세 갱신 중…' : '상세 정보만 다시 불러오기'}</Button></div>}
     {loading ? <p className="post-message" role="status">모집글을 불러오는 중…</p> : error ? <PostError message={error} retry={retryDetail} /> : post && <div className="post-detail-grid">
@@ -106,6 +109,7 @@ function PostDetailContent() {
           <RoleRequirements requirements={role.requirements} /><progress max={role.headcount} value={role.filledCount} aria-label={`${role.roleName} 모집 ${role.headcount}명 중 ${role.filledCount}명 충원`} />
           <Button disabled={!!applicationBlock(post) || !roleOpen(role)} onClick={() => setModal({ roleId: role.id })}>{roleOpen(role) ? `${role.roleName} 지원하기` : '역할 모집 마감'}</Button>
         </section>)}
+        {post.isMine && <Link className="button" to={`/posts/${post.id}/edit${isPostMock ? '?editExample=success' : ''}`}>모집글 수정</Link>}
         {post.isMine ? <Link className="button" to={`/posts/${post.id}/applicants${isPostMock ? `?${params}` : ''}`}>지원자 관리</Link> : <Button disabled={!!applicationBlock(post)} onClick={() => setModal({ roleId: null })}>{post.myApplication ? postActionLabel(post) : applicationBlock(post) || '지원하기'}</Button>}
         <p className="post-note">{post.isMine ? '지원자 관리 화면에서 지원자를 조회하고 수락·거절할 수 있습니다. 모집 마감과 연락 수단은 아래에서 확인할 수 있어요.' : post.myApplication ? '지원 이력이 있어 재지원할 수 없습니다. 연락 수단은 수락된 지원자만 확인할 수 있어요.' : '지원 전 역할과 참여 가능한 시간을 확인해 주세요.'}{isPostMock && ' 현재는 개발용 예시 상태입니다.'}</p>
         <div className="post-secondary-actions"><Button disabled>스크랩 · 준비 중</Button><Button disabled>신고 · 준비 중</Button></div>

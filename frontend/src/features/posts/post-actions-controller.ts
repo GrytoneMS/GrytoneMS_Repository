@@ -3,7 +3,7 @@ import type { PostDetail } from './model'
 import { safeContactLink } from './post-actions-api'
 
 export const canReadContact = (post: PostDetail) => post.isMine || post.myApplication?.status === 'ACCEPTED'
-export const canClosePost = (post: PostDetail) => post.isMine && post.status === 'OPEN'
+export const canClosePost = (post: Pick<PostDetail, 'isMine' | 'status'>) => post.isMine && post.status === 'OPEN'
 export function closedPost(post: PostDetail): PostDetail {
   return { ...post, status: 'CLOSED', roles: post.roles.map(role => ({ ...role, status: 'CLOSED' })),
     myApplication: post.myApplication?.status === 'PENDING' ? { ...post.myApplication, status: 'CLOSED' } : post.myApplication }
