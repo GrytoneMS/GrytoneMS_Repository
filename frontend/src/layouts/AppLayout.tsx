@@ -15,11 +15,12 @@ const links = [
   { to: '/users/example-user', label: '다른 사용자 프로필' },
   { to: '/me/posts', label: '내 모집글' },
   { to: '/me/applications', label: '내 지원 내역' },
+  { to: '/me/scraps', label: '내 스크랩' },
 ]
 
 export function AppLayout() {
   const { pathname } = useLocation()
-  const isRecruitment = pathname === '/me/posts' || pathname === '/me/applications' || pathname === '/posts' || /^\/posts\/[^/]+(?:\/(?:applicants|edit))?$/.test(pathname)
+  const isRecruitment = pathname === '/me/posts' || pathname === '/me/applications' || pathname === '/me/scraps' || pathname === '/posts' || /^\/posts\/[^/]+(?:\/(?:applicants|edit))?$/.test(pathname)
   if (isRecruitment) return (
     <div className="posts-layout">
       <a className="post-skip" href="#main-content">본문으로 건너뛰기</a>

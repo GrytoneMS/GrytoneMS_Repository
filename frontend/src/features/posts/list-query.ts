@@ -43,7 +43,7 @@ export function appendPostFilters(params: URLSearchParams, filters: Partial<Post
 export function listSearchParams(conditions: PostListConditions, previous = new URLSearchParams()) {
   const params = appendPostFilters(new URLSearchParams({ sort: conditions.sort }), conditions)
   // 개발용 시나리오는 보존하되 커서는 URL 상태로 복원하지 않습니다.
-  for (const key of ['scenario', 'viewer']) if (previous.has(key)) params.set(key, previous.get(key)!)
+  for (const key of ['scenario', 'viewer', 'scrapExample', 'scrapUser', 'scrapCase', 'scrapResult', 'scrapReset']) if (previous.has(key)) params.set(key, previous.get(key)!)
   return params
 }
 export function keywordError(keyword: string) {

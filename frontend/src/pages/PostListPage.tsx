@@ -6,6 +6,8 @@ import { isPostMock, loadPosts, readScenario, type Scenario } from '../features/
 import { ListFilters } from '../features/posts/ListFilters'
 import { clearAllConditions, keywordError, listSearchParams, readListConditions, type PostListConditions } from '../features/posts/list-query'
 import { createListLoader } from '../features/posts/list-loader'
+import { ScrapExamples } from '../features/scraps/ScrapContext'
+import { useScraps } from '../features/scraps/context'
 
 export default function PostListPage() {
   const [params, setParams] = useSearchParams()
@@ -15,6 +17,7 @@ export default function PostListPage() {
   const change = (update: (previous: PostListConditions) => PostListConditions) => setParams(previous => listSearchParams(update(readListConditions(previous)), previous))
   const canonical = listSearchParams(conditions, params).toString()
   return <section className="post-list" aria-labelledby="post-list-title">
+    <ScrapExamples />
     <MockControls scenario={scenario} onScenario={value => setParams(previous => { const next = new URLSearchParams(previous); next.set('scenario', value); return next })} />
     <div className="post-list-heading"><div><p className="post-eyebrow">천안·아산 대학생을 위한 팀원 모집</p><h1 id="post-list-title">어떤 팀원을 찾고 있나요?</h1></div>
       <div className="post-sort" role="group" aria-label="모집글 정렬"><Button aria-pressed={conditions.sort === 'LATEST'} onClick={() => change(previous => ({ ...previous, sort: 'LATEST' }))}>최신순</Button><Button aria-pressed={conditions.sort === 'DEADLINE'} onClick={() => change(previous => ({ ...previous, sort: 'DEADLINE' }))}>마감 임박순</Button></div>
@@ -27,8 +30,14 @@ export default function PostListPage() {
 }
 
 function PostListResults({ conditions, scenario, search, clear }: { conditions: PostListConditions; scenario: Scenario; search: string; clear: () => void }) {
+  const scraps = useScraps()
   // 조건별 새 loader로 목록·커서를 초기화하고, 이전 loader는 abort + 버전 검사로 폐기합니다.
-  const [loader] = useState(() => createListLoader((cursor, signal) => loadPosts(conditions.sort, cursor, scenario, signal, {}, conditions)))
+  const [loader] = useState(() => createListLoader(async (cursor, signal) => {
+    const revision = scraps?.controller.getRevision()
+    const page = await loadPosts(conditions.sort, cursor, scenario, signal, { token: scraps?.token }, conditions)
+    if (scraps && !scraps.mock && !signal.aborted) scraps.controller.observe(page.items, revision!)
+    return page
+  }))
   const state = useSyncExternalStore(loader.subscribe, loader.getSnapshot, loader.getSnapshot)
   useEffect(() => { void loader.first(); return loader.cancel }, [loader])
   const { items, hasNext, nextCursor, loading, error, moreError } = state

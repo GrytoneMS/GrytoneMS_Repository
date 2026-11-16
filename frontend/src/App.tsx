@@ -14,11 +14,13 @@ import ProfileEditPage from './pages/ProfileEditPage'
 import UserProfilePage from './pages/UserProfilePage'
 import MyPostsPage from './pages/MyPostsPage'
 import MyApplicationsPage from './pages/MyApplicationsPage'
+import MyScrapsPage from './pages/MyScrapsPage'
+import { ScrapProvider } from './features/scraps/ScrapContext'
 import NotFoundPage from './pages/NotFoundPage'
 
 export default function App() {
   return (
-    <Routes>
+    <ScrapProvider><Routes>
       <Route element={<AppLayout />}>
         <Route index element={<Navigate to="/posts" replace />} />
         <Route path="/login" element={<LoginPage />} />
@@ -35,8 +37,9 @@ export default function App() {
         <Route path="/users/:userId" element={<UserProfilePage />} />
         <Route path="/me/posts" element={<MyPostsPage />} />
         <Route path="/me/applications" element={<MyApplicationsPage />} />
+        <Route path="/me/scraps" element={<MyScrapsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
-    </Routes>
+    </Routes></ScrapProvider>
   )
 }

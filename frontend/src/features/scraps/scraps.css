@@ -1,0 +1,21 @@
+.post-card { position: relative; }
+.scrap-control { display: grid; gap: 6px; min-width: 0; }
+.scrap-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 40px; min-height: 40px; padding: 8px 14px; border: 1px solid var(--post-line, #e5e9f0); border-radius: 99px; background: white; color: var(--post-muted, #5b6475); cursor: pointer; }
+.scrap-button[aria-pressed=true] { background: var(--color-primary); border-color: transparent; color: white; }
+.scrap-button:disabled { cursor: default; opacity: .55; }
+.scrap-button svg { flex-shrink: 0; }
+.scrap-compact .scrap-button { position: absolute; top: 64px; right: 16px; padding: 8px; }
+.scrap-error { margin: 0; font-size: 12px; color: #a32323; background: white; border: 1px solid #e9baba; border-radius: 8px; padding: 8px; overflow-wrap: anywhere; }
+.scrap-compact .scrap-error { margin: 0 16px 12px; }
+.scrap-recheck { border: 1px solid var(--post-line); border-radius: 8px; background: white; color: var(--post-ink); padding: 6px 10px; font-size: 12px; cursor: pointer; }
+.scrap-compact .scrap-recheck { margin: 0 16px 12px; }
+.scrap-notice { position: fixed; z-index: 20; bottom: 20px; left: 50%; transform: translateX(-50%); margin: 0; max-width: calc(100% - 32px); padding: 12px 20px; color: white; background: #172640; border-radius: 12px; box-shadow: 0 4px 16px #0f172a30; }
+.scrap-page { max-width: 1200px; margin-inline: auto; }
+.scrap-tools { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-block: 24px; }
+.scrap-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.scrap-grid .post-card-cover { min-height: 112px; }
+.scrap-grid .scrap-compact .scrap-button { top: 60px; }
+.scrap-grid .post-card-body h2 { margin-bottom: 12px; }
+.scrap-grid .post-chip-closed { background: var(--post-soft); }
+@media (max-width: 1000px) { .scrap-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .scrap-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; } }

@@ -12,6 +12,8 @@ import type { ApplicationDraft, ApplyResponse } from '../features/posts/applicat
 import { mockApplicationSender } from '../features/posts/application-mock'
 import { refreshAppliedPost } from '../features/posts/application-submit'
 import { PostActions } from '../features/posts/PostActions'
+import { ScrapButton, ScrapExamples } from '../features/scraps/ScrapContext'
+import { useScraps } from '../features/scraps/context'
 
 export default function PostDetailPage() {
   const { postId } = useParams()
@@ -20,6 +22,7 @@ export default function PostDetailPage() {
 }
 
 function PostDetailContent() {
+  const scraps = useScraps()
   const location = useLocation()
   const editSaved = location.state?.postEditSaved === true
   const { postId = '' } = useParams()
@@ -39,13 +42,15 @@ function PostDetailContent() {
   const update = (key: string, value: string) => setParams(previous => { const next = new URLSearchParams(previous); next.set(key, value); return next }, { replace: true })
   useEffect(() => {
     const request = new AbortController()
-    loadPost(postId, scenario, request.signal, viewer).then(result => {
+    const revision = scraps?.controller.getRevision()
+    loadPost(postId, scenario, request.signal, viewer, { token: scraps?.token }).then(result => {
+      if (scraps && !scraps.mock && !request.signal.aborted) scraps.controller.observe([result], revision!)
       if (!request.signal.aborted) setPost(firstRoleClosed ? { ...result, roles: result.roles.map((role, index) => index === 0 ? { ...role, status: 'CLOSED' } : role) } : result)
     })
       .catch((failure: unknown) => { if (!request.signal.aborted) setError(postErrorMessage(failure)) })
       .finally(() => { if (!request.signal.aborted) setLoading(false) })
     return () => request.abort()
-  }, [postId, scenario, viewer, retry, firstRoleClosed])
+  }, [postId, scenario, viewer, retry, firstRoleClosed, scraps])
   const backParams = new URLSearchParams(params); backParams.delete('viewer')
   const back = `/posts${backParams.size ? `?${backParams}` : ''}`
   const retryDetail = () => { setLoading(true); setError(''); setRetry(value => value + 1) }
@@ -53,7 +58,7 @@ function PostDetailContent() {
     setRefreshing(true)
     const result = await refreshAppliedPost(current, async () => {
       if (isPostMock && outcome === 'refreshFailure') throw new Error('개발용 상세 재조회 실패')
-      const updated = await loadPost(postId, scenario, new AbortController().signal, viewer)
+      const updated = await loadPost(postId, scenario, new AbortController().signal, viewer, { token: scraps?.token })
       return firstRoleClosed ? { ...updated, roles: current.roles } : updated
     })
     setPost(result.post)
@@ -70,6 +75,7 @@ function PostDetailContent() {
     void refreshApplication(applied)
   }
   return <section className="post-detail" aria-label="모집글 상세">
+    <ScrapExamples />
     <MockControls scenario={scenario} onScenario={value => update('scenario', value)} viewer={viewer} onViewer={value => update('viewer', value)} />
     {isPostMock && <div className="application-examples"><label>개발용 지원 결과 예시<select value={outcome ?? 'success'} onChange={event => update('application', event.target.value)}>
       {Object.entries({ success: '지원 성공', failure: '서버 실패', refreshFailure: '성공 후 상세 재조회 실패', expired: '인증 만료', unverified: '학교 미인증', duplicate: '중복 지원', closed: '제출 직전 모집 마감', blocked: '삭제·숨김·차단', suspended: '이용 정지' }).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
@@ -112,7 +118,7 @@ function PostDetailContent() {
         {post.isMine && <Link className="button" to={`/posts/${post.id}/edit${isPostMock ? '?editExample=success' : ''}`}>모집글 수정</Link>}
         {post.isMine ? <Link className="button" to={`/posts/${post.id}/applicants${isPostMock ? `?${params}` : ''}`}>지원자 관리</Link> : <Button disabled={!!applicationBlock(post)} onClick={() => setModal({ roleId: null })}>{post.myApplication ? postActionLabel(post) : applicationBlock(post) || '지원하기'}</Button>}
         <p className="post-note">{post.isMine ? '지원자 관리 화면에서 지원자를 조회하고 수락·거절할 수 있습니다. 모집 마감과 연락 수단은 아래에서 확인할 수 있어요.' : post.myApplication ? '지원 이력이 있어 재지원할 수 없습니다. 연락 수단은 수락된 지원자만 확인할 수 있어요.' : '지원 전 역할과 참여 가능한 시간을 확인해 주세요.'}{isPostMock && ' 현재는 개발용 예시 상태입니다.'}</p>
-        <div className="post-secondary-actions"><Button disabled>스크랩 · 준비 중</Button><Button disabled>신고 · 준비 중</Button></div>
+        <div className="post-secondary-actions"><ScrapButton postId={post.id} initial={post.isScrapped} own={post.isMine || scraps?.userId !== undefined && String(scraps.userId) === String(post.leader.id)} title={post.title} /><Button disabled>신고 · 준비 중</Button></div>
         <PostActions post={post} onPost={setPost} viewer={viewer} scenario={scenario} closing={params.get('closing')} contact={params.get('contact')} />
       </aside>
     </div>}
