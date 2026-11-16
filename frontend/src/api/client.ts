@@ -44,14 +44,15 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const { token, body, headers: initialHeaders, ...init } = options
   const headers = new Headers(initialHeaders)
   headers.set('Accept', 'application/json')
-  if (body !== undefined) headers.set('Content-Type', 'application/json')
+  const isMultipart = body instanceof FormData
+  if (body !== undefined && !isMultipart) headers.set('Content-Type', 'application/json')
   if (token) headers.set('Authorization', `Bearer ${token}`)
 
   // Network errors and AbortError propagate unchanged to the caller.
   const response = await fetch(`${baseUrl.replace(/\/+$/, '')}${path}`, {
     ...init,
     headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined || isMultipart ? body : JSON.stringify(body),
   })
   let payload: unknown
   try {

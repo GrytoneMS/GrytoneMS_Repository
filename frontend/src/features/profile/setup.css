@@ -1,0 +1,43 @@
+.app-layout:has(.profile-setup) { max-width: none; padding: 0; }
+.app-layout:has(.profile-setup) > header { display: none; }
+.app-layout:has(.profile-setup) > main { padding: 0; }
+
+.profile-setup {
+  --setup-blue: #4053b8;
+  --setup-background: #f5f6fa;
+  --setup-border: #e4e7f0;
+  --setup-muted: #555f76;
+  min-height: 100vh;
+  padding: 22px clamp(16px, 3.5vw, 54px) 54px;
+  background: var(--setup-background);
+  color: #151a2d;
+}
+
+.profile-setup header a { color: inherit; font-weight: 900; text-decoration: none; }
+.profile-setup header span { color: #4864d8; }
+.profile-setup-card {
+  width: min(100%, 540px);
+  margin: clamp(30px, 7vw, 100px) auto 0;
+  padding: clamp(22px, 3vw, 36px);
+  border: 1px solid var(--setup-border);
+  border-radius: 24px;
+  box-shadow: 0 2px 2px rgb(21 26 45 / 12%);
+  background: white;
+}
+
+.profile-setup-card h1 { margin: 0 0 18px; font-size: 1.65rem; }
+.profile-setup-help { margin: 0 0 18px; color: var(--setup-muted); font-size: .83rem; }
+.profile-setup .input-field { gap: 4px; }
+.profile-setup .input-field label, .profile-setup-role-heading h2 { font-size: .83rem; font-weight: 700; }
+.profile-setup .input { min-height: 44px; border-color: var(--setup-border); border-radius: 12px; background: var(--setup-background); }
+.profile-setup-nickname { display: flex; justify-content: space-between; gap: 8px; margin: 8px 0 18px; color: var(--setup-muted); font-size: .8rem; }
+.profile-setup-role-heading { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.profile-setup-role-heading h2 { margin: 0; }
+.profile-setup-skip { padding: 0; border: 0; color: #354aaf; background: transparent; font-size: .83rem; cursor: pointer; }
+.profile-setup-skip:disabled { opacity: .55; cursor: default; }
+.profile-setup-roles { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 18px; }
+.profile-setup-roles button { min-height: 32px; padding: 4px 12px; border: 0; border-radius: 999px; background: #edf0f6; color: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; }
+.profile-setup-roles button[aria-pressed=true] { background: #151a2d; color: white; }
+.profile-setup-roles button:disabled { opacity: .55; cursor: default; }
+.profile-setup-error { margin: 0 0 12px; color: var(--color-error); }
+.profile-setup-start { width: 100%; min-height: 48px; border-color: var(--setup-blue); border-radius: 999px; background: var(--setup-blue); font-weight: 700; }
