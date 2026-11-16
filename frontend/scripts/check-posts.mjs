@@ -128,16 +128,40 @@ try {
     assert.equal(model.locationLabel({ ...post, locationCode: 'CUSTOM', locationText: '실제 응답 장소' }), '실제 응답 장소')
     assert.equal('contactLink' in post, false)
   })
-  await check('기존 인증·프로필 등 라우트의 정적 렌더 및 모집 화면 헤더 분리', async () => {
+  await check('인증·프로필 실제 화면(비로그인) 정적 렌더 및 모집 화면 헤더 분리', async () => {
+    // Node에는 브라우저 저장소가 없어 토큰 없는 메모리 저장소로 대신합니다 (비로그인 상태).
+    const memoryStorage = () => {
+      const store = new Map()
+      return { getItem: key => store.get(key) ?? null, setItem: (key, value) => store.set(key, String(value)), removeItem: key => store.delete(key), clear: () => store.clear() }
+    }
+    const savedStorage = { session: globalThis.sessionStorage, local: globalThis.localStorage }
+    globalThis.sessionStorage = memoryStorage()
+    globalThis.localStorage = memoryStorage()
+    try {
     const { default: App } = await server.ssrLoadModule('/src/App.tsx')
     const render = path => renderToStaticMarkup(createElement(MemoryRouter, { initialEntries: [path] }, createElement(App)))
-    for (const [path, title] of [
-      ['/login', '로그인'], ['/signup', '회원가입'], ['/school-verification', '학교 인증'],
-      ['/profile/setup', '초기 프로필 설정'], ['/me/profile', '내 프로필'],
-      ['/me/profile/edit', '프로필 수정'], ['/users/1', '다른 사용자 프로필'],
+    // 로그인·회원가입: 실제 입력 폼이 보여야 합니다.
+    const login = render('/login')
+    assert.ok(login.includes('>로그인</h1>'), '/login 제목')
+    for (const field of ['email', 'password']) assert.ok(login.includes(`name="${field}"`), `/login ${field}`)
+    const signup = render('/signup')
+    assert.ok(signup.includes('>회원가입</h1>'), '/signup 제목')
+    for (const field of ['email', 'password', 'nickname', 'agreeTerms', 'agreePrivacy']) assert.ok(signup.includes(`name="${field}"`), `/signup ${field}`)
+    // 로그인이 필요한 화면: 빈 페이지가 아니라 로그인 안내와 로그인 링크가 보여야 합니다.
+    for (const [path, title, guide] of [
+      ['/school-verification', '학교 인증', '학교 인증을 진행하려면'],
+      ['/profile/setup', '프로필 설정', '프로필을 설정하려면'],
+      ['/me/profile', '내 프로필', '프로필을 보려면'],
+      ['/me/profile/edit', '내 프로필', '프로필을 보려면'],
+      ['/users/1', '사용자 프로필', '프로필을 볼 수 있어요'],
     ]) {
       const html = render(path)
-      assert.ok(html.includes(`<h1>${title}</h1>`), path)
+      assert.ok(html.includes(`>${title}</h1>`), `${path} 제목`)
+      assert.ok(html.includes(guide), `${path} 로그인 안내`)
+      assert.ok(html.includes('href="/login"'), `${path} 로그인 링크`)
+    }
+    for (const path of ['/login', '/signup', '/school-verification', '/profile/setup', '/me/profile', '/me/profile/edit', '/users/1']) {
+      const html = render(path)
       assert.ok(html.includes('class="app-layout"'), path)
       assert.ok(!html.includes('class="posts-layout"'), path)
     }
@@ -161,6 +185,10 @@ try {
     assert.ok(create.includes('개발 중 · 인증 연동 대기'))
     assert.ok(!create.includes('로그인하기 (새 탭)'))
     assert.ok(!create.includes('학교 인증하기 (새 탭)'))
+    } finally {
+      globalThis.sessionStorage = savedStorage.session
+      globalThis.localStorage = savedStorage.local
+    }
   })
   await check('수정 경로도 모집 전용 레이아웃 적용·쿼리 무관·관계없는 하위 경로 제외', async () => {
     const { default: App } = await server.ssrLoadModule('/src/App.tsx')
