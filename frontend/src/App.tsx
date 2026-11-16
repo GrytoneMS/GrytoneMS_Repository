@@ -17,10 +17,13 @@ import MyApplicationsPage from './pages/MyApplicationsPage'
 import MyScrapsPage from './pages/MyScrapsPage'
 import { ScrapProvider } from './features/scraps/ScrapContext'
 import NotFoundPage from './pages/NotFoundPage'
+import AdminPage from './features/admin/AdminPage'
 
 export default function App() {
   return (
     <ScrapProvider><Routes>
+      <Route path="/admin" element={<AdminPage />} />
+      <Route path="/admin/:section" element={<AdminPage />} />
       <Route element={<AppLayout />}>
         <Route index element={<Navigate to="/posts" replace />} />
         <Route path="/login" element={<LoginPage />} />
