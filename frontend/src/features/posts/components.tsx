@@ -3,6 +3,8 @@ import { Button } from '../../components/Button'
 import { categoryLabels, meetingLabels } from './model'
 import type { PostRole, PostStatus, PostSummary, RoleSummary, Viewer } from './model'
 import { isPostMock, type Scenario } from './source'
+import { ScrapButton } from '../scraps/ScrapContext'
+import { useScraps } from '../scraps/context'
 
 export function RoleRequirements({ requirements }: Pick<PostRole, 'requirements'>) {
   return <p>{requirements?.trim() ? requirements : '요구조건 없음'}</p>
@@ -13,12 +15,14 @@ export function StatusBadge({ status, daysLeft }: { status: PostStatus; daysLeft
 export function RoleAvailability({ role, label = '남은' }: { role: Pick<RoleSummary, 'roleName' | 'remaining'>; label?: string }) {
   return <div className="post-role-line"><span>{role.roleName}</span><span className="post-chip post-chip-blue">{label} {role.remaining}명</span></div>
 }
-export function PostCard({ post, index, search }: { post: PostSummary; index: number; search: string }) {
+export function PostCard({ post, index, search, scrapList = false }: { post: PostSummary; index: number; search: string; scrapList?: boolean }) {
+  const scraps = useScraps()
   return <article className="post-card">
     <Link to={`/posts/${post.id}${search}`} className="post-card-link">
       <div className={`post-card-cover post-tint-${index % 4}`}><span className="post-chip">{categoryLabels[post.category]}</span><StatusBadge status={post.status} daysLeft={post.dDay} /></div>
-      <div className="post-card-body"><h2>{post.title}</h2>{post.roles.map((role, roleIndex) => <RoleAvailability key={`${role.roleCode}-${roleIndex}`} role={role} label="남은 인원" />)}<p className="post-card-meta">{[post.leader.schoolName, meetingLabels[post.meetingType]].filter(Boolean).join(' · ')}</p></div>
+      <div className="post-card-body"><h2>{post.title}</h2>{scrapList ? <span className={`post-chip ${post.status === 'CLOSED' ? 'post-chip-closed' : 'post-chip-blue'}`}>{post.status === 'CLOSED' ? '마감' : '모집중'}</span> : <>{post.roles.map((role, roleIndex) => <RoleAvailability key={`${role.roleCode}-${roleIndex}`} role={role} label="남은 인원" />)}<p className="post-card-meta">{[post.leader.schoolName, meetingLabels[post.meetingType]].filter(Boolean).join(' · ')}</p></>}</div>
     </Link>
+    <ScrapButton postId={post.id} initial={post.isScrapped} own={scraps?.userId !== undefined && String(scraps.userId) === String(post.leader.id)} title={post.title} compact />
   </article>
 }
 export function PostError({ message, retry }: { message: string; retry: () => void }) {

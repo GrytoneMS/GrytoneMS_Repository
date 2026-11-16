@@ -11,7 +11,7 @@ export type PostRole = { id: number; roleCode: RoleCode; roleName: string; headc
 export type Leader = { id: number; nickname: string | null; schoolName: string | null }
 export type PostSummary = {
   id: number; title: string; category: Category; status: PostStatus; deadline: string; dDay: number;
-  meetingType: MeetingType; leader: Leader; roles: RoleSummary[]; createdAt: string
+  meetingType: MeetingType; leader: Leader; roles: RoleSummary[]; createdAt: string; isScrapped: boolean
 }
 export type PostDetail = Omit<PostSummary, 'roles' | 'leader'> & {
   description: string; periodStart: string; periodEnd: string;
