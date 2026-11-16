@@ -1,7 +1,7 @@
 import { ApiError } from '../../api/client'
 import { mockDetail } from '../posts/mock'
 import { isPostMock } from '../posts/source'
-import { applyDecision, decisionBlock, type Application, type Snapshot } from './model'
+import { applyDecision, decisionBlock, findApplication, type Application, type Snapshot } from './model'
 import type { PostDetail } from '../posts/model'
 import type { ManagementService } from './controller'
 
@@ -32,7 +32,7 @@ export function createMockManagement(postId: string, query: URLSearchParams): Ma
       applicant: { id: 201 + index, nickname: names[index], schoolName: ['한국기술교육대학교', '순천향대학교', '선문대학교'][index % 3], major: index % 2 ? null : '컴퓨터공학', grade: index % 2 ? null : 2, profileImageUrl: null },
     }))
     const roles = post.roles.map((role, index) => ({ postRoleId: role.id, roleName: role.roleName, headcount: role.headcount, filledCount: role.filledCount,
-      applications: scenario === 'empty' ? [] : index === 0 ? applications.filter(item => item.status !== 'ACCEPTED') : index === 1 ? applications.filter(item => item.status === 'ACCEPTED') : [],
+      applications: scenario === 'empty' ? [] : post.roles.length === 1 ? applications : index === 0 ? applications.filter(item => item.status !== 'ACCEPTED') : index === 1 ? applications.filter(item => item.status === 'ACCEPTED') : [],
     }))
     if (scenario === 'full') {
       post.roles[0].filledCount = post.roles[0].headcount
@@ -40,6 +40,12 @@ export function createMockManagement(postId: string, query: URLSearchParams): Ma
       roles[0].filledCount = roles[0].headcount
     }
     if (scenario === 'closedPost') { post.status = 'CLOSED'; post.deadline = '2020-01-01' }
+    if (scenario === 'reopen' || scenario === 'expiredClosed') {
+      post.status = 'CLOSED'
+      if (scenario === 'expiredClosed') post.deadline = '2020-01-01'
+      for (const role of post.roles) { role.status = 'CLOSED'; role.filledCount = role.headcount }
+      for (const role of roles) role.filledCount = role.headcount
+    }
     // 현재 서버 조회는 CANCELED를 제외합니다. 취소 상태만 확인하는 명시적 계약 방어 예시입니다.
     if (scenario === 'canceled' && roles[0].applications[0]) roles[0].applications[0].status = 'CANCELED'
     return { post, roles }
@@ -63,6 +69,33 @@ export function createMockManagement(postId: string, query: URLSearchParams): Ma
       const errors: Record<string, [number, string]> = { failure: [500, 'INTERNAL_ERROR'], full: [409, 'ROLE_FULL'], processed: [409, 'INVALID_APPLICATION_STATUS'], expired: [401, 'UNAUTHORIZED'], forbidden: [403, 'FORBIDDEN'], notFound: [404, 'NOT_FOUND'], network: [0, 'NETWORK'] }
       if (errors[outcome]) { if (outcome === 'network') throw new TypeError('offline'); fail(...errors[outcome]) }
       snapshot ??= initial()
+      if (decision === 'remove') {
+        if (decisionBlock(snapshot, id, decision)) fail(409, 'INVALID_APPLICATION_STATUS')
+        const target = findApplication(snapshot, id)!
+        const role = snapshot.post.roles.find(role => role.id === target.role.postRoleId)!
+        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' })
+        const beforeDeadline = snapshot.post.deadline >= today
+        const roleReopened = beforeDeadline && role.status === 'CLOSED'
+        const postReopened = beforeDeadline && snapshot.post.status === 'CLOSED'
+        const result = { applicationId: id, status: 'LEFT' as const, roleReopened, postReopened }
+        snapshot = applyDecision(snapshot, result)
+        // 개발용 서버 정책 모사입니다. 실제 화면에서는 재조회 결과만 사용합니다.
+        const nextRole = snapshot.post.roles.find(role => role.id === target.role.postRoleId)!
+        nextRole.filledCount = Math.max(0, nextRole.filledCount - 1)
+        snapshot.roles.find(role => role.postRoleId === target.role.postRoleId)!.filledCount = nextRole.filledCount
+        if (roleReopened) nextRole.status = 'OPEN'
+        if (postReopened) snapshot.post.status = 'OPEN'
+        if (scenario === 'replacement' && beforeDeadline && nextRole.status === 'OPEN' && id === 501 && !findApplication(snapshot, 508)) {
+          // 재모집 후 다른 사람이 새로 지원한 서버 스냅샷. 기존 CLOSED 지원은 복원하지 않습니다.
+          const reopenedRole = snapshot.roles.find(role => role.postRoleId === target.role.postRoleId)!
+          reopenedRole.applications.push({ ...target.application, id: 508, status: 'PENDING', createdAt: new Date().toISOString(),
+            applicant: { ...target.application.applicant, id: 208, nickname: '새 지원자 B' } })
+        }
+        processed = true
+        if (outcome === 'alreadyLeft') fail(409, 'INVALID_APPLICATION_STATUS')
+        if (outcome === 'responseLost') throw new TypeError('처리 후 응답 유실')
+        return result
+      }
       if (decisionBlock(snapshot, id, decision)) fail(409, decision === 'accept' ? 'ROLE_FULL' : 'INVALID_APPLICATION_STATUS')
       const role = snapshot.roles.find(role => role.applications.some(item => item.id === id))!
       const roleClosed = decision === 'accept' && role.filledCount + 1 >= role.headcount
