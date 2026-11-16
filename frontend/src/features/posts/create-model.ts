@@ -96,6 +96,7 @@ export function createFailure(error: unknown): { message: string; fields: Create
   const entries = Array.isArray(error.fieldErrors) ? error.fieldErrors.map(({ field, message }) => [field, message]) : Object.entries(error.fieldErrors ?? {})
   const fields = Object.fromEntries(entries)
   switch (error.code) {
+    case 'AUTH_CHECKING': case 'AUTH_LOOKUP_FAILED': return { message: error.message, fields }
     case 'UNAUTHORIZED': return { message: '로그인이 필요하거나 만료되었어요. 입력 내용은 유지됩니다.', fields, action: 'login' }
     case 'UNVERIFIED': return { message: '모집글을 등록하려면 학교 인증을 완료해 주세요. 입력 내용은 유지됩니다.', fields, action: 'verify' }
     case 'SUSPENDED': return { message: '이용이 정지된 계정은 모집글을 등록할 수 없어요.', fields }

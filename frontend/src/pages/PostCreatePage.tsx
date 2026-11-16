@@ -5,7 +5,10 @@ import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { createFailure, emptyRole, initialPostDraft, needsEvent, needsLocationText, roleLabels, todayInKorea } from '../features/posts/create-model'
 import { createPostSubmitter } from '../features/posts/create-submit'
-import { CreateIntegrationNotice } from '../features/posts/CreateIntegrationNotice'
+import { AuthStatus } from '../features/auth/AuthContext'
+import { useAuth } from '../features/auth/useAuth'
+import { createPost } from '../features/posts/create-api'
+import { isPostMock } from '../features/posts/source'
 import type { CreateErrors, PostDraft, RoleDraft } from '../features/posts/create-model'
 import { categoryLabels, locationLabels, meetingLabels } from '../features/posts/model'
 import '../features/posts/create.css'
@@ -28,6 +31,7 @@ function Choices<T extends string>({ field, label, value, options, onChange, err
 }
 
 export default function PostCreatePage({ editor }: { editor?: PostEditor } = {}) {
+  const auth = useAuth()
   const navigate = useNavigate()
   const [draft, setDraft] = useState(() => editor?.initial ?? initialPostDraft())
   const [createErrors, setErrors] = useState<CreateErrors>({})
@@ -73,7 +77,7 @@ export default function PostCreatePage({ editor }: { editor?: PostEditor } = {})
       onSuccess: id => navigate(`/posts/${id}`),
       onFailure: result => { setFailure(result); showErrors(result.fields) },
       onSettled: () => setSubmitting(false),
-    })
+    }, { send: (body, options) => auth.store.execute((session, authSignal) => createPost(body, { token: session.token, signal: options?.signal ? AbortSignal.any([options.signal, authSignal]) : authSignal }), true) })
   }
   const input = (field: string, label: string, value: string, onChange: (value: string) => void, props: ComponentPropsWithoutRef<'input'> = {}) =>
     <Input {...props} id={`create-${field}`} name={field} label={label} value={value} onChange={event => onChange(event.target.value)} error={errors[field]} />
@@ -85,7 +89,8 @@ export default function PostCreatePage({ editor }: { editor?: PostEditor } = {})
     <div className="create-main">
       <h1>{editor ? '모집글 수정' : '모집글 작성'}</h1>
       <p className="create-caption">필수 항목을 입력해 주세요. 요구 조건은 선택 사항이에요.</p>
-      {editor ? editor.notice : <CreateIntegrationNotice />}
+      {editor ? editor.notice : <AuthStatus />}
+      {!editor && isPostMock && <p className="post-note">모집글 작성은 실제 API를 사용합니다. 목록 예시 모드에서도 등록 성공을 가짜로 만들지 않습니다.</p>}
       {(failureMessage || Object.keys(errors).length > 0) && <div className="create-error-summary" tabIndex={-1} role="alert">
         <p>{failureMessage || '입력 내용을 확인해 주세요.'}</p>
         {Object.keys(errors).length > 0 && <ul>{Object.entries(errors).map(([field, message]) => <li key={field}><button type="button" onClick={() => focusField(field)}>{message}</button></li>)}</ul>}

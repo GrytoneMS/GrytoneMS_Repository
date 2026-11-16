@@ -1,5 +1,5 @@
-﻿import { useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router'
 import { Button } from '../components/Button'
 import { ApplicationActionDialog } from '../features/my-applications/ApplicationActionDialog'
 import { MyApplicationsList } from '../features/my-applications/MyApplicationsList'
@@ -8,16 +8,21 @@ import { actionFor, filterParams, readFilter, statusLabels, type Action, type My
 import { actionExamples, exampleMode, listExamples, myApplicationsService } from '../features/my-applications/source'
 import { isPostMock } from '../features/posts/source'
 import '../features/my-applications/my-applications.css'
+import { AuthStatus } from '../features/auth/AuthContext'
+import { useAuth } from '../features/auth/useAuth'
 
-export default function MyApplicationsPage({ session }: { session?: Session } = {}) {
+export default function MyApplicationsPage() {
+  const auth = useAuth(), session = auth.session
   const [params] = useSearchParams()
   const status = readFilter(params), mock = exampleMode(params)
   const exampleQuery = mock ? params.toString() : ''
   // 사용자/토큰/필터 교체 때 이전 목록·확인창을 즉시 폐기합니다. 토큰은 저장하거나 URL에 넣지 않습니다.
-  const scope = JSON.stringify([session?.userId, session?.token, status, exampleQuery])
+  const scope = JSON.stringify([auth.scope, session?.userId, session?.token, status, exampleQuery])
+  if (!mock && auth.status !== 'authenticated') return <section className="post-message"><h1>내 지원 내역</h1><AuthStatus />{isPostMock && <Link to="/me/applications?example=true">개발 예시로 확인</Link>}</section>
   return <MyApplicationsContent key={scope} session={session} />
 }
 function MyApplicationsContent({ session }: { session?: Session }) {
+  const { store } = useAuth()
   const [params, setParams] = useSearchParams()
   const status = readFilter(params), mock = exampleMode(params), query = mock ? params.toString() : ''
   const userId = session?.userId, token = session?.token
@@ -26,7 +31,12 @@ function MyApplicationsContent({ session }: { session?: Session }) {
   const controller = useRef<ReturnType<typeof createMyApplicationsController> | null>(null)
   const notice = useRef<HTMLParagraphElement>(null), error = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    const manager = createMyApplicationsController(myApplicationsService(new URLSearchParams(query), userId !== undefined && token !== undefined ? { userId, token } : undefined), status, setState)
+    const base = myApplicationsService(new URLSearchParams(query), userId !== undefined && token !== undefined ? { userId, token } : undefined)
+    const service: typeof base = mock ? base : {
+      load: (status, cursor, signal) => store.execute((_, authSignal) => base.load(status, cursor, AbortSignal.any([signal, authSignal]))),
+      act: (id, action, signal) => store.execute((_, authSignal) => base.act(id, action, AbortSignal.any([signal, authSignal]))),
+    }
+    const manager = createMyApplicationsController(service, status, setState)
     controller.current = manager
     void manager.load()
     const refresh = () => { void manager.load() }
@@ -34,7 +44,7 @@ function MyApplicationsContent({ session }: { session?: Session }) {
     window.addEventListener('focus', refresh); window.addEventListener('pageshow', refresh)
     document.addEventListener('visibilitychange', visible)
     return () => { manager.dispose(); window.removeEventListener('focus', refresh); window.removeEventListener('pageshow', refresh); document.removeEventListener('visibilitychange', visible) }
-  }, [status, query, userId, token])
+  }, [status, query, userId, token, mock, store])
   useEffect(() => { if (state.notice) notice.current?.focus() }, [state.notice])
   useEffect(() => { if (state.error) error.current?.focus() }, [state.error])
   const locked = state.loading || state.moreLoading || state.busyId !== null
@@ -42,13 +52,13 @@ function MyApplicationsContent({ session }: { session?: Session }) {
   const validConfirmation = confirmation && !locked && !state.needsRefresh && state.items.some(item => item.id === confirmation.item.id && actionFor(item) === confirmation.action)
   return <section className="my-applications-page" aria-label="내 지원 내역" aria-busy={locked}>
     <h1>내 지원 내역</h1>
-    {isPostMock && <aside className="post-dev" aria-label="내 지원 내역 개발 예시"><strong>{mock ? '개발용 예시 · 실제 조회·취소·팀 나가기 요청이 아닙니다' : '실제 API 모드 · 공통 인증 연결 필요'}</strong><div>
+    {isPostMock && <aside className="post-dev" aria-label="내 지원 내역 개발 예시"><strong>{mock ? '개발용 예시 · 실제 조회·취소·팀 나가기 요청이 아닙니다' : '실제 API 모드 · 로그인 사용자 조회'}</strong><div>
       <label>데이터<select disabled={state.busyId !== null} value={mock ? 'true' : 'false'} onChange={event => update('example', event.target.value)}><option value="false">실제 API</option><option value="true">개발 예시</option></select></label>
       {mock && <><label>사용자<select disabled={state.busyId !== null} value={params.get('viewer') ?? 'alice'} onChange={event => update('viewer', event.target.value)}><option value="alice">사용자 A</option><option value="bob">사용자 B</option><option value="guest">로그아웃</option></select></label>
         <label>조회<select disabled={state.busyId !== null} value={params.get('list') ?? 'normal'} onChange={event => update('list', event.target.value)}>{Object.entries(listExamples).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <label>처리 결과<select disabled={state.busyId !== null} value={params.get('result') ?? 'success'} onChange={event => update('result', event.target.value)}>{Object.entries(actionExamples).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></>}
     </div>{mock && <><p>예시 처리 결과는 같은 사용자·시나리오의 필터 이동에도 유지되며 새로고침 시 초기화됩니다. 목록의 링크는 예시 모집글 상세로 연결됩니다.</p><Button disabled={state.busyId !== null} onClick={() => update('reset', String(Date.now()))}>예시 초기화</Button></>}</aside>}
-    {!mock && !session?.token?.trim() && <p className="post-safety">공통 인증 연동 대기 중 · 로그인/토큰 저장 기능을 별도로 만들지 않았습니다. 실제 요청은 보내지 않습니다.</p>}
+    {!mock && !session?.token?.trim() && <p className="post-safety">로그인 후 내 지원 내역을 확인할 수 있어요.</p>}
     <nav className="my-application-filters" aria-label="지원 상태 필터"><Button disabled={state.busyId !== null} aria-pressed={status === ''} onClick={() => setParams(previous => filterParams(previous, ''))}>전체</Button>{Object.entries(statusLabels).map(([value, label]) => <Button key={value} disabled={state.busyId !== null} aria-pressed={status === value} onClick={() => setParams(previous => filterParams(previous, value as keyof typeof statusLabels))}>{label}</Button>)}</nav>
     <p className="my-application-caption">최신 지원순 · 지원 상태와 모집글의 모집 상태는 서로 달라요.</p>
     {state.notice && <p className="post-safety" role="status" tabIndex={-1} ref={notice}>{state.notice}{mock && ' (개발 예시)'}</p>}

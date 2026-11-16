@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useParams, useSearchParams } from 'react-router'
 import { Button } from '../components/Button'
 import { MockControls, PostError, RoleAvailability, RoleRequirements, StatusBadge } from '../features/posts/components'
@@ -12,14 +12,22 @@ import type { ApplicationDraft, ApplyResponse } from '../features/posts/applicat
 import { mockApplicationSender } from '../features/posts/application-mock'
 import { refreshAppliedPost } from '../features/posts/application-submit'
 import { PostActions } from '../features/posts/PostActions'
+import { AuthStatus } from '../features/auth/AuthContext'
+import { useAuth } from '../features/auth/useAuth'
+import { applyToPost } from '../features/posts/application-api'
 
 export default function PostDetailPage() {
+  const auth = useAuth()
   const { postId } = useParams()
   const [params] = useSearchParams()
-  return <PostDetailContent key={`${postId}:${readScenario(params.get('scenario'))}:${readViewer(params.get('viewer'))}:${isPostMock && params.get('roles')}`} />
+  if (!isPostMock && (auth.status === 'checking' || auth.status === 'error')) return <section className="post-detail"><AuthStatus /></section>
+  return <PostDetailContent key={`${auth.scope}:${postId}:${readScenario(params.get('scenario'))}:${readViewer(params.get('viewer'))}:${isPostMock && params.get('roles')}`} />
 }
 
 function PostDetailContent() {
+  const auth = useAuth(), store = auth.store
+  const refreshRequest = useRef<AbortController | null>(null)
+  useEffect(() => () => refreshRequest.current?.abort(), [])
   const location = useLocation()
   const editSaved = location.state?.postEditSaved === true
   const { postId = '' } = useParams()
@@ -36,26 +44,32 @@ function PostDetailContent() {
   const [refreshing, setRefreshing] = useState(false)
   const outcome = isPostMock ? params.get('application') : null
   const firstRoleClosed = isPostMock && params.get('roles') === 'closed'
+  const requestPost = useCallback((signal: AbortSignal) => !isPostMock && auth.status === 'authenticated'
+    ? store.execute((session, authSignal) => loadPost(postId, scenario, AbortSignal.any([signal, authSignal]), viewer, { token: session.token }))
+    : loadPost(postId, scenario, signal, viewer), [postId, scenario, viewer, auth.status, store])
   const update = (key: string, value: string) => setParams(previous => { const next = new URLSearchParams(previous); next.set(key, value); return next }, { replace: true })
   useEffect(() => {
     const request = new AbortController()
-    loadPost(postId, scenario, request.signal, viewer).then(result => {
+    requestPost(request.signal).then(result => {
       if (!request.signal.aborted) setPost(firstRoleClosed ? { ...result, roles: result.roles.map((role, index) => index === 0 ? { ...role, status: 'CLOSED' } : role) } : result)
     })
       .catch((failure: unknown) => { if (!request.signal.aborted) setError(postErrorMessage(failure)) })
       .finally(() => { if (!request.signal.aborted) setLoading(false) })
     return () => request.abort()
-  }, [postId, scenario, viewer, retry, firstRoleClosed])
+  }, [requestPost, retry, firstRoleClosed])
   const backParams = new URLSearchParams(params); backParams.delete('viewer')
   const back = `/posts${backParams.size ? `?${backParams}` : ''}`
   const retryDetail = () => { setLoading(true); setError(''); setRetry(value => value + 1) }
   async function refreshApplication(current: PostDetail) {
+    refreshRequest.current?.abort()
+    const request = new AbortController(); refreshRequest.current = request
     setRefreshing(true)
     const result = await refreshAppliedPost(current, async () => {
       if (isPostMock && outcome === 'refreshFailure') throw new Error('개발용 상세 재조회 실패')
-      const updated = await loadPost(postId, scenario, new AbortController().signal, viewer)
+      const updated = await requestPost(request.signal)
       return firstRoleClosed ? { ...updated, roles: current.roles } : updated
     })
+    if (request.signal.aborted) return
     setPost(result.post)
     setRefreshFailed(result.refreshFailed)
     setRefreshing(false)
@@ -113,11 +127,11 @@ function PostDetailContent() {
         {post.isMine ? <Link className="button" to={`/posts/${post.id}/applicants${isPostMock ? `?${params}` : ''}`}>지원자 관리</Link> : <Button disabled={!!applicationBlock(post)} onClick={() => setModal({ roleId: null })}>{post.myApplication ? postActionLabel(post) : applicationBlock(post) || '지원하기'}</Button>}
         <p className="post-note">{post.isMine ? '지원자 관리 화면에서 지원자를 조회하고 수락·거절할 수 있습니다. 모집 마감과 연락 수단은 아래에서 확인할 수 있어요.' : post.myApplication ? '지원 이력이 있어 재지원할 수 없습니다. 연락 수단은 수락된 지원자만 확인할 수 있어요.' : '지원 전 역할과 참여 가능한 시간을 확인해 주세요.'}{isPostMock && ' 현재는 개발용 예시 상태입니다.'}</p>
         <div className="post-secondary-actions"><Button disabled>스크랩 · 준비 중</Button><Button disabled>신고 · 준비 중</Button></div>
-        <PostActions post={post} onPost={setPost} viewer={viewer} scenario={scenario} closing={params.get('closing')} contact={params.get('contact')} />
+        <PostActions post={post} onPost={setPost} viewer={viewer} scenario={scenario} closing={params.get('closing')} contact={params.get('contact')} session={isPostMock ? undefined : auth.session} run={store.execute} />
       </aside>
     </div>}
     {modal && post && <ApplicationModal post={post} initialRoleId={modal.roleId} onClose={() => setModal(null)} onSuccess={applicationSucceeded}
-      mock={isPostMock} send={isPostMock ? mockApplicationSender(outcome) : undefined} />}
+      mock={isPostMock} send={isPostMock ? mockApplicationSender(outcome) : (id, draft) => store.execute((session, signal) => applyToPost(id, draft, { token: session.token, signal }), true)} />}
   </section>
 }
 

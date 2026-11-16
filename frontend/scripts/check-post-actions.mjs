@@ -75,7 +75,7 @@ try {
         assert.equal(html.includes('연락 수단 확인</button>'), ['owner', 'accepted'].includes(viewer))
         assert.equal(html.includes('모집 마감하기</button>'), viewer === 'owner' && id === '1')
         assert.ok(!html.includes('https://example.com'))
-        assert.ok(html.includes('공통 인증 연동 대기 중'))
+        assert.ok(html.includes('로그인 상태를 확인한 뒤'))
       }
     }
     for (const item of mockList('LATEST').items) assert.equal('contactLink' in item, false)

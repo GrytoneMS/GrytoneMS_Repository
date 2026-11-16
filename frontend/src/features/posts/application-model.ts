@@ -23,8 +23,8 @@ export function validateApplication(draft: ApplicationDraft, post: PostDetail): 
   return errors
 }
 const messages: Record<string, string> = {
-  UNAUTHORIZED: '로그인이 만료됐거나 필요해요. 인증 연동 후 다시 로그인해 주세요.',
-  UNVERIFIED: '학교 인증이 필요해요. 학교 인증 화면 연동을 기다리고 있어요.',
+  UNAUTHORIZED: '로그인이 만료됐거나 필요해요. 다시 로그인해 주세요. 입력은 유지됩니다.',
+  UNVERIFIED: '학교 인증이 필요해요. 학교 인증 화면에서 인증해 주세요. 입력은 유지됩니다.',
   SUSPENDED: '이용이 정지된 계정은 지원할 수 없어요.',
   CANNOT_APPLY_OWN_POST: '내가 올린 모집글에는 지원할 수 없어요.',
   ALREADY_APPLIED: '이미 지원한 모집글이에요. 취소·거절·마감된 지원도 다시 지원할 수 없어요.',

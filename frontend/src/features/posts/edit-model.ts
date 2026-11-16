@@ -8,7 +8,7 @@ import { initialPostDraft, toCreatePostRequest, validatePostDraft, type PostDraf
 export type EditSnapshot = { post: PostDetail; contactLink: string; applicants: ApplicantRole[] }
 export type RoleRule = { codeLocked: boolean; min: number; deletionReason?: string }
 export function requireEditToken(options: PostRequestOptions) {
-  if (!options.token?.trim()) throw new ApiError(401, { success: false, code: 'AUTH_PENDING', message: '공통 인증 연동 대기 중입니다. 토큰 없는 실제 조회·수정 요청은 보내지 않으며 입력은 유지됩니다.' })
+  if (!options.token?.trim()) throw new ApiError(401, { success: false, code: 'AUTH_PENDING', message: '로그인이 필요해요. 토큰 없는 조회·수정 요청은 보내지 않으며 입력은 유지됩니다.' })
 }
 function invalid(): never { throw new ApiError(200, { success: false, code: 'INVALID_RESPONSE', message: '수정에 필요한 기존 값을 모두 확인하지 못했어요. 저장하지 않고 다시 조회해 주세요.' }) }
 export function checkSnapshot(snapshot: EditSnapshot, id: string) {

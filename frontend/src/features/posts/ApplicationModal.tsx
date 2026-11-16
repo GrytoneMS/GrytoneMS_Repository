@@ -8,6 +8,7 @@ import type { ApplicationDraft, ApplicationErrors, ApplyResponse } from './appli
 import { createApplicationSubmitter } from './application-submit'
 import type { ApplicationSender } from './application-submit'
 import './application.css'
+import { AuthStatus } from '../auth/AuthContext'
 
 type Props = {
   post: PostDetail; initialRoleId: number | null; onClose: () => void;
@@ -85,7 +86,7 @@ export function ApplicationModal({ post, initialRoleId, onClose, onSuccess, send
           <div className="post-chips">{['기본 정보', '희망 역할', '보유 기술·툴', '경력·활동', '포트폴리오'].map(label => <span className="post-chip" key={label}>{label}</span>)}</div>
           <p>실제 공개 항목은 내 프로필의 공개 설정을 따릅니다. 현재 화면에서는 개인 프로필이나 비공개 항목을 조회하지 않습니다.</p>
         </section>
-        {!mock && <p className="application-notice">로그인·학교 인증 화면은 현재 준비 중입니다. 공통 인증 연동 전에는 지원 요청을 보내지 않습니다.</p>}
+        {!mock && <AuthStatus />}
         {failure && <p className="field-error" role="alert">{failure}</p>}
         {busy && <p role="status">지원 요청을 보내는 중이에요. 결과 확인까지 잠시 기다려 주세요.</p>}
       </div>

@@ -15,10 +15,11 @@ import UserProfilePage from './pages/UserProfilePage'
 import MyPostsPage from './pages/MyPostsPage'
 import MyApplicationsPage from './pages/MyApplicationsPage'
 import NotFoundPage from './pages/NotFoundPage'
+import { AuthProvider } from './features/auth/AuthContext'
 
 export default function App() {
   return (
-    <Routes>
+    <AuthProvider><Routes>
       <Route element={<AppLayout />}>
         <Route index element={<Navigate to="/posts" replace />} />
         <Route path="/login" element={<LoginPage />} />
@@ -37,6 +38,6 @@ export default function App() {
         <Route path="/me/applications" element={<MyApplicationsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
-    </Routes>
+    </Routes></AuthProvider>
   )
 }
