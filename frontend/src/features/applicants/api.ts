@@ -42,13 +42,14 @@ export async function loadManagement(postId: string, options: PostRequestOptions
 }
 export async function decideApplication(applicationId: number, decision: Decision, reason: Reason | null = null, options: PostRequestOptions = {}): Promise<DecisionResult> {
   requireToken(options)
-  if (!validId(applicationId) || !['accept', 'reject'].includes(decision) || reason !== null && !Object.hasOwn(reasonLabels, reason)) {
+  if (!validId(applicationId) || !['accept', 'reject', 'remove'].includes(decision) || reason !== null && !Object.hasOwn(reasonLabels, reason)) {
     throw new ApiError(400, { success: false, code: 'INVALID_INPUT', message: '지원 번호와 처리 내용을 확인해 주세요.' })
   }
-  const result = await apiRequest<DecisionResult>(`/api/applications/${applicationId}/${decision}`, {
+  const result = await apiRequest<DecisionResult>(`/api/applications/${applicationId}/${decision === 'remove' ? 'leave' : decision}`, {
     ...options, method: 'PATCH', ...(decision === 'reject' ? { body: { reason } } : {}),
   })
-  if (!result || result.applicationId !== applicationId || result.status !== (decision === 'accept' ? 'ACCEPTED' : 'REJECTED')
-    || decision === 'accept' && (typeof result.roleClosed !== 'boolean' || typeof result.postClosed !== 'boolean')) invalidResponse()
+  if (!result || result.applicationId !== applicationId || result.status !== (decision === 'accept' ? 'ACCEPTED' : decision === 'remove' ? 'LEFT' : 'REJECTED')
+    || decision === 'accept' && (typeof result.roleClosed !== 'boolean' || typeof result.postClosed !== 'boolean')
+    || decision === 'remove' && (typeof result.roleReopened !== 'boolean' || typeof result.postReopened !== 'boolean')) invalidResponse()
   return result
 }
