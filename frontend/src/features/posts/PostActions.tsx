@@ -85,7 +85,7 @@ export function PostActionsView({ state, mock, authenticated, onConfirm, onRefre
   </div>
 }
 
-function ClosePostDialog({ state, onClose, onSubmit }: { state: PostActionsState; onClose: () => void; onSubmit: () => void }) {
+export function ClosePostDialog({ state, onClose, onSubmit }: { state: Pick<PostActionsState, 'closing' | 'refreshing' | 'needsRefresh' | 'closeError'> & { post: Pick<PostDetail, 'isMine' | 'status'> }; onClose: () => void; onSubmit: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const locked = state.closing || state.refreshing
   useEffect(() => {
