@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { Button } from '../../components/Button'
+import { BrandLogo } from '../../components/BrandLogo'
 import { Input } from '../../components/Input'
 import { authErrors, login, saveAccessToken, signup } from './api'
 import './auth.css'
@@ -117,7 +118,7 @@ export function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
 
   return (
     <div ref={page} className={`auth-page auth-page--${mode}`}>
-      <Link className="auth-logo" to="/posts" aria-label="TEAM:ON 홈">TEAM<span>:ON</span></Link>
+      <Link className="auth-logo" to="/posts" aria-label="TEAM:ON 홈"><BrandLogo /></Link>
       <div className="auth-grid">
         <aside className="auth-intro" aria-label="서비스 소개">
           <p className="auth-intro-title">학교를 넘어<br />팀을 만나요</p>

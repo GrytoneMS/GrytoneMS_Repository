@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { ApiError } from '../api/client'
 import { Button } from '../components/Button'
+import { BrandLogo } from '../components/BrandLogo'
 import { Input } from '../components/Input'
 import { authErrors, readAccessToken } from '../features/auth/api'
 import {
@@ -30,7 +31,7 @@ export default function SchoolVerificationPage() {
   return (
     <div className="verification-page">
       <header className="verification-header">
-        <Link to="/posts" aria-label="TEAM:ON 홈">TEAM<span>:ON</span></Link>
+        <Link to="/posts" aria-label="TEAM:ON 홈"><BrandLogo /></Link>
       </header>
       {token
         ? <VerificationForms token={token} />

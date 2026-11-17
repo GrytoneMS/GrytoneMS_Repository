@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { ApiError } from '../api/client'
 import { Button } from '../components/Button'
+import { BrandLogo } from '../components/BrandLogo'
 import { Input } from '../components/Input'
 import { authErrors, readAccessToken } from '../features/auth/api'
 import { getMyProfile, saveRoleTags } from '../features/profile/api'
@@ -18,7 +19,7 @@ export default function ProfileSetupPage() {
 
   return (
     <div className="profile-setup">
-      <header><Link to="/posts" aria-label="TEAM:ON 홈">TEAM<span>:ON</span></Link></header>
+      <header><Link to="/posts" aria-label="TEAM:ON 홈"><BrandLogo /></Link></header>
       <section className="profile-setup-card" aria-labelledby="profile-setup-title">
         <h1 id="profile-setup-title">프로필 설정</h1>
         {token

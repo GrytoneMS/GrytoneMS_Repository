@@ -1,4 +1,5 @@
 * { box-sizing: border-box; }
+html { scrollbar-gutter: stable; }
 body { margin: 0; font-family: var(--font-family); font-size: var(--font-size-base); line-height: var(--line-height-base); color: var(--color-text); background: var(--color-background); }
 a { color: var(--color-primary); }
 button, input { font: inherit; }

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Link, NavLink } from 'react-router'
-import { NotificationLink } from '../notifications/NotificationLink'
+import { Link } from 'react-router'
 import { ApiError } from '../../api/client'
 import { Button } from '../../components/Button'
+import { SiteHeader } from '../../components/SiteHeader'
 import { readAccessToken } from '../auth/api'
 import { getMyProfile } from './api'
 import type { Profile } from './api'
@@ -13,15 +13,7 @@ import './profile.css'
 export function ProfileLayout({ children }: { children: ReactNode }) {
   return (
     <div className="profile-page">
-      <header className="profile-header">
-        <Link className="profile-logo" to="/posts" aria-label="TEAM:ON 홈">TEAM<span>:ON</span></Link>
-        <nav aria-label="주 메뉴">
-          <NavLink to="/posts" end>홈</NavLink>
-          <NavLink to="/posts/new">모집글 작성</NavLink>
-          <NotificationLink />
-          <NavLink to="/me/profile">마이페이지</NavLink>
-        </nav>
-      </header>
+      <SiteHeader />
       <div className="profile-content">{children}</div>
     </div>
   )
