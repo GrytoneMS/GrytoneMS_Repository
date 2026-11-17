@@ -15,6 +15,7 @@ import UserProfilePage from './pages/UserProfilePage'
 import MyPostsPage from './pages/MyPostsPage'
 import MyApplicationsPage from './pages/MyApplicationsPage'
 import MyScrapsPage from './pages/MyScrapsPage'
+import MyBlocksPage from './pages/MyBlocksPage'
 import { ScrapProvider } from './features/scraps/ScrapContext'
 import NotFoundPage from './pages/NotFoundPage'
 import { AuthProvider } from './features/auth/AuthContext'
@@ -48,6 +49,7 @@ function SessionRoutes() {
         <Route path="/me/posts" element={<MyPostsPage />} />
         <Route path="/me/applications" element={<MyApplicationsPage />} />
         <Route path="/me/scraps" element={<MyScrapsPage />} />
+        <Route path="/me/blocks" element={<MyBlocksPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes></ScrapProvider>

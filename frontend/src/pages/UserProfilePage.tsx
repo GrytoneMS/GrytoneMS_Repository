@@ -1,128 +1,114 @@
-import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { ApiError } from '../api/client'
 import { Button } from '../components/Button'
-import { readAccessToken } from '../features/auth/api'
+import { useAuth } from '../features/auth/useAuth'
+import { AuthStatus } from '../features/auth/AuthContext'
+import { authenticatedSafety, type SafetyService } from '../features/safety/source'
+import { ReportAction } from '../features/safety/ReportAction'
 import { roleLabels } from '../features/posts/create-model'
 import { ProfileAvatar, ProfileLayout } from '../features/profile/ProfileLayout'
 import { ProfileSections } from '../features/profile/ProfileSections'
 import { profileError, schoolName } from '../features/profile/presentation'
-import { blockUser, getUserProfile, reportReasons, reportUser, unblockUser } from '../features/profile/user-api'
 import type { Profile } from '../features/profile/api'
 import '../features/profile/user-profile.css'
 
 const validId = /^[1-9][0-9]*$/
-type ReportReason = keyof typeof reportReasons
 
 export default function UserProfilePage() {
   const { userId = '' } = useParams()
   const [params] = useSearchParams()
   const applicationId = params.get('applicationId')
-  const token = readAccessToken()
+  const auth = useAuth()
+  const service = useMemo(() => authenticatedSafety(auth.store, auth.session), [auth.store, auth.session])
 
   return <ProfileLayout>
     <div className="user-profile">
       {!validId.test(userId) || (applicationId !== null && !validId.test(applicationId))
         ? <section className="profile-card"><h1>프로필을 찾을 수 없어요.</h1></section>
-        : !token
-          ? <section className="profile-card"><h1>사용자 프로필</h1><p><Link to="/login">로그인</Link>한 뒤 프로필을 볼 수 있어요.</p></section>
-          : <UserProfile key={`${userId}:${applicationId}`} userId={userId} applicationId={applicationId} token={token} />}
+        : auth.status !== 'authenticated'
+          ? <section className="profile-card"><h1>사용자 프로필</h1><AuthStatus /></section>
+          : <UserProfile key={`${auth.scope}:${userId}:${applicationId}`} userId={userId} applicationId={applicationId} service={service} />}
     </div>
   </ProfileLayout>
 }
 
-function UserProfile({ userId, applicationId, token }: { userId: string; applicationId: string | null; token: string }) {
+function UserProfile({ userId, applicationId, service }: { userId: string; applicationId: string | null; service: SafetyService }) {
   const [profile, setProfile] = useState<Profile>()
   const [error, setError] = useState<unknown>()
   const [attempt, setAttempt] = useState(0)
   const [blocked, setBlocked] = useState(false)
-  const [action, setAction] = useState<'report' | 'block'>()
+  const [action, setAction] = useState<'block'>()
   const [saving, setSaving] = useState(false)
   const [actionError, setActionError] = useState('')
-  const [notice, setNotice] = useState('')
-  const [reported, setReported] = useState(false)
+  const actionRequest = useRef<AbortController | null>(null)
+  const actionLock = useRef(false)
+  useEffect(() => () => actionRequest.current?.abort(), [])
 
   useEffect(() => {
     const controller = new AbortController()
-    getUserProfile(token, userId, applicationId, controller.signal).then(result => {
-      if (controller.signal.aborted) return
+    service.profile(userId, applicationId, controller.signal).then(result => {
+      if (controller.signal.aborted || !service.current()) return
       if (String(result.id) !== userId) {
         setError(new ApiError(404, { success: false, code: 'NOT_FOUND', message: '프로필을 찾을 수 없어요.' }))
         return
       }
       setProfile(result)
     }).catch(reason => {
-      if (controller.signal.aborted) return
+      if (controller.signal.aborted || !service.current()) return
       if (reason instanceof ApiError && reason.code === 'BLOCKED_USER') setBlocked(true)
       else setError(reason)
     })
     return () => controller.abort()
-  }, [attempt, token, userId, applicationId])
+  }, [attempt, service, userId, applicationId])
 
   function open(next: typeof action) {
     setActionError('')
-    setNotice('')
     setAction(next)
   }
 
-  async function submitReport(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!profile || saving || reported) return
-    const fields = new FormData(event.currentTarget)
-    const reason = fields.get('reason')
-    if (typeof reason !== 'string' || !Object.hasOwn(reportReasons, reason)) return
-
-    setSaving(true)
-    setActionError('')
-    try {
-      await reportUser(token, profile.id, reason as ReportReason, String(fields.get('detail') ?? '').trim())
-      setReported(true)
-      setNotice('신고가 접수됐어요.')
-      setAction(undefined)
-    } catch (reason) {
-      if (reason instanceof ApiError && reason.code === 'ALREADY_REPORTED') {
-        setReported(true)
-        setNotice('이미 신고한 사용자예요.')
-        setAction(undefined)
-      } else setActionError(profileError(reason))
-    } finally {
-      setSaving(false)
-    }
-  }
-
   async function submitBlock() {
-    if (!profile || saving) return
+    if (!profile || actionLock.current || !service.current()) return
+    const request = new AbortController(); actionRequest.current = request; actionLock.current = true
+    const current = () => !request.signal.aborted && service.current()
     setSaving(true)
     setActionError('')
     try {
-      await blockUser(token, profile.id)
+      const result = await service.block(profile.id, request.signal)
+      if (!current()) return
+      if (result.isBlocked !== true) throw new Error('차단 결과를 확인하지 못했어요. 다시 조회해 주세요.')
       setBlocked(true)
       setAction(undefined)
     } catch (reason) {
+      if (!current()) return
       if (reason instanceof ApiError && reason.code === 'ALREADY_BLOCKED') {
         setBlocked(true)
         setAction(undefined)
       } else setActionError(profileError(reason))
     } finally {
-      setSaving(false)
+      actionLock.current = false
+      if (current()) setSaving(false)
     }
   }
 
   async function removeBlock() {
-    if (saving) return
+    if (actionLock.current || !service.current()) return
+    const request = new AbortController(); actionRequest.current = request; actionLock.current = true
+    const current = () => !request.signal.aborted && service.current()
     setSaving(true)
     setActionError('')
     try {
-      await unblockUser(token, userId)
+      await service.remove(Number(userId), request.signal)
+      if (!current()) return
       setProfile(undefined)
       setError(undefined)
       setBlocked(false)
       setAttempt(value => value + 1)
     } catch (reason) {
-      setActionError(profileError(reason))
+      if (current()) setActionError(profileError(reason))
     } finally {
-      setSaving(false)
+      actionLock.current = false
+      if (current()) setSaving(false)
     }
   }
 
@@ -162,31 +148,14 @@ function UserProfile({ userId, applicationId, token }: { userId: string; applica
         </div>}
       </div>
       <div className="user-profile-actions">
-        <Button className="profile-secondary" disabled={saving || reported} onClick={() => open('report')}>신고</Button>
+        <ReportAction targetType="USER" targetId={profile.id} label="사용자 신고" disabled={saving} />
         <Button className="profile-secondary" disabled={saving} onClick={() => open('block')}>차단</Button>
       </div>
     </section>
 
-    {notice && <p className="user-profile-notice" role="status">{notice}</p>}
-    {action === 'report' && <section className="profile-card" aria-labelledby="user-report-title">
-      <h2 id="user-report-title">사용자 신고</h2>
-      <form className="user-report-form" onSubmit={submitReport}>
-        <label>신고 사유
-          <select name="reason" required disabled={saving} defaultValue="">
-            <option value="">신고 사유를 선택해 주세요</option>
-            {Object.entries(reportReasons).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
-          </select>
-        </label>
-        <label>상세 내용 (선택 · 200자 이하)<textarea name="detail" maxLength={200} disabled={saving} /></label>
-        {actionError && <p className="profile-error" role="alert">{actionError}</p>}
-        <div className="user-profile-actions">
-          <Button className="profile-secondary" onClick={() => open(undefined)} disabled={saving}>취소</Button>
-          <Button className="profile-secondary" type="submit" disabled={saving}>{saving ? '접수 중…' : '신고 접수'}</Button>
-        </div>
-      </form>
-    </section>}
     {action === 'block' && <section className="profile-card" aria-labelledby="user-block-title">
       <h2 id="user-block-title">{profile.nickname}님을 차단할까요?</h2>
+      <p>서로의 대기 중인 지원은 마감되고, 차단을 해제해도 복원되지 않아요. 이미 수락된 팀은 유지돼요.</p>
       {actionError && <p className="profile-error" role="alert">{actionError}</p>}
       <div className="user-profile-actions">
         <Button className="profile-secondary" disabled={saving} onClick={() => open(undefined)}>취소</Button>

@@ -153,7 +153,7 @@ try {
       ['/profile/setup', '프로필 설정', '프로필을 설정하려면'],
       ['/me/profile', '내 프로필', '프로필을 보려면'],
       ['/me/profile/edit', '내 프로필', '프로필을 보려면'],
-      ['/users/1', '사용자 프로필', '프로필을 볼 수 있어요'],
+      ['/users/1', '사용자 프로필', '로그인 후 이용할 수 있어요'],
     ]) {
       const html = render(path)
       assert.ok(html.includes(`>${title}</h1>`), `${path} 제목`)
