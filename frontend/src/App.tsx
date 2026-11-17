@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router'
 import { AppLayout } from './layouts/AppLayout'
 import LoginPage from './pages/LoginPage'
+import WithdrawPage from './pages/WithdrawPage'
 import SignupPage from './pages/SignupPage'
 import SchoolVerificationPage from './pages/SchoolVerificationPage'
 import ProfileSetupPage from './pages/ProfileSetupPage'
@@ -37,6 +38,7 @@ function SessionRoutes() {
       <Route element={<AppLayout />}>
         <Route index element={<Navigate to="/posts" replace />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/settings/withdraw" element={<WithdrawPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/school-verification" element={<SchoolVerificationPage />} />
         <Route path="/profile/setup" element={<ProfileSetupPage />} />
