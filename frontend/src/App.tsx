@@ -23,6 +23,8 @@ import { useAuth } from './features/auth/useAuth'
 import NotificationsPage from './pages/NotificationsPage'
 import { NotificationProvider } from './features/notifications/NotificationProvider'
 import AdminPage from './features/admin/AdminPage'
+import SettingsPage from './pages/SettingsPage'
+import NotificationSettingsPage from './pages/NotificationSettingsPage'
 
 export default function App() {
   return <AuthProvider><SessionRoutes /></AuthProvider>
@@ -53,6 +55,8 @@ function SessionRoutes() {
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/me/scraps" element={<MyScrapsPage />} />
         <Route path="/me/blocks" element={<MyBlocksPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes></NotificationProvider></ScrapProvider>

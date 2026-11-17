@@ -24,7 +24,7 @@ const links = [
 export function AppLayout() {
   const { pathname } = useLocation()
   const isNotifications = pathname === '/notifications'
-  const isRecruitment = isNotifications || pathname === '/me/posts' || pathname === '/me/applications' || pathname === '/me/scraps' || pathname === '/me/blocks' || pathname === '/posts' || /^\/posts\/[^/]+(?:\/(?:applicants|edit))?$/.test(pathname)
+  const isRecruitment = isNotifications || pathname === '/settings' || pathname === '/settings/notifications' || pathname === '/me/posts' || pathname === '/me/applications' || pathname === '/me/scraps' || pathname === '/me/blocks' || pathname === '/posts' || /^\/posts\/[^/]+(?:\/(?:applicants|edit))?$/.test(pathname)
   if (isRecruitment) return (
     <div className="posts-layout">
       <a className="post-skip" href="#main-content">본문으로 건너뛰기</a>

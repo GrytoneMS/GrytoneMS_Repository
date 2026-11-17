@@ -1,0 +1,23 @@
+.settings-page { width: min(100%, 760px); margin: 0 auto; }
+.settings-page .settings-back { display: inline-block; margin-bottom: 20px; color: var(--post-muted, var(--color-muted)); }
+.settings-page .settings-lead { margin-block: 12px 28px; color: var(--post-muted, var(--color-muted)); }
+.settings-page .settings-card { margin-block: 20px; padding: clamp(20px, 4vw, 32px); border: 1px solid var(--post-line, var(--color-border)); border-radius: 20px; background: white; }
+.settings-page .settings-card h2 { margin-bottom: 12px; }
+.settings-menu, .settings-toggle { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: 20px; border-bottom: 1px solid var(--post-line, var(--color-border)); }
+.settings-menu:last-child, .settings-toggle:last-child { border-bottom: 0; }
+.settings-menu > span:first-child, .settings-toggle > span { display: grid; gap: 6px; min-width: 0; }
+.settings-menu strong, .settings-toggle strong { color: var(--post-ink, var(--color-text)); font-size: 16px; }
+.settings-menu span span, .settings-toggle span span { font-size: 13px; color: var(--post-muted, var(--color-muted)); }
+.settings-pending { color: var(--post-muted, var(--color-muted)); }
+.settings-pending > span:last-child { flex-shrink: 0; font-size: 13px; }
+.settings-info { padding: 20px; background: var(--post-soft, #eef2f7); border-radius: 16px; }
+.settings-info p { margin-top: 8px; font-size: 14px; }
+.settings-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+.settings-fields legend { font-weight: 700; font-size: 20px; }
+.settings-toggle input { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--post-blue, var(--color-primary)); cursor: pointer; }
+.settings-page :is(a, button, input):focus-visible { outline: 3px solid var(--color-primary); outline-offset: 4px; }
+.settings-save { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-top: 24px; }
+.settings-save p { font-size: 13px; color: var(--post-muted, var(--color-muted)); }
+.settings-page .settings-error { color: var(--color-error); margin-top: 16px; }
+.settings-page .settings-success { color: #1d653a; margin-top: 16px; }
+@media (max-width: 480px) { .settings-save .button { width: 100%; } .settings-toggle, .settings-menu { gap: 14px; } }
