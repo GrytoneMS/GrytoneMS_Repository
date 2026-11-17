@@ -17,6 +17,7 @@ import { useAuth } from '../features/auth/useAuth'
 import { applyToPost } from '../features/posts/application-api'
 import { ScrapButton, ScrapExamples } from '../features/scraps/ScrapContext'
 import { useScraps } from '../features/scraps/context'
+import { ReportAction } from '../features/safety/ReportAction'
 
 export default function PostDetailPage() {
   const auth = useAuth()
@@ -135,7 +136,7 @@ function PostDetailContent() {
         {post.isMine && <Link className="button" to={`/posts/${post.id}/edit${isPostMock ? '?editExample=success' : ''}`}>모집글 수정</Link>}
         {post.isMine ? <Link className="button" to={`/posts/${post.id}/applicants${isPostMock ? `?${params}` : ''}`}>지원자 관리</Link> : <Button disabled={!!applicationBlock(post)} onClick={() => setModal({ roleId: null })}>{post.myApplication ? postActionLabel(post) : applicationBlock(post) || '지원하기'}</Button>}
         <p className="post-note">{post.isMine ? '지원자 관리 화면에서 지원자를 조회하고 수락·거절할 수 있습니다. 모집 마감과 연락 수단은 아래에서 확인할 수 있어요.' : post.myApplication ? '지원 이력이 있어 재지원할 수 없습니다. 연락 수단은 수락된 지원자만 확인할 수 있어요.' : '지원 전 역할과 참여 가능한 시간을 확인해 주세요.'}{isPostMock && ' 현재는 개발용 예시 상태입니다.'}</p>
-        <div className="post-secondary-actions"><ScrapButton postId={post.id} initial={post.isScrapped} own={post.isMine || scraps?.userId !== undefined && String(scraps.userId) === String(post.leader.id)} title={post.title} /><Button disabled>신고 · 준비 중</Button></div>
+        <div className="post-secondary-actions"><ScrapButton postId={post.id} initial={post.isScrapped} own={post.isMine || scraps?.userId !== undefined && String(scraps.userId) === String(post.leader.id)} title={post.title} />{!post.isMine && !isPostMock && <ReportAction targetType="POST" targetId={post.id} label="모집글 신고" />}</div>
         <PostActions post={post} onPost={setPost} viewer={viewer} scenario={scenario} closing={params.get('closing')} contact={params.get('contact')} session={isPostMock ? undefined : auth.session} run={store.execute} />
       </aside>
     </div>}

@@ -143,12 +143,13 @@ try {
     const { default: MyPostsPage } = await server.ssrLoadModule('/src/pages/MyPostsPage.tsx')
     const { default: MyApplicationsPage } = await server.ssrLoadModule('/src/pages/MyApplicationsPage.tsx')
     const { default: MyScrapsPage } = await server.ssrLoadModule('/src/pages/MyScrapsPage.tsx')
+    const { default: MyBlocksPage } = await server.ssrLoadModule('/src/pages/MyBlocksPage.tsx')
     const { default: PostApplicantsPage } = await server.ssrLoadModule('/src/pages/PostApplicantsPage.tsx')
     let token = 'synthetic', pending = deferred(); const store = createAuthStore(() => token, () => pending.promise)
     const render = Component => renderToStaticMarkup(createElement(MemoryRouter, null, createElement(AuthContext.Provider, { value: store }, createElement(Component))))
-    for (const Component of [MyPostsPage, MyApplicationsPage, MyScrapsPage, PostApplicantsPage]) { const html = render(Component); assert.ok(html.includes('확인 중')); assert.ok(!html.includes('https://example.com/contact')) }
+    for (const Component of [MyPostsPage, MyApplicationsPage, MyScrapsPage, MyBlocksPage, PostApplicantsPage]) { const html = render(Component); assert.ok(html.includes('확인 중')); assert.ok(!html.includes('https://example.com/contact')); assert.ok(!html.includes('해제 확인')) }
     token = null; await store.sync()
-    for (const Component of [MyPostsPage, MyApplicationsPage, MyScrapsPage, PostApplicantsPage]) { const html = render(Component); assert.ok(html.includes('로그인')); assert.ok(!html.includes('my-post-card')); assert.ok(!html.includes('my-application-card')) }
+    for (const Component of [MyPostsPage, MyApplicationsPage, MyScrapsPage, MyBlocksPage, PostApplicantsPage]) { const html = render(Component); assert.ok(html.includes('로그인')); assert.ok(!html.includes('my-post-card')); assert.ok(!html.includes('my-application-card')); assert.ok(!html.includes('해제 확인')) }
     store.dispose()
     const signedIn = await ready()
     const html = renderToStaticMarkup(createElement(MemoryRouter, { initialEntries: ['/me/posts?status=CLOSED'] }, createElement(AuthContext.Provider, { value: signedIn }, createElement(MyPostsPage))))
