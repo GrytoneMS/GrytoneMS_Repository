@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link, NavLink } from 'react-router'
+import { NotificationLink } from '../notifications/NotificationLink'
 import { ApiError } from '../../api/client'
 import { Button } from '../../components/Button'
 import { readAccessToken } from '../auth/api'
@@ -17,6 +18,7 @@ export function ProfileLayout({ children }: { children: ReactNode }) {
         <nav aria-label="주 메뉴">
           <NavLink to="/posts" end>홈</NavLink>
           <NavLink to="/posts/new">모집글 작성</NavLink>
+          <NotificationLink />
           <NavLink to="/me/profile">마이페이지</NavLink>
         </nav>
       </header>

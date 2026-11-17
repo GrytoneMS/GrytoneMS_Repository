@@ -20,6 +20,8 @@ import { ScrapProvider } from './features/scraps/ScrapContext'
 import NotFoundPage from './pages/NotFoundPage'
 import { AuthProvider } from './features/auth/AuthContext'
 import { useAuth } from './features/auth/useAuth'
+import NotificationsPage from './pages/NotificationsPage'
+import { NotificationProvider } from './features/notifications/NotificationProvider'
 import AdminPage from './features/admin/AdminPage'
 
 export default function App() {
@@ -29,7 +31,7 @@ export default function App() {
 function SessionRoutes() {
   const auth = useAuth()
   return (
-    <ScrapProvider session={auth.session} authScope={auth.scope} store={auth.store}><Routes>
+    <ScrapProvider session={auth.session} authScope={auth.scope} store={auth.store}><NotificationProvider><Routes>
       <Route path="/admin" element={<AdminPage />} />
       <Route path="/admin/:section" element={<AdminPage />} />
       <Route element={<AppLayout />}>
@@ -48,10 +50,11 @@ function SessionRoutes() {
         <Route path="/users/:userId" element={<UserProfilePage />} />
         <Route path="/me/posts" element={<MyPostsPage />} />
         <Route path="/me/applications" element={<MyApplicationsPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/me/scraps" element={<MyScrapsPage />} />
         <Route path="/me/blocks" element={<MyBlocksPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
-    </Routes></ScrapProvider>
+    </Routes></NotificationProvider></ScrapProvider>
   )
 }
