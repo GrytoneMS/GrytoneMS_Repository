@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router'
+import { BrandLogo } from '../components/BrandLogo'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { createResetController, initialReset, requestNotice } from '../features/auth/password-reset'
@@ -27,7 +28,7 @@ function ResetForm({ confirm, search }: { confirm: boolean; search: string }) {
   }, [confirm])
   const missing = confirm && !token && !state.done
   return <div className="auth-page auth-page--reset">
-    <Link className="auth-logo" to="/posts" aria-label="TEAM:ON 홈">TEAM<span>:ON</span></Link>
+    <Link className="auth-logo" to="/posts" aria-label="TEAM:ON 홈"><BrandLogo /></Link>
     <section className="auth-card reset-card" aria-labelledby="reset-heading">
       <h1 id="reset-heading">{confirm ? '새 비밀번호 설정' : '비밀번호 재설정'}</h1>
       {state.done ? <div role="status"><p>{confirm ? '비밀번호가 변경됐어요. 새 비밀번호로 로그인해 주세요.' : requestNotice}</p></div> : missing ? <p className="auth-alert" role="alert">링크가 없거나 올바르지 않아요. 재설정 메일을 다시 요청해 주세요.</p> : <>

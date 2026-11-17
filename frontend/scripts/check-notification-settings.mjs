@@ -86,7 +86,7 @@ try {
     const fresh = { applyEnabled: true, deadlineEnabled: false, quietHoursEnabled: true }; globalThis.fetch = async () => ok(fresh)
     assert.deepEqual(await notificationSettingsService(store).load(new AbortController().signal), fresh); store.dispose()
   })
-  await check('비로그인/확인 중 설정 내용 차단·미인증 홈 진입·차단 연결 준비 표시', async () => {
+  await check('비로그인/확인 중 설정 내용 차단·미인증 홈 진입·계정 메뉴 연결', async () => {
     const { AuthContext } = await server.ssrLoadModule('/src/features/auth/context.ts')
     const { default: Home } = await server.ssrLoadModule('/src/pages/SettingsPage.tsx')
     const { default: Settings } = await server.ssrLoadModule('/src/pages/NotificationSettingsPage.tsx')
@@ -94,7 +94,8 @@ try {
     const anonymous = createAuthStore(() => null)
     for (const Component of [Home, Settings]) { const html = render(Component, anonymous); assert.ok(html.includes('로그인')); assert.ok(!html.includes('name="applyEnabled"')) }
     const pending = createAuthStore(() => 't', () => new Promise(() => {})); const html = render(Settings, pending); assert.ok(html.includes('확인 중')); assert.ok(!html.includes('변경사항 저장')); pending.dispose()
-    const signedIn = await ready(), home = render(Home, signedIn); assert.ok(home.includes('/settings/notifications')); assert.ok(home.includes('차단한 사용자 목록 관리')); assert.ok(home.includes('href="/me/blocks"')); assert.ok(home.includes('회원 탈퇴')); signedIn.dispose(); anonymous.dispose()
+    const signedIn = await ready(), home = render(Home, signedIn); assert.ok(home.includes('/settings/notifications')); assert.ok(home.includes('차단한 사용자 목록 관리')); assert.ok(home.includes('href="/me/blocks"')); assert.ok(home.includes('회원 탈퇴'))
+    assert.ok(home.includes('href="/settings/withdraw"')); assert.ok(home.includes('href="/forgot-password"')); assert.ok(!home.includes('settings-pending')); signedIn.dispose(); anonymous.dispose()
   })
   console.log(`${passed} notification settings checks passed (intercepted API/controller/auth/static render; no browser).`)
 } finally { globalThis.fetch = original; await server.close() }

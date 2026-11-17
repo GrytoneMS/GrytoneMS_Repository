@@ -14,8 +14,8 @@ export default function SettingsPage() {
         <Link className="settings-menu" to="/me/blocks"><span><strong>차단 사용자 관리</strong><span>차단한 사용자 목록 관리</span></span><span aria-hidden="true">›</span></Link>
       </section>
       <section className="settings-card" aria-labelledby="settings-account"><h2 id="settings-account">계정 관리</h2>
-        <div className="settings-menu settings-pending" aria-disabled="true"><strong>비밀번호 재설정</strong><span>준비 중</span></div>
-        <div className="settings-menu settings-pending" aria-disabled="true"><strong>회원 탈퇴</strong><span>준비 중</span></div>
+        <Link className="settings-menu" to="/forgot-password"><strong>비밀번호 재설정</strong><span aria-hidden="true">›</span></Link>
+        <Link className="settings-menu" to="/settings/withdraw"><strong>회원 탈퇴</strong><span aria-hidden="true">›</span></Link>
       </section>
     </>}
   </section>

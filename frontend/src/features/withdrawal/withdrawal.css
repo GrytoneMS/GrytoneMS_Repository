@@ -1,0 +1,11 @@
+.withdraw-logo { display: inline-flex; align-items: center; }
+.withdraw-logo:focus-visible { outline: 3px solid var(--auth-blue); outline-offset: 4px; }
+.withdraw-card { width: min(100%, 700px); margin: 32px auto; }
+.withdraw-policy { padding-left: 20px; margin-block: 20px; }
+.withdraw-policy li + li { margin-top: 12px; }
+.withdraw-counts { display: flex; flex-wrap: wrap; gap: 24px; margin-block: 24px; }
+.withdraw-counts dd { margin: 4px 0; font-weight: 700; }
+.withdraw-fields { border: 0; padding: 0; margin: 16px 0; min-width: 0; display: grid; gap: 16px; }
+.withdraw-final { display: grid; gap: 16px; }
+.withdraw-card :is(a, button, input):focus-visible { outline: 3px solid var(--auth-blue); outline-offset: 4px; }
+.withdraw-card p, .withdraw-policy { overflow-wrap: anywhere; }

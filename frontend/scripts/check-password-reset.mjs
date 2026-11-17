@@ -76,6 +76,7 @@ try {
     const { default: Page } = await server.ssrLoadModule('/src/pages/PasswordResetPage.tsx')
     const render = (confirm, path) => renderToStaticMarkup(createElement(MemoryRouter, { initialEntries: [path] }, createElement(Page, { confirm })))
     assert.ok(render(false, '/forgot-password').includes('type="email"'))
+    for (const confirm of [false, true]) { const logo = render(confirm, confirm ? '/reset-password' : '/forgot-password'); assert.ok(logo.includes('class="teamon-logo"')); assert.ok(logo.includes('brand/team-on.png')); assert.ok(logo.includes('alt="TEAM:ON"')) }
     const missing = render(true, '/reset-password'); assert.ok(!missing.includes('type="password"')); assert.ok(missing.includes('/forgot-password'))
     const html = render(true, '/reset-password?token=synthetic-secret'); assert.ok(html.includes('name="confirmation"')); assert.ok(!html.includes('synthetic-secret')); assert.ok(html.includes('/login'))
   })
