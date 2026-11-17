@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router'
 import { AppLayout } from './layouts/AppLayout'
 import LoginPage from './pages/LoginPage'
 import WithdrawPage from './pages/WithdrawPage'
+import PasswordResetPage from './pages/PasswordResetPage'
 import SignupPage from './pages/SignupPage'
 import SchoolVerificationPage from './pages/SchoolVerificationPage'
 import ProfileSetupPage from './pages/ProfileSetupPage'
@@ -24,6 +25,8 @@ import { useAuth } from './features/auth/useAuth'
 import NotificationsPage from './pages/NotificationsPage'
 import { NotificationProvider } from './features/notifications/NotificationProvider'
 import AdminPage from './features/admin/AdminPage'
+import SettingsPage from './pages/SettingsPage'
+import NotificationSettingsPage from './pages/NotificationSettingsPage'
 
 export default function App() {
   return <AuthProvider><SessionRoutes /></AuthProvider>
@@ -39,6 +42,8 @@ function SessionRoutes() {
         <Route index element={<Navigate to="/posts" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/settings/withdraw" element={<WithdrawPage />} />
+        <Route path="/forgot-password" element={<PasswordResetPage />} />
+        <Route path="/reset-password" element={<PasswordResetPage confirm />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/school-verification" element={<SchoolVerificationPage />} />
         <Route path="/profile/setup" element={<ProfileSetupPage />} />
@@ -55,6 +60,8 @@ function SessionRoutes() {
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/me/scraps" element={<MyScrapsPage />} />
         <Route path="/me/blocks" element={<MyBlocksPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes></NotificationProvider></ScrapProvider>

@@ -1,5 +1,17 @@
 # 회원 탈퇴 (AUTH-09)
 
+## PR #52 최신 dev 통합 (2026-11-17)
+
+- #50·#51·#53이 병합된 `origin/dev=60111ae`를 AUTH-09에 병합. App.tsx의 양쪽 import·라우트를 모두 보존해 `/forgot-password`, `/reset-password`(confirm), `/settings/withdraw`를 함께 등록. 인증·스크랩·알림 Provider 및 설정·관리자 등 기존 라우트 유지.
+- 설정 홈의 준비 중 항목을 비밀번호 재설정 `/forgot-password`, 회원 탈퇴 `/settings/withdraw` 링크로 연결.
+- 탈퇴·비밀번호 재설정 화면은 최종 공통 BrandLogo 사용. #53 SiteHeader·로고 원본·메뉴 정렬과 기능 로직은 변경하지 않음.
+- `frontend`에서 `npm.cmd run build`, `npm.cmd run lint`, `node scripts/check-withdrawal.mjs`(10), `node scripts/check-notification-settings.mjs`(8), `node scripts/check-password-reset.mjs`(8), `node scripts/check-posts.mjs`(12), `node scripts/check-auth-session.mjs`(16), `node scripts/check-safety.mjs`(12), `node scripts/check-admin.mjs`(17) 통과. 총 83개 검사. 로고 전용 스크립트는 없으며 기존 정적 렌더 검사에 두 화면의 공통 로고 및 설정 링크 검증을 보강.
+- 충돌 표시 검사·`git diff --check` 수행. 자동 검사는 요청 가로채기·상태·정적 렌더 범위이며 이번 통합에서 실제 브라우저 확인·메일 발송·실제 탈퇴·서버 후처리 검증은 수행하지 않음. 아래 과거 사용자 확인과 구분.
+- 실행 중 Vite 5173은 현재 저장소의 AUTH-09를 사용. 5174는 기존 점검 worktree `audit/auth-profile-notifications-20261117`로 유지. 기존 stash 3개와 점검 worktree 보존. 서버 재시작 없음.
+- 수동 확인: `http://localhost:5173/settings`, `/settings/withdraw`, `/forgot-password`, `/reset-password`(토큰 없으면 안내). 기존 계정에 실제 탈퇴 요청을 보내지 말 것.
+
+아래는 최초 구현 당시 기록이며, 미병합 PR·설정 후속 연결·직접 PNG 사용에 대한 항목은 위 통합 기록으로 대체됨.
+
 ## 기준과 연결
 
 - README·frontend README·Git 상태 확인. 깨끗한 작업 트리에서 fetch한 최신 `origin/dev=4928c06`으로 `feature/front-AUTH-09` 생성. 기존 AUTH-05·NOTI-03 브랜치와 stash 3개 보존.

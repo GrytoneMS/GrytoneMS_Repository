@@ -1,7 +1,7 @@
-import { Link, NavLink, Outlet, useLocation } from 'react-router'
+import { NavLink, Outlet, useLocation } from 'react-router'
+import { SiteHeader } from '../components/SiteHeader'
 import '../features/posts/posts.css'
 import { AuthStatus } from '../features/auth/AuthContext'
-import { NotificationLink } from '../features/notifications/NotificationLink'
 import { isPostMock } from '../features/posts/source'
 
 const links = [
@@ -24,13 +24,11 @@ const links = [
 export function AppLayout() {
   const { pathname } = useLocation()
   const isNotifications = pathname === '/notifications'
-  const isRecruitment = isNotifications || pathname === '/me/posts' || pathname === '/me/applications' || pathname === '/me/scraps' || pathname === '/me/blocks' || pathname === '/posts' || /^\/posts\/[^/]+(?:\/(?:applicants|edit))?$/.test(pathname)
+  const isRecruitment = isNotifications || pathname === '/settings' || pathname === '/settings/notifications' || pathname === '/me/posts' || pathname === '/me/applications' || pathname === '/me/scraps' || pathname === '/me/blocks' || pathname === '/posts' || /^\/posts\/[^/]+(?:\/(?:applicants|edit))?$/.test(pathname)
   if (isRecruitment) return (
     <div className="posts-layout">
       <a className="post-skip" href="#main-content">본문으로 건너뛰기</a>
-      <header className="posts-header"><Link className="post-logo" to="/posts" aria-label="TEAM:ON 홈"><img src="/brand/team-on.png" alt="TEAM:ON" width={659} height={115} /></Link>
-        <nav aria-label="주 메뉴"><NavLink to="/posts" end>홈</NavLink><NavLink to="/posts/new">모집글 작성</NavLink><NotificationLink /><Link to="/me/profile" aria-current={pathname === '/me/posts' ? 'page' : undefined}>마이페이지</Link></nav>
-      </header>
+      <SiteHeader />
       <main id="main-content" className="posts-main">{!isNotifications && !isPostMock && <AuthStatus publicView />}<Outlet /></main>
     </div>
   )

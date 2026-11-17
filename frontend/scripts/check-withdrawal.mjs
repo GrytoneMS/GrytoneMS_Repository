@@ -103,6 +103,7 @@ try {
       assert.ok(!render(store).includes('type="password"')); store.dispose()
     }
     const store = createAuthStore(() => null), html = render(store, { withdrawalCompleted: true })
+    assert.ok(html.includes('class="teamon-logo"')); assert.ok(html.includes('brand/team-on.png')); assert.ok(html.includes('alt="TEAM:ON"'))
     assert.ok(html.includes('회원 탈퇴가 완료')); assert.ok(html.includes('href="/posts"')); assert.ok(html.includes('href="/login"')); store.dispose()
   })
   console.log(`${passed} withdrawal checks passed (intercepted API/controller/auth/static render; no real deletion/browser).`)

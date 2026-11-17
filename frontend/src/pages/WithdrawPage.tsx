@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
+import { BrandLogo } from '../components/BrandLogo'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { AuthStatus } from '../features/auth/AuthContext'
@@ -14,7 +15,7 @@ export default function WithdrawPage() {
   const auth = useAuth(), location = useLocation(), navigate = useNavigate()
   const service = useMemo(() => withdrawalService(auth.store, auth.session), [auth.store, auth.session])
   const done = location.state?.withdrawalCompleted === true
-  return <div className="auth-page"><Link className="post-logo withdraw-logo" to="/posts" aria-label="TEAM:ON 홈"><img src="/brand/team-on.png" alt="TEAM:ON" width={659} height={115} /></Link>
+  return <div className="auth-page"><Link className="post-logo withdraw-logo" to="/posts" aria-label="TEAM:ON 홈"><BrandLogo /></Link>
     <section className="auth-card withdraw-card" aria-labelledby="withdraw-title"><h1 id="withdraw-title">회원 탈퇴</h1>
       {done ? <><p role="status">회원 탈퇴가 완료됐어요. 이용해 주셔서 감사합니다.</p><div className="auth-links"><Link to="/posts">홈으로</Link><Link to="/login">로그인</Link></div></> : auth.status !== 'authenticated' ? <><AuthStatus /><p>로그인이 만료되었거나 결과 확인 중 세션이 종료됐다면 다시 로그인해 계정 상태를 확인해 주세요. 로그인 불가만으로 탈퇴 완료를 단정할 수 없습니다.</p></> : <WithdrawForm key={auth.scope} service={service} complete={() => {
         navigate('/settings/withdraw', { replace: true, state: { withdrawalCompleted: true } })
