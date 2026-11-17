@@ -11,15 +11,15 @@ type SubmitCallbacks = {
 export function createPostSubmitter() {
   let active: AbortController | null = null
   return {
-    async submit(draft: PostDraft, callbacks: SubmitCallbacks, options: Pick<PostRequestOptions, 'token'> = {}) {
+    async submit(draft: PostDraft, callbacks: SubmitCallbacks, options: Pick<PostRequestOptions, 'token'> & { send?: typeof createPost } = {}) {
       if (active) return
       const errors = validatePostDraft(draft)
       if (Object.keys(errors).length) { callbacks.onInvalid(errors); return }
       const controller = new AbortController(); active = controller
       callbacks.onStart()
       try {
-        // 인증 컨텍스트가 아직 없습니다. 임시 사용자 헤더나 토큰 저장 정책을 만들지 않습니다.
-        const result = await createPost(toCreatePostRequest(draft), { token: options.token, signal: controller.signal })
+        // 화면은 확인된 세션으로 감싼 sender를 공급합니다. 토큰 저장 정책은 이 모듈에서 다루지 않습니다.
+        const result = await (options.send ?? createPost)(toCreatePostRequest(draft), { token: options.token, signal: controller.signal })
         if (!controller.signal.aborted) callbacks.onSuccess(result.id)
       } catch (error) {
         if (!controller.signal.aborted) callbacks.onFailure(createFailure(error))

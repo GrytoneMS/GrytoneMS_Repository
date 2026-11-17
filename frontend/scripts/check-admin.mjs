@@ -161,7 +161,7 @@ try {
     const { SuspensionFields } = await server.ssrLoadModule('/src/features/admin/AdminPage.tsx')
     for (const path of ['/admin', '/admin/reports', '/admin/verifications', '/admin/suspensions', '/admin/schools']) {
       const html = renderToStaticMarkup(createElement(MemoryRouter, { initialEntries: [path] }, createElement(App)))
-      assert.ok(html.includes('admin-sidebar')); assert.ok(html.includes('관리자 권한 확인 중')); assert.ok(!html.includes('app-layout'))
+      assert.ok(html.includes('admin-sidebar')); assert.ok(html.includes('로그인 후 이용할 수 있어요.')); assert.ok(!html.includes('app-layout'))
     }
     const html = renderToStaticMarkup(createElement(SuspensionFields, { days: null, reason: '', disabled: false, onChange() {} }))
     for (const value of ['7일', '30일', '영구', '사용자에게 안내']) assert.ok(html.includes(value))

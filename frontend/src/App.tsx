@@ -17,11 +17,18 @@ import MyApplicationsPage from './pages/MyApplicationsPage'
 import MyScrapsPage from './pages/MyScrapsPage'
 import { ScrapProvider } from './features/scraps/ScrapContext'
 import NotFoundPage from './pages/NotFoundPage'
+import { AuthProvider } from './features/auth/AuthContext'
+import { useAuth } from './features/auth/useAuth'
 import AdminPage from './features/admin/AdminPage'
 
 export default function App() {
+  return <AuthProvider><SessionRoutes /></AuthProvider>
+}
+
+function SessionRoutes() {
+  const auth = useAuth()
   return (
-    <ScrapProvider><Routes>
+    <ScrapProvider session={auth.session} authScope={auth.scope} store={auth.store}><Routes>
       <Route path="/admin" element={<AdminPage />} />
       <Route path="/admin/:section" element={<AdminPage />} />
       <Route element={<AppLayout />}>

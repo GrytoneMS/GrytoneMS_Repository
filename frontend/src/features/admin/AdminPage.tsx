@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { Button } from '../../components/Button'
-import { readAccessToken } from '../auth/api'
-import { realAdmin, type AdminService } from './api'
+import { useAuth } from '../auth/useAuth'
+import { AuthStatus } from '../auth/AuthContext'
+import type { AdminService } from './api'
+import { authenticatedAdmin } from './source'
 import { createAdminController, type AdminController, type AdminState } from './controller'
 import { adminExampleEnabled, createMockAdmin } from './mock'
 import { actions, allowedActions, jobError, menus, reasons, type Job, type Menu, type Report, type School, type SchoolInput, type Verification } from './model'
@@ -15,16 +17,10 @@ export default function AdminPage() {
   const { section = 'reports' } = useParams()
   const [params, setParams] = useSearchParams()
   const menu: Menu = Object.hasOwn(menus, section) ? section as Menu : 'reports'
-  const [token, setToken] = useState(() => typeof window === 'undefined' ? null : readAccessToken())
-  useEffect(() => {
-    const sync = () => setToken(readAccessToken())
-    window.addEventListener('storage', sync); window.addEventListener('focus', sync)
-    const timer = window.setInterval(sync, 400)
-    return () => { clearInterval(timer); window.removeEventListener('storage', sync); window.removeEventListener('focus', sync) }
-  }, [])
+  const auth = useAuth()
   const example = adminExampleEnabled(params)
   const exampleQuery = new URLSearchParams([...params].filter(([k]) => k.startsWith('admin'))).toString()
-  const service = useMemo<AdminService>(() => example ? createMockAdmin(new URLSearchParams(exampleQuery)) : realAdmin(token, () => readAccessToken() === token), [token, example, exampleQuery])
+  const service = useMemo<AdminService>(() => example ? createMockAdmin(new URLSearchParams(exampleQuery)) : authenticatedAdmin(auth.store, auth.session), [auth.session, auth.store, example, exampleQuery])
   const status = menu === 'verifications' ? (['PENDING', 'APPROVED', 'REJECTED'].includes(params.get('status') ?? '') ? params.get('status')! : 'PENDING') : menu === 'reports' ? (params.get('status') === 'RESOLVED' ? 'RESOLVED' : 'RECEIVED') : ''
   return <div className="admin-app">
     <aside className="admin-sidebar"><Link to="/posts" className="admin-brand"><img src={`${import.meta.env.BASE_URL}brand/team-on.png`} alt="TEAM:ON" /></Link><p>관리자</p>
@@ -36,7 +32,7 @@ export default function AdminPage() {
         <label>결과<select value={params.get('adminResult') ?? 'success'} onChange={e => setParams(p => { const n = new URLSearchParams(p); n.set('adminResult', e.target.value); return n })}>{Object.entries({ success: '정상', failure: '처리 실패', lost: '처리 후 응답 유실', refreshFailure: '성공 후 조회 실패', loadFailure: '목록 실패', expired: '인증 만료', forbidden: '권한 없음' }).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
         <Button onClick={() => setParams(p => { const n = new URLSearchParams(p); n.set('adminReset', String(Date.now())); return n })}>예시 초기화</Button>
       </aside>}
-      <AdminContent key={`${token}:${exampleQuery}:${menu}:${status}`} service={service} menu={menu} status={status} current={() => example || readAccessToken() === token} onStatus={value => setParams(p => { const n = new URLSearchParams(p); n.set('status', value); return n })} />
+      {!example && auth.status !== 'authenticated' ? <AuthStatus /> : <AdminContent key={`${auth.scope}:${exampleQuery}:${menu}:${status}`} service={service} menu={menu} status={status} current={() => example || auth.store.getSnapshot().session === auth.session} onStatus={value => setParams(p => { const n = new URLSearchParams(p); n.set('status', value); return n })} />}
     </main>
   </div>
 }

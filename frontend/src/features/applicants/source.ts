@@ -2,6 +2,14 @@ import { loadManagement, decideApplication } from './api'
 import { isPostMock } from '../posts/source'
 import type { PostRequestOptions } from '../posts/api'
 import type { ManagementService } from './controller'
+import type { AuthStore } from '../auth/session'
+
+export function authenticatedManagement(postId: string, store: AuthStore): ManagementService {
+  return {
+    load: signal => store.execute((session, authSignal) => loadManagement(postId, { token: session.token, signal: AbortSignal.any([signal, authSignal]) })),
+    decide: (id, decision, reason, signal) => store.execute((session, authSignal) => decideApplication(id, decision, reason, { token: session.token, signal: signal ? AbortSignal.any([signal, authSignal]) : authSignal })),
+  }
+}
 
 export function managementService(postId: string, query: URLSearchParams, options: PostRequestOptions = {}): ManagementService {
   if (!isPostMock) return {

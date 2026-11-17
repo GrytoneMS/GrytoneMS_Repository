@@ -5,7 +5,7 @@ import { PostCreateAuthPendingError } from './create-integration'
 
 /** 실제 POST만 호출합니다. mock 모드나 요청 실패를 성공으로 대체하지 않습니다. */
 export async function createPost(body: CreatePostRequest, options: PostRequestOptions = {}) {
-  // 인증 컨텍스트가 연결될 때까지 토큰 없는 작성 요청은 fetch 전에 차단합니다.
+  // 직접 호출에서도 토큰 없는 작성 요청은 fetch 전에 차단합니다.
   if (!options.token?.trim()) throw new PostCreateAuthPendingError()
   const result = await apiRequest<{ id: number }>('/api/posts', { ...options, method: 'POST', body })
   if (!result || !Number.isSafeInteger(result.id) || result.id <= 0) {

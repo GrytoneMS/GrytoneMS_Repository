@@ -49,7 +49,7 @@ export function validatePage(page: Page, menu: Menu, cursor?: string, status = '
   if (page.hasNext && page.nextCursor !== String(page.items.at(-1)!.id)) invalid()
   return page
 }
-export function realAdmin(token: string | null, current = () => true): AdminService {
+export function realAdmin(token: string | null, current = () => true, accountLoader?: (signal: AbortSignal) => Promise<Account>): AdminService {
   let verified = false
   function auth(admin = true) {
     if (!token?.trim() || !current()) throw new ApiError(401, { success: false, code: 'AUTH_PENDING', message: '로그인이 필요합니다.' })
@@ -61,7 +61,7 @@ export function realAdmin(token: string | null, current = () => true): AdminServ
   return {
     async account(signal) {
       verified = false; auth(false)
-      const account = validateAccount(await apiRequest<Account>('/api/users/me', { token: token!, signal, cache: 'no-store' }))
+      const account = validateAccount(await (accountLoader ? accountLoader(signal) : apiRequest<Account>('/api/users/me', { token: token!, signal, cache: 'no-store' })))
       if (current() && !signal.aborted) verified = account.role === 'ADMIN'
       return account
     },

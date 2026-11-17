@@ -6,24 +6,26 @@ import { mockScraps } from './mock'
 import { isPostMock } from '../posts/source'
 import './scraps.css'
 import { ScrapContext, useScraps, type ScrapContextValue as Context } from './context'
+import type { AuthStore } from '../auth/session'
+import { authenticatedScraps } from './source'
 
 const keys = ['scrapExample', 'scrapUser', 'scrapCase', 'scrapResult', 'scrapReset']
 export type ScrapSession = { userId: string; token: string }
-export function ScrapProvider({ children, session }: { children: ReactNode; session?: ScrapSession }) {
+export function ScrapProvider({ children, session, store, authScope }: { children: ReactNode; session?: ScrapSession; store?: AuthStore; authScope?: string }) {
   const { search } = useLocation()
   const query = new URLSearchParams(search)
   const mock = isPostMock && query.get('scrapExample') === 'true'
-  const scope = mock ? new URLSearchParams(keys.filter(key => query.has(key)).map(key => [key, query.get(key)!])).toString() : JSON.stringify([session?.userId, session?.token])
+  const scope = mock ? new URLSearchParams(keys.filter(key => query.has(key)).map(key => [key, query.get(key)!])).toString() : JSON.stringify([authScope, session?.userId, session?.token])
   const context = useMemo<Context>(() => {
     const params = new URLSearchParams(mock ? scope : '')
     const example = mock ? mockScraps(params) : null
-    const controller = createScrapController(example?.service ?? realScraps({ token: session?.token }), example?.values)
-    return { controller, mock, userId: mock ? example?.userId : session?.userId, token: mock ? undefined : session?.token, search: mock ? `?${params}` : '' }
-  }, [scope, mock, session?.userId, session?.token])
+    const controller = createScrapController(example?.service ?? (store ? authenticatedScraps(store) : realScraps({ token: session?.token })), example?.values)
+    return { controller, mock, ready: mock || !!session?.token, userId: mock ? example?.userId : session?.userId, token: mock ? undefined : session?.token, search: mock ? `?${params}` : '' }
+  }, [scope, mock, session?.userId, session?.token, store])
   // 자식의 첫 목록 요청(passive effect)보다 먼저 활성화합니다. StrictMode 재마운트도 같은 순서입니다.
   useLayoutEffect(() => { context.controller.resume(); return context.controller.dispose }, [context])
   // 공통 인증 연결 시 userId와 인증 세션 변경값으로 scope를 구분합니다. 토큰을 저장하지 않습니다.
-  return <ScrapContext.Provider key={scope} value={context}>{children}<ScrapNotice controller={context.controller} /></ScrapContext.Provider>
+  return <ScrapContext.Provider value={context}>{children}<ScrapNotice controller={context.controller} /></ScrapContext.Provider>
 }
 function ScrapNotice({ controller }: { controller: Context['controller'] }) {
   const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot)
@@ -40,7 +42,7 @@ function LiveScrapButton({ context, postId, initial, own, title, compact }: { co
   const unknown = typeof saved !== 'boolean'
   const blocked = own && !saved
   return <div className={`scrap-control${compact ? ' scrap-compact' : ''}`}>
-    <button type="button" className="scrap-button" aria-pressed={saved === true} aria-label={`${title} 스크랩 ${saved ? '해제' : '등록'}`} disabled={busy || blocked || unknown || needsCheck}
+    <button type="button" className="scrap-button" aria-pressed={saved === true} aria-label={`${title} 스크랩 ${saved ? '해제' : '등록'}`} disabled={context.ready === false || busy || blocked || unknown || needsCheck}
       title={blocked ? '내가 올린 모집글은 스크랩할 수 없어요.' : unknown ? '스크랩 상태를 조회한 뒤 시도해 주세요.' : undefined}
       onClick={event => { event.preventDefault(); event.stopPropagation(); void context.controller.change(postId, saved, own) }}>
       <svg width="20" height="20" viewBox="0 0 24 24" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z" /></svg>{!compact && (busy ? '처리 중…' : saved ? '스크랩 해제' : '스크랩')}

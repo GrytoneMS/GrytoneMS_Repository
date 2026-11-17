@@ -7,12 +7,14 @@ import { canClosePost, canReadContact, createPostActions, type PostActionsState 
 import { createMockPostActions } from './post-actions-mock'
 import { isPostMock, loadPost, type Scenario } from './source'
 import './post-actions.css'
+import type { AuthStore } from '../auth/session'
 
 type Props = {
   post: PostDetail; onPost: (post: PostDetail) => void; viewer: Viewer; scenario: Scenario;
   closing: string | null; contact: string | null;
   // 공통 인증 연동용 주입 지점. 인증 정보를 저장하지 않으며 세션 변경 시 자식을 교체합니다.
   session?: { userId: string; token: string }
+  run?: AuthStore['execute']
 }
 export function PostActions(props: Props) {
   const { post, session } = props
@@ -21,14 +23,14 @@ export function PostActions(props: Props) {
   // key changes remove old contact during render, before effect cleanup/async completion.
   return <ScopedPostActions key={scope} {...props} />
 }
-function ScopedPostActions({ post, onPost, session, scenario, viewer, closing, contact }: Props) {
+function ScopedPostActions({ post, onPost, session, scenario, viewer, closing, contact, run }: Props) {
   const mounted = useRef(false)
   const focusFrame = useRef<number | null>(null)
   const [actions] = useState(() => createPostActions(post, {
     ...(isPostMock ? createMockPostActions(post, scenario, viewer, closing, contact) : {
-      close: (signal: AbortSignal) => closePost(post.id, { token: session?.token, signal }),
-      contact: (signal: AbortSignal) => getPostContact(post.id, { token: session?.token, signal }),
-      load: (signal: AbortSignal) => loadPost(String(post.id), scenario, signal, viewer, { token: session?.token }),
+      close: (signal: AbortSignal) => run ? run((current, authSignal) => closePost(post.id, { token: current.token, signal: AbortSignal.any([signal, authSignal]) })) : closePost(post.id, { token: session?.token, signal }),
+      contact: (signal: AbortSignal) => run ? run((current, authSignal) => getPostContact(post.id, { token: current.token, signal: AbortSignal.any([signal, authSignal]) })) : getPostContact(post.id, { token: session?.token, signal }),
+      load: (signal: AbortSignal) => run ? run((current, authSignal) => loadPost(String(post.id), scenario, AbortSignal.any([signal, authSignal]), viewer, { token: current.token })) : loadPost(String(post.id), scenario, signal, viewer, { token: session?.token }),
     }), onPost,
   }))
   const state = useSyncExternalStore(actions.subscribe, actions.getSnapshot, actions.getSnapshot)
@@ -79,7 +81,7 @@ export function PostActionsView({ state, mock, authenticated, onConfirm, onRefre
         </div>}
         {state.copyNotice && <p role="status">{state.copyNotice}</p>}
       </> : <p className="post-note">수락 전이거나 지원이 거절·취소·마감되었거나 팀에서 나간 경우에는 조회할 수 없어요.</p>}
-      {!mock && !authenticated && <p className="post-note">공통 인증 연동 대기 중 · 인증 연동 전에는 마감·연락 수단 조회 요청을 보내지 않습니다.</p>}
+      {!mock && !authenticated && <p className="post-note">로그인 상태를 확인한 뒤 마감·연락 수단을 이용할 수 있어요.</p>}
       {mock && <p className="post-note">개발용 예시 · 실제 요청·DB 변경이 없으며 연락 수단은 가상 주소입니다.</p>}
     </section>
   </div>
