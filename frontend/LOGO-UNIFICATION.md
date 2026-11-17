@@ -1,4 +1,4 @@
-# TEAM:ON 로고 통일 — 별도 fix PR
+# TEAM:ON 로고 및 공통 헤더 통일
 
 ## 최종 원본 확인
 
@@ -29,7 +29,8 @@
 
 - 탈퇴 기능을 feature/front-AUTH-09의 커밋 `7461b60`, PR #52로 먼저 분리. 로고 변경 전 스냅샷·로고 패치·사용자 최종 원본을 Git 밖에 보존하고 기존 stash 3개 유지.
 - #52 생성 후 다시 fetch한 최신 origin/dev `4928c06`에서 fix/team-on-logo-unify 생성. #50·#51·#52 모두 미병합이므로 가져오지 않음.
-- 이번 로고 범위: components/BrandLogo.tsx·brand-logo.css, AuthPage·ProfileLayout·AppLayout·AdminPage·SchoolVerificationPage·ProfileSetupPage의 로고 import/마크업 및 이 문서, 총 9개 파일.
+- 로고 범위: components/BrandLogo.tsx·brand-logo.css, AuthPage·ProfileLayout·AppLayout·AdminPage·SchoolVerificationPage·ProfileSetupPage의 로고 사용처 및 이 문서.
+- 추가 헤더 범위: SiteHeader·site-header.css를 AppLayout·ProfileLayout에서 재사용. 모집 헤더 기준 여백·간격·글꼴·행간·정렬 통일, 활성 라벨의 굵은 폭 예약, root scrollbar-gutter:stable 적용. NotificationLink는 라벨 폭 예약을 위한 마크업만 변경하며 경로·배지 로직 유지. 본문·인증·프로필 기능 변경 없음. HEADER-ALIGNMENT.md에 영향 화면과 미검증 시각 항목 기록.
 - App.tsx 탈퇴 라우트·WithdrawPage·features/withdrawal·탈퇴 검사·WITHDRAWAL 문서는 이 PR에 없음.
 - #52 병합 후 WithdrawPage의 직접 PNG를 BrandLogo로 바꾸는 import/마크업 연결 필요. 독립 auth-page 레이아웃이므로 모집 공통 헤더 변경만으로 이 연결이 자동 적용되지는 않음. 기존 직접 PNG도 동일한 최종 원본임.
 - #50 병합 후 설정 헤더, #51 병합 후 독립 PasswordResetPage 로고도 확인·연결 필요. 미병합 기능 파일을 복제하지 않음.
@@ -37,7 +38,7 @@
 
 ## 검증과 시각 확인 주소
 
-- 최종 build·lint·git diff --check 및 staged diff 검사 통과. 공통 인증 16개·모집 12개·관리자 17개, 총 45개 검사 통과. 탈퇴 검사는 PR #52의 38개 검증에 포함되며 이 브랜치로 복사하지 않음. 로고 변경을 실제 API 검증으로 간주하지 않음.
+- 최종 build·lint·git diff --check 및 staged diff 검사 통과. 공통 인증 16개·모집 12개·신고/차단 및 프로필 연결 12개·관리자 17개, 총 57개 검사 통과. 탈퇴 검사는 PR #52의 38개 검증에 포함되며 이 브랜치로 복사하지 않음. 로고·헤더 변경을 실제 API 검증으로 간주하지 않음.
 - 소스 전체 재검색: 직접 만든 TEAM/span 로고 제거, 이미지 경로를 BrandLogo 한 곳에서만 정의.
 - 브라우저 직접 시각 확인은 미검증. 사용자에게 요청할 주소(기본 origin `http://localhost:5173`):
   - `/login`, `/signup`, `/school-verification`, `/profile/setup`
