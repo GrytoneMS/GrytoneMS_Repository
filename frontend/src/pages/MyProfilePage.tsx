@@ -27,6 +27,7 @@ function MyProfile({ profile }: { profile: Profile }) {
         <Link to="/me/blocks">내 차단 목록</Link>
         <Link to="/notifications">알림함</Link>
         <Link to="/me/scraps">내 스크랩</Link>
+        <Link to="/settings">설정</Link>
       </section>
     </aside>
     <div className="profile-stack">
