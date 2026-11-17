@@ -1,0 +1,17 @@
+.safety-report { min-width: 0; }
+.post-secondary-actions:has(> .safety-report) { flex-wrap: wrap; }
+.post-secondary-actions > .safety-report { flex: 1 1 100%; }
+.user-profile-actions:has(> .safety-report) { flex-basis: 100%; align-items: flex-start; }
+.user-profile-actions > .safety-report { flex: 1; }
+.safety-report-form p, .safety-report > p { font-size: 13px; }
+.safety-report-form { display: grid; gap: 12px; margin-top: 12px; padding: 16px; border: 1px solid #dce3ef; border-radius: 16px; background: white; color: #26334b; }
+.safety-report-form label { display: grid; gap: 6px; font-size: 13px; }
+.safety-report-form select, .safety-report-form textarea { min-width: 0; width: 100%; padding: 10px; border: 1px solid #bac7db; border-radius: 8px; font: inherit; }
+.safety-report-form textarea { min-height: 90px; resize: vertical; }
+.safety-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.safety-report .button.safety-secondary, .safety-blocks .button.safety-secondary { background: white; color: #33445f; border: 1px solid #bac7db; }
+.safety-blocks { max-width: 800px; margin-inline: auto; }
+.safety-blocks ul { padding: 0; list-style: none; }
+.safety-blocks li { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 20px; margin-block: 12px; border: 1px solid #dce3ef; border-radius: 16px; }
+.safety-blocks li > div { flex: 1; min-width: 120px; }
+.safety-blocks [role=alert] { color: #a52b35; }

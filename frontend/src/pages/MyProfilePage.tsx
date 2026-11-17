@@ -24,6 +24,7 @@ function MyProfile({ profile }: { profile: Profile }) {
       <section className="profile-card profile-shortcuts" aria-label="내 활동 바로가기">
         <Link to="/me/posts">내 모집글</Link>
         <Link to="/me/applications">내 지원 내역</Link>
+        <Link to="/me/blocks">내 차단 목록</Link>
       </section>
     </aside>
     <div className="profile-stack">

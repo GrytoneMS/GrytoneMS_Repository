@@ -20,7 +20,7 @@ const links = [
 
 export function AppLayout() {
   const { pathname } = useLocation()
-  const isRecruitment = pathname === '/me/posts' || pathname === '/me/applications' || pathname === '/me/scraps' || pathname === '/posts' || /^\/posts\/[^/]+(?:\/(?:applicants|edit))?$/.test(pathname)
+  const isRecruitment = pathname === '/me/posts' || pathname === '/me/applications' || pathname === '/me/scraps' || pathname === '/me/blocks' || pathname === '/posts' || /^\/posts\/[^/]+(?:\/(?:applicants|edit))?$/.test(pathname)
   if (isRecruitment) return (
     <div className="posts-layout">
       <a className="post-skip" href="#main-content">본문으로 건너뛰기</a>

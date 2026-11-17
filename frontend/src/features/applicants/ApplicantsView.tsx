@@ -5,6 +5,8 @@ import { StatusBadge } from '../posts/components'
 import { decisionBlock, reasonLabels, statusLabels } from './model'
 import type { Application, Decision, Reason, Snapshot } from './model'
 import type { ManagementState } from './controller'
+import { ReportAction } from '../safety/ReportAction'
+import { isPostMock } from '../posts/source'
 
 export function ApplicantsView({ snapshot, state, reason, onReason, onAction, onRefresh, search }: {
   snapshot: Snapshot; state: ManagementState; reason: Reason | null; onReason: (reason: Reason | null) => void;
@@ -32,6 +34,7 @@ export function ApplicantsView({ snapshot, state, reason, onReason, onAction, on
             <Link className="applicants-profile-link" to={`/users/${item.applicant.id}`}>프로필 보기</Link>
           </div>
           <p className="applicant-message">{item.message}</p>
+          {snapshot.post.isMine && !isPostMock && <ReportAction targetType="APPLICATION" targetId={item.id} label="지원 메시지 신고" disabled={locked} />}
           <p className="applicant-meta">가능 시간: {item.availableTime}</p>
           <p className="applicant-meta">지원 일시: <time dateTime={item.createdAt}>{item.createdAt.replace('T', ' ')}</time></p>
           <div className="applicant-actions"><Button className="applicants-soft" disabled={locked || !!decisionBlock(snapshot, item.id, 'reject')} onClick={() => onAction(item.id, 'reject')}>거절</Button><Button disabled={locked || !!decisionBlock(snapshot, item.id, 'accept')} onClick={() => onAction(item.id, 'accept')}>수락</Button></div>

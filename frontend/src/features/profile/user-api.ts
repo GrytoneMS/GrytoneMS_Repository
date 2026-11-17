@@ -15,15 +15,22 @@ export function getUserProfile(token: string, userId: string, applicationId: str
 }
 
 export function reportUser(token: string, userId: number, reasonCode: keyof typeof reportReasons, detail: string) {
-  return apiRequest<{ reportId: number }>('/api/reports', {
-    method: 'POST', token, body: { targetType: 'USER', targetId: userId, reasonCode, detail },
+  return reportTarget(token, 'USER', userId, reasonCode, detail)
+}
+
+export function reportTarget(token: string, targetType: 'USER' | 'POST' | 'APPLICATION', targetId: number, reasonCode: keyof typeof reportReasons, detail: string, signal?: AbortSignal) {
+  return apiRequest<{ reportId: number; status: string }>('/api/reports', {
+    method: 'POST', token, signal, body: { targetType, targetId, reasonCode, detail },
   })
 }
 
-export function blockUser(token: string, userId: number) {
-  return apiRequest<{ isBlocked: boolean }>('/api/blocks', { method: 'POST', token, body: { userId } })
+export function blockUser(token: string, userId: number, signal?: AbortSignal) {
+  return apiRequest<{ isBlocked: boolean }>('/api/blocks', { method: 'POST', token, signal, body: { userId } })
 }
 
-export function unblockUser(token: string, userId: string) {
-  return apiRequest<{ isBlocked: boolean }>(`/api/blocks/${userId}`, { method: 'DELETE', token })
+export async function unblockUser(token: string, userId: string, signal?: AbortSignal) {
+  if (!token.trim() || !/^[1-9]\d*$/.test(userId)) throw new Error('로그인과 차단 해제 대상을 확인해 주세요.')
+  const value = await apiRequest<{ userId: number; isBlocked: boolean }>(`/api/blocks/${userId}`, { method: 'DELETE', token, signal })
+  if (!value || String(value.userId) !== userId || value.isBlocked !== false) throw new Error('차단 해제 결과를 확인하지 못했어요. 목록을 다시 조회해 주세요.')
+  return value
 }
