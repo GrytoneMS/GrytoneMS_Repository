@@ -22,11 +22,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 export function AuthStatus({ state: supplied, publicView = false }: { state?: AuthState; publicView?: boolean } = {}) {
   const auth = useAuth(), state = supplied ?? auth
-  return <aside className="post-note" aria-label="로그인 상태" role="status">
-    {state.status === 'checking' ? '로그인 상태를 확인 중이에요.' : state.status === 'error' ? state.message : state.status === 'anonymous' ? state.message || (publicView ? '비로그인 · 공개 모집글을 조회할 수 있어요.' : '로그인 후 이용할 수 있어요.') : <>{state.session?.account.nickname ?? '회원'} · {state.session?.account.status === 'VERIFIED' ? '학교 인증 완료' : state.session?.account.status === 'SUSPENDED' ? '이용 정지' : '학교 미인증'}</>}
+  return <aside className="post-note auth-status" aria-label="로그인 상태" role="status">
+    <span>{state.status === 'checking' ? '로그인 상태를 확인 중이에요.' : state.status === 'error' ? state.message : state.status === 'anonymous' ? state.message || (publicView ? '비로그인 · 공개 모집글을 조회할 수 있어요.' : '로그인 후 이용할 수 있어요.') : <>{state.session?.account.nickname ?? '회원'} · {state.session?.account.status === 'VERIFIED' ? '학교 인증 완료' : state.session?.account.status === 'SUSPENDED' ? '이용 정지' : '학교 미인증'}</>}</span>
     {state.status === 'anonymous' && <> <Link to="/login">로그인</Link></>}
     {state.status === 'authenticated' && state.session?.account.status === 'UNVERIFIED' && <> <Link to="/school-verification">학교 인증</Link></>}
     {state.status === 'error' && <Button onClick={() => void auth.store.refresh()}>로그인 상태 다시 조회</Button>}
-    {state.status !== 'checking' && state.status !== 'anonymous' && <Button onClick={clearAccessToken}>로그아웃</Button>}
+    {state.status !== 'checking' && state.status !== 'anonymous' && <Button className="auth-status-logout" onClick={clearAccessToken}>로그아웃</Button>}
   </aside>
 }
