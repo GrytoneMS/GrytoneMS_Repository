@@ -47,7 +47,7 @@ function LoginForm() {
         <Button type="submit" disabled={pending}>{pending ? '로그인 중…' : '로그인'}</Button>
       </form>
       <div className="auth-links">
-        <button type="button" disabled>비밀번호 재설정 (준비 중)</button>
+        <Link to="/forgot-password">비밀번호 재설정</Link>
         <Link to="/signup">이메일로 회원가입</Link>
       </div>
     </section>
