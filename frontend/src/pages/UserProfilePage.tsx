@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { ApiError } from '../api/client'
 import { Button } from '../components/Button'
-import { useSafetyToken, safetyTokenCurrent } from '../features/safety/auth'
+import { useAuth } from '../features/auth/useAuth'
+import { AuthStatus } from '../features/auth/AuthContext'
+import { authenticatedSafety, type SafetyService } from '../features/safety/source'
 import { ReportAction } from '../features/safety/ReportAction'
 import { roleLabels } from '../features/posts/create-model'
 import { ProfileAvatar, ProfileLayout } from '../features/profile/ProfileLayout'
 import { ProfileSections } from '../features/profile/ProfileSections'
 import { profileError, schoolName } from '../features/profile/presentation'
-import { blockUser, getUserProfile, unblockUser } from '../features/profile/user-api'
 import type { Profile } from '../features/profile/api'
 import '../features/profile/user-profile.css'
 
@@ -18,20 +19,21 @@ export default function UserProfilePage() {
   const { userId = '' } = useParams()
   const [params] = useSearchParams()
   const applicationId = params.get('applicationId')
-  const token = useSafetyToken()
+  const auth = useAuth()
+  const service = useMemo(() => authenticatedSafety(auth.store, auth.session), [auth.store, auth.session])
 
   return <ProfileLayout>
     <div className="user-profile">
       {!validId.test(userId) || (applicationId !== null && !validId.test(applicationId))
         ? <section className="profile-card"><h1>프로필을 찾을 수 없어요.</h1></section>
-        : !token
-          ? <section className="profile-card"><h1>사용자 프로필</h1><p><Link to="/login">로그인</Link>한 뒤 프로필을 볼 수 있어요.</p></section>
-          : <UserProfile key={`${token}:${userId}:${applicationId}`} userId={userId} applicationId={applicationId} token={token} />}
+        : auth.status !== 'authenticated'
+          ? <section className="profile-card"><h1>사용자 프로필</h1><AuthStatus /></section>
+          : <UserProfile key={`${auth.scope}:${userId}:${applicationId}`} userId={userId} applicationId={applicationId} service={service} />}
     </div>
   </ProfileLayout>
 }
 
-function UserProfile({ userId, applicationId, token }: { userId: string; applicationId: string | null; token: string }) {
+function UserProfile({ userId, applicationId, service }: { userId: string; applicationId: string | null; service: SafetyService }) {
   const [profile, setProfile] = useState<Profile>()
   const [error, setError] = useState<unknown>()
   const [attempt, setAttempt] = useState(0)
@@ -45,20 +47,20 @@ function UserProfile({ userId, applicationId, token }: { userId: string; applica
 
   useEffect(() => {
     const controller = new AbortController()
-    getUserProfile(token, userId, applicationId, controller.signal).then(result => {
-      if (controller.signal.aborted || !safetyTokenCurrent(token)) return
+    service.profile(userId, applicationId, controller.signal).then(result => {
+      if (controller.signal.aborted || !service.current()) return
       if (String(result.id) !== userId) {
         setError(new ApiError(404, { success: false, code: 'NOT_FOUND', message: '프로필을 찾을 수 없어요.' }))
         return
       }
       setProfile(result)
     }).catch(reason => {
-      if (controller.signal.aborted || !safetyTokenCurrent(token)) return
+      if (controller.signal.aborted || !service.current()) return
       if (reason instanceof ApiError && reason.code === 'BLOCKED_USER') setBlocked(true)
       else setError(reason)
     })
     return () => controller.abort()
-  }, [attempt, token, userId, applicationId])
+  }, [attempt, service, userId, applicationId])
 
   function open(next: typeof action) {
     setActionError('')
@@ -66,13 +68,13 @@ function UserProfile({ userId, applicationId, token }: { userId: string; applica
   }
 
   async function submitBlock() {
-    if (!profile || actionLock.current || !safetyTokenCurrent(token)) return
+    if (!profile || actionLock.current || !service.current()) return
     const request = new AbortController(); actionRequest.current = request; actionLock.current = true
-    const current = () => !request.signal.aborted && safetyTokenCurrent(token)
+    const current = () => !request.signal.aborted && service.current()
     setSaving(true)
     setActionError('')
     try {
-      const result = await blockUser(token, profile.id, request.signal)
+      const result = await service.block(profile.id, request.signal)
       if (!current()) return
       if (result.isBlocked !== true) throw new Error('차단 결과를 확인하지 못했어요. 다시 조회해 주세요.')
       setBlocked(true)
@@ -90,13 +92,13 @@ function UserProfile({ userId, applicationId, token }: { userId: string; applica
   }
 
   async function removeBlock() {
-    if (actionLock.current || !safetyTokenCurrent(token)) return
+    if (actionLock.current || !service.current()) return
     const request = new AbortController(); actionRequest.current = request; actionLock.current = true
-    const current = () => !request.signal.aborted && safetyTokenCurrent(token)
+    const current = () => !request.signal.aborted && service.current()
     setSaving(true)
     setActionError('')
     try {
-      await unblockUser(token, userId, request.signal)
+      await service.remove(Number(userId), request.signal)
       if (!current()) return
       setProfile(undefined)
       setError(undefined)

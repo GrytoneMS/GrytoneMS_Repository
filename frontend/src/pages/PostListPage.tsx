@@ -6,10 +6,13 @@ import { isPostMock, loadPosts, readScenario, type Scenario } from '../features/
 import { ListFilters } from '../features/posts/ListFilters'
 import { clearAllConditions, keywordError, listSearchParams, readListConditions, type PostListConditions } from '../features/posts/list-query'
 import { createListLoader } from '../features/posts/list-loader'
+import { AuthStatus } from '../features/auth/AuthContext'
+import { useAuth } from '../features/auth/useAuth'
 import { ScrapExamples } from '../features/scraps/ScrapContext'
 import { useScraps } from '../features/scraps/context'
 
 export default function PostListPage() {
+  const auth = useAuth()
   const [params, setParams] = useSearchParams()
   const [searchReset, setSearchReset] = useState(0)
   const conditions = readListConditions(params)
@@ -25,17 +28,20 @@ export default function PostListPage() {
     <ListFilters key={searchReset} conditions={conditions} change={change} />
     {isPostMock && <p className="post-note">개발용 예시 모드입니다. 검색·필터의 실제 결과는 API 모드에서 확인해 주세요.</p>}
     {keywordError(conditions.keyword) ? <div className="post-message" role="alert"><p>{keywordError(conditions.keyword)}</p><Button onClick={() => change(previous => ({ ...previous, keyword: '' }))}>검색어 지우기</Button></div>
-      : <PostListResults key={`${canonical}:${scenario}`} conditions={conditions} scenario={scenario} search={`?${canonical}`} clear={() => { setSearchReset(value => value + 1); change(clearAllConditions) }} />}
+      : !isPostMock && (auth.status === 'checking' || auth.status === 'error') ? <AuthStatus /> : <PostListResults key={`${auth.scope}:${canonical}:${scenario}`} conditions={conditions} scenario={scenario} search={`?${canonical}`} clear={() => { setSearchReset(value => value + 1); change(clearAllConditions) }} />}
   </section>
 }
 
 function PostListResults({ conditions, scenario, search, clear }: { conditions: PostListConditions; scenario: Scenario; search: string; clear: () => void }) {
+  const auth = useAuth()
   const scraps = useScraps()
   // 조건별 새 loader로 목록·커서를 초기화하고, 이전 loader는 abort + 버전 검사로 폐기합니다.
   const [loader] = useState(() => createListLoader(async (cursor, signal) => {
     const revision = scraps?.controller.getRevision()
-    const page = await loadPosts(conditions.sort, cursor, scenario, signal, { token: scraps?.token }, conditions)
-    if (scraps && !scraps.mock && !signal.aborted) scraps.controller.observe(page.items, revision!)
+    const page = !isPostMock && auth.status === 'authenticated'
+      ? await auth.store.execute((session, authSignal) => loadPosts(conditions.sort, cursor, scenario, AbortSignal.any([signal, authSignal]), { token: session.token }, conditions))
+      : await loadPosts(conditions.sort, cursor, scenario, signal, {}, conditions)
+    if (!isPostMock && scraps && !scraps.mock && !signal.aborted) scraps.controller.observe(page.items, revision!)
     return page
   }))
   const state = useSyncExternalStore(loader.subscribe, loader.getSnapshot, loader.getSnapshot)

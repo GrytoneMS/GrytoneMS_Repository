@@ -5,14 +5,17 @@ import { PostCard, PostError } from '../features/posts/components'
 import { ScrapExamples } from '../features/scraps/ScrapContext'
 import { useScraps } from '../features/scraps/context'
 import type { createScrapController } from '../features/scraps/controller'
+import { AuthStatus } from '../features/auth/AuthContext'
+import { useAuth } from '../features/auth/useAuth'
 
 export default function MyScrapsPage() {
   const context = useScraps()
+  const auth = useAuth()
   return <section className="scrap-page" aria-labelledby="scrap-title">
     <ScrapExamples />
     <h1 id="scrap-title">스크랩</h1>
     <p className="post-note">최신 스크랩순 · 삭제·숨김된 글은 자동으로 사라져요.</p>
-    {context && <ScrapList controller={context.controller} search={context.search} />}
+    {!context?.mock && auth.status !== 'authenticated' ? <AuthStatus /> : context && <ScrapList key={auth.scope} controller={context.controller} search={context.search} />}
   </section>
 }
 function ScrapList({ controller, search }: { controller: ReturnType<typeof createScrapController>; search: string }) {

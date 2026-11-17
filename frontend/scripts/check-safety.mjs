@@ -71,7 +71,7 @@ try {
   })
   await check('더 보기 실패는 기존 항목 보존·중복 합치기·해제 실패 보존/성공 제거', async () => {
     let state, calls = 0, fail = true
-    const c = createBlocksController('t', v => { state = v }, () => true, {
+    const c = createBlocksController(v => { state = v }, () => true, {
       load: async cursor => { calls++; if (!cursor) return page([row(7)], '101'); if (fail) throw Error('network'); return page([row(7), row(8)]) },
       remove: async () => { if (fail) throw Error('network') },
     })
@@ -81,16 +81,16 @@ try {
   })
   await check('동일 tick 해제 중복 차단·계정 변경/폐기 뒤 늦은 응답 폐기', async () => {
     let state, count = 0, current = true; const pending = deferred()
-    const c = createBlocksController('t', v => { state = v }, () => current, { load: async () => page([row(7)]), remove: async () => { count++; return pending.promise } })
+    const c = createBlocksController(v => { state = v }, () => current, { load: async () => page([row(7)]), remove: async () => { count++; return pending.promise } })
     await c.load(); const a = c.remove(7), b = c.remove(7); assert.equal(count, 1)
     current = false; pending.resolve(); await Promise.all([a, b]); assert.equal(state.items.length, 1); assert.equal(state.notice, ''); c.dispose()
     const late = deferred(); let updates = 0
-    const d = createBlocksController('t', () => updates++, () => true, { load: () => late.promise, remove: async () => {} })
+    const d = createBlocksController(() => updates++, () => true, { load: () => late.promise, remove: async () => {} })
     const loading = d.load(); d.dispose(); const before = updates; late.resolve(page([row(9)])); await loading; assert.equal(updates, before)
   })
   await check('차단 목록 401/403은 이전 개인정보 제거', async () => {
     let state, deny = false
-    const c = createBlocksController('t', v => { state = v }, () => true, { load: async () => { if (deny) throw new ApiError(403, { code: 'FORBIDDEN', message: 'denied' }); return page([row(7)]) }, remove: async () => {} })
+    const c = createBlocksController(v => { state = v }, () => true, { load: async () => { if (deny) throw new ApiError(403, { code: 'FORBIDDEN', message: 'denied' }); return page([row(7)]) }, remove: async () => {} })
     await c.load(); deny = true; await c.load(); assert.deepEqual(state.items, []); assert.equal(state.denied, true); c.dispose()
   })
   await check('신고 UI와 차단 목록 경로 정적 렌더', async () => {
@@ -99,6 +99,49 @@ try {
     assert.ok(html.includes('지원 메시지 신고'))
     const { default: MyBlocksPage } = await server.ssrLoadModule('/src/pages/MyBlocksPage.tsx')
     assert.ok(renderToStaticMarkup(createElement(MemoryRouter, {}, createElement(MyBlocksPage))).includes('내 차단 목록'))
+  })
+  const { createAuthStore } = await server.ssrLoadModule('/src/features/auth/session.ts')
+  const { authenticatedSafety } = await server.ssrLoadModule('/src/features/safety/source.ts')
+  const user = { id: 7, nickname: '검증', status: 'VERIFIED', role: 'USER' }
+  await check('공통 인증 확인 전 신고/목록/차단/해제는 요청 0회·미인증 신고 차단', async () => {
+    let calls = 0; globalThis.fetch = async () => { calls++; return ok(page([])) }
+    const pending = deferred(), store = createAuthStore(() => 't', () => pending.promise)
+    const loading = store.refresh(), service = authenticatedSafety(store), signal = new AbortController().signal
+    for (const request of [() => service.load(null, signal), () => service.remove(9, signal), () => service.block(9, signal), () => service.report('POST', 9, 'ETC', '', signal)]) await assert.rejects(request(), e => e.code === 'AUTH_CHECKING')
+    assert.equal(calls, 0); pending.resolve({ ...user, status: 'UNVERIFIED' }); await loading
+    const ready = authenticatedSafety(store)
+    await assert.rejects(ready.report('POST', 9, 'ETC', '', signal), e => e.code === 'UNVERIFIED'); assert.equal(calls, 0)
+    await ready.load(null, signal); assert.equal(calls, 1); store.dispose()
+  })
+  await check('신고/차단/해제/프로필 공통 Bearer·signal 재사용·추가 사용자 조회 없음', async () => {
+    const store = createAuthStore(() => 'synthetic-test-only', async () => user); await store.refresh()
+    const service = authenticatedSafety(store), signal = new AbortController().signal, paths = []
+    globalThis.fetch = async (url, options) => {
+      paths.push(url); assert.equal(options.headers.get('Authorization'), 'Bearer synthetic-test-only'); assert.ok(options.signal)
+      if (url.endsWith('/api/reports')) return ok({ reportId: 9, status: 'RECEIVED' })
+      if (url.endsWith('/api/blocks/9')) return ok({ userId: 9, isBlocked: false })
+      if (url.endsWith('/api/blocks')) return ok({ userId: 9, isBlocked: true })
+      return ok(url.includes('/profile') ? { id: 9 } : page([]))
+    }
+    await service.load(null, signal); await service.block(9, signal); await service.remove(9, signal); await service.profile('9', null, signal); await service.report('APPLICATION', 15, 'ETC', '', signal)
+    assert.equal(paths.length, 5); assert.ok(!paths.some(x => x.endsWith('/api/users/me'))); store.dispose()
+  })
+  await check('로그아웃·계정 전환은 실제 공통 세션의 늦은 목록/해제 응답 폐기·새 목록 격리', async () => {
+    let token = 'a', state
+    const store = createAuthStore(() => token, async () => ({ ...user, id: token === 'a' ? 7 : 8 })); await store.refresh()
+    const service = authenticatedSafety(store), late = deferred(); let oldSignal
+    globalThis.fetch = async (_, options) => { oldSignal = options.signal; return late.promise }
+    const c = createBlocksController(v => { state = v }, service.current, service), loading = c.load()
+    token = null; await store.sync(); assert.equal(oldSignal.aborted, true)
+    late.resolve(ok(page([row(99)]))); await loading; assert.deepEqual(state.items, []); c.dispose()
+    token = 'a'; await store.sync(); const old = authenticatedSafety(store), pending = deferred()
+    globalThis.fetch = async (_, options) => { oldSignal = options.signal; return pending.promise }
+    const removing = old.remove(99, new AbortController().signal)
+    token = 'b'; await store.sync(); assert.equal(oldSignal.aborted, true)
+    pending.resolve(ok({ userId: 99, isBlocked: false })); await assert.rejects(removing, e => e.name === 'AbortError')
+    let calls = 0; globalThis.fetch = async () => { calls++; return ok(page([row(10)])) }
+    await assert.rejects(old.load(null, new AbortController().signal), e => e.name === 'AbortError'); assert.equal(calls, 0)
+    const fresh = authenticatedSafety(store); assert.deepEqual((await fresh.load(null, new AbortController().signal)).items.map(x => x.userId), [10]); assert.equal(calls, 1); store.dispose()
   })
   console.log(`${passed} safety checks passed (intercepted API/controller/static render; no browser).`)
 } finally { globalThis.fetch = original; delete globalThis.sessionStorage; delete globalThis.localStorage; await server.close() }

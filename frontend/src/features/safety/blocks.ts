@@ -1,12 +1,11 @@
 import { ApiError } from '../../api/client'
-import { getBlocks, safetyError, type BlockedUser, type BlockPage } from './api'
-import { unblockUser } from '../profile/user-api'
+import { safetyError, type BlockedUser, type BlockPage } from './api'
 
 export type BlocksState = { items: BlockedUser[]; cursor: string | null; hasNext: boolean; loading: boolean; removing: number | null; error: string; notice: string; denied: boolean }
 export const initialBlocks: BlocksState = { items: [], cursor: null, hasNext: false, loading: false, removing: null, error: '', notice: '', denied: false }
-export function createBlocksController(token: string, publish: (state: BlocksState) => void, current: () => boolean, service = {
-  load: (cursor: string | null, signal: AbortSignal): Promise<BlockPage> => getBlocks(token, cursor, signal),
-  remove: (userId: number, signal: AbortSignal) => unblockUser(token, String(userId), signal),
+export function createBlocksController(publish: (state: BlocksState) => void, current: () => boolean, service: {
+  load: (cursor: string | null, signal: AbortSignal) => Promise<BlockPage>;
+  remove: (userId: number, signal: AbortSignal) => Promise<unknown>;
 }) {
   let state = { ...initialBlocks }, active = true, version = 0, request = new AbortController()
   const valid = (v: number) => active && current() && v === version && !request.signal.aborted

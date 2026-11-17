@@ -153,7 +153,7 @@ try {
       ['/profile/setup', '프로필 설정', '프로필을 설정하려면'],
       ['/me/profile', '내 프로필', '프로필을 보려면'],
       ['/me/profile/edit', '내 프로필', '프로필을 보려면'],
-      ['/users/1', '사용자 프로필', '프로필을 볼 수 있어요'],
+      ['/users/1', '사용자 프로필', '로그인 후 이용할 수 있어요'],
     ]) {
       const html = render(path)
       assert.ok(html.includes(`>${title}</h1>`), `${path} 제목`)
@@ -169,20 +169,21 @@ try {
     const myApplications = render('/me/applications')
     assert.ok(myApplications.includes('class="posts-layout"'))
     assert.ok(myApplications.includes('<h1>내 지원 내역</h1>'))
-    assert.ok(myApplications.includes('공통 인증 연동 대기 중'))
+    assert.ok(myApplications.includes('로그인 후 이용할 수 있어요.'))
     assert.ok(render('/me/applications/other').includes('class="app-layout"'))
     assert.ok(render('/posts/1').includes('class="posts-layout"'))
     assert.ok(render('/posts/1/applicants').includes('class="posts-layout"'))
     assert.ok(render('/posts/1/applicants').includes('모집글 지원자 관리'))
+    assert.ok(render('/posts/1/applicants').includes('로그인 후 이용할 수 있어요.'))
     assert.ok(render('/me/posts').includes('class="posts-layout"'))
     assert.ok(render('/me/posts').includes('<h1>내 모집글</h1>'))
-    assert.ok(render('/me/posts').includes('공통 인증 연동 대기 중'))
-    assert.ok(render('/me/posts?status=CLOSED').includes('aria-pressed="true">마감</button>'))
+    assert.ok(render('/me/posts').includes('로그인 후 이용할 수 있어요.'))
+    assert.ok(render('/me/posts?status=CLOSED').includes('href="/login"'))
     const create = render('/posts/new')
     assert.ok(create.includes('class="posts-layout"'))
     assert.ok(create.includes('<h1>모집글 작성</h1>'))
     assert.ok(create.includes('name="contactLink"'))
-    assert.ok(create.includes('개발 중 · 인증 연동 대기'))
+    assert.ok(create.includes('로그인 후 이용할 수 있어요.'))
     assert.ok(!create.includes('로그인하기 (새 탭)'))
     assert.ok(!create.includes('학교 인증하기 (새 탭)'))
     } finally {

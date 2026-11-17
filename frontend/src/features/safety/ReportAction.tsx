@@ -1,29 +1,31 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Link } from 'react-router'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { ApiError } from '../../api/client'
 import { Button } from '../../components/Button'
 import { reportReasons } from '../profile/user-api'
-import { useSafetyToken, safetyTokenCurrent } from './auth'
-import { createReport, safetyError, type ReportReason, type ReportTarget } from './api'
+import { useAuth } from '../auth/useAuth'
+import { AuthStatus } from '../auth/AuthContext'
+import { authenticatedSafety, type SafetyService } from './source'
+import { safetyError, type ReportReason, type ReportTarget } from './api'
 import './safety.css'
 
 export function ReportAction(props: { targetType: ReportTarget; targetId: number; label: string; disabled?: boolean }) {
-  const token = useSafetyToken()
-  return <ReportContent key={`${token}:${props.targetType}:${props.targetId}`} {...props} token={token} />
+  const auth = useAuth()
+  const service = useMemo(() => authenticatedSafety(auth.store, auth.session), [auth.store, auth.session])
+  return <ReportContent key={`${auth.scope}:${props.targetType}:${props.targetId}`} {...props} service={service} ready={auth.status === 'authenticated'} />
 }
-function ReportContent({ token, targetType, targetId, label, disabled }: { token: string | null; targetType: ReportTarget; targetId: number; label: string; disabled?: boolean }) {
+function ReportContent({ service, ready, targetType, targetId, label, disabled }: { service: SafetyService; ready: boolean; targetType: ReportTarget; targetId: number; label: string; disabled?: boolean }) {
   const [open, setOpen] = useState(false), [busy, setBusy] = useState(false), [reported, setReported] = useState(false), [message, setMessage] = useState('')
   const request = useRef<AbortController | null>(null)
   const lock = useRef(false)
   useEffect(() => () => request.current?.abort(), [])
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!token || !safetyTokenCurrent(token) || lock.current || reported) return
+    if (!ready || !service.current() || disabled || lock.current || reported) return
     const form = new FormData(event.currentTarget), reason = String(form.get('reason')) as ReportReason, detail = String(form.get('detail') ?? '')
     const controller = new AbortController(); request.current = controller; lock.current = true; setBusy(true); setMessage('')
-    const current = () => !controller.signal.aborted && safetyTokenCurrent(token)
+    const current = () => !controller.signal.aborted && service.current()
     try {
-      await createReport(token, targetType, targetId, reason, detail, controller.signal)
+      await service.report(targetType, targetId, reason, detail, controller.signal)
       if (current()) { setReported(true); setMessage('신고가 접수됐어요.'); setOpen(false) }
     } catch (error) {
       if (current()) {
@@ -35,7 +37,7 @@ function ReportContent({ token, targetType, targetId, label, disabled }: { token
   return <div className="safety-report">
     <Button className="safety-secondary" disabled={disabled || busy || reported} onClick={() => { setOpen(value => !value); setMessage('') }}>{reported ? '신고 접수됨' : label}</Button>
     {message && <p role={reported ? 'status' : 'alert'}>{message}</p>}
-    {open && (!token ? <p><Link to="/login">로그인</Link> 후 학교 인증을 완료하면 신고할 수 있어요.</p> : <form className="safety-report-form" onSubmit={submit} aria-label={label}>
+    {open && (!ready ? <AuthStatus /> : <form className="safety-report-form" onSubmit={submit} aria-label={label}>
       <strong>{label}</strong><p>학교 인증 회원만 신고할 수 있어요. 접수한 신고는 취소할 수 없어요.</p>
       <label>신고 사유<select name="reason" required disabled={busy} defaultValue=""><option value="">사유를 선택해 주세요</option>{Object.entries(reportReasons).map(([key, text]) => <option value={key} key={key}>{text}</option>)}</select></label>
       <label>상세 내용 (선택 · 200자 이하)<textarea name="detail" maxLength={200} disabled={busy} /></label>

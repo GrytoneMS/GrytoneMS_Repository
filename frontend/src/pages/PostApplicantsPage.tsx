@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { Button } from '../components/Button'
 import { isPostMock } from '../features/posts/source'
-import { readAccessToken } from '../features/auth/api'
+import { useAuth } from '../features/auth/useAuth'
+import { AuthStatus } from '../features/auth/AuthContext'
 import { createManagementController, initialManagementState } from '../features/applicants/controller'
-import { managementService } from '../features/applicants/source'
+import { authenticatedManagement, managementService } from '../features/applicants/source'
 import { ApplicantsView } from '../features/applicants/ApplicantsView'
 import { DecisionDialog } from '../features/applicants/DecisionDialog'
 import { findApplication, type Decision, type Reason } from '../features/applicants/model'
@@ -13,17 +14,12 @@ import '../features/applicants/applicants.css'
 export default function PostApplicantsPage() {
   const { postId = '' } = useParams()
   const [params] = useSearchParams()
-  const [token, setToken] = useState(() => typeof window === 'undefined' ? null : readAccessToken())
-  useEffect(() => {
-    const sync = () => setToken(readAccessToken())
-    window.addEventListener('storage', sync)
-    window.addEventListener('focus', sync)
-    const timer = window.setInterval(sync, 500)
-    return () => { window.removeEventListener('storage', sync); window.removeEventListener('focus', sync); window.clearInterval(timer) }
-  }, [])
-  return <ApplicantsContent key={`${postId}:${isPostMock ? params.toString() : token}`} postId={postId} token={token} />
+  const auth = useAuth()
+  if (!isPostMock && auth.status !== 'authenticated') return <section className="applicants-page"><h1 className="applicants-page-title">모집글 지원자 관리</h1><AuthStatus /></section>
+  return <ApplicantsContent key={`${postId}:${isPostMock ? params.toString() : auth.scope}`} postId={postId} />
 }
-function ApplicantsContent({ postId, token }: { postId: string; token: string | null }) {
+function ApplicantsContent({ postId }: { postId: string }) {
+  const { store } = useAuth()
   const [params, setParams] = useSearchParams()
   const [state, setState] = useState(initialManagementState)
   const [reason, setReason] = useState<Reason | null>(null)
@@ -33,12 +29,11 @@ function ApplicantsContent({ postId, token }: { postId: string; token: string | 
   const errorNotice = useRef<HTMLDivElement>(null)
   const query = isPostMock ? params.toString() : ''
   useEffect(() => {
-    const manager = createManagementController(managementService(postId, new URLSearchParams(query), { token: token ?? undefined }), setState,
-      () => isPostMock || readAccessToken() === token)
+    const manager = createManagementController(isPostMock ? managementService(postId, new URLSearchParams(query)) : authenticatedManagement(postId, store), setState)
     controller.current = manager
     void manager.load()
     return () => manager.dispose()
-  }, [postId, query, token])
+  }, [postId, query, store])
   useEffect(() => { if (state.notice) resultNotice.current?.focus() }, [state.revision, state.notice])
   useEffect(() => { if (state.error) errorNotice.current?.focus() }, [state.error])
   const target = confirmation && state.snapshot ? findApplication(state.snapshot, confirmation.id) : null

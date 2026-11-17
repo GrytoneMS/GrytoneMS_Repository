@@ -25,6 +25,7 @@ function MyProfile({ profile }: { profile: Profile }) {
         <Link to="/me/posts">내 모집글</Link>
         <Link to="/me/applications">내 지원 내역</Link>
         <Link to="/me/blocks">내 차단 목록</Link>
+        <Link to="/me/scraps">내 스크랩</Link>
       </section>
     </aside>
     <div className="profile-stack">

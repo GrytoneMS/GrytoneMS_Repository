@@ -9,13 +9,24 @@ import { createMyPosts, type MyState, type MyService } from '../features/my-post
 import type { PostStatus } from '../features/posts/model'
 import { myPostsService } from '../features/my-posts/source'
 import '../features/my-posts/my-posts.css'
+import { AuthStatus } from '../features/auth/AuthContext'
+import { useAuth } from '../features/auth/useAuth'
 
 export default function MyPostsPage() {
+  const auth = useAuth(), token = auth.session?.token, store = auth.store
   const [params] = useSearchParams()
   const status = params.get('status') === 'CLOSED' ? 'CLOSED' : 'OPEN'
   const query = isPostMock ? new URLSearchParams({ mine: params.get('mine') ?? 'normal', result: params.get('result') ?? 'success' }).toString() : ''
-  const service = useMemo(() => myPostsService(new URLSearchParams(query)), [query])
-  return <MyPostsContent key={`${status}:${query}`} status={status} service={service} />
+  const service = useMemo<MyService>(() => {
+    const base = myPostsService(new URLSearchParams(query), { token })
+    return isPostMock ? base : {
+      load: (status, cursor, signal) => store.execute((_, authSignal) => base.load(status, cursor, AbortSignal.any([signal, authSignal]))),
+      close: (id, signal) => store.execute((_, authSignal) => base.close(id, AbortSignal.any([signal, authSignal]))),
+      remove: (id, signal) => store.execute((_, authSignal) => base.remove(id, AbortSignal.any([signal, authSignal]))),
+    }
+  }, [query, token, store])
+  if (!isPostMock && auth.status !== 'authenticated') return <section className="post-message"><h1>내 모집글</h1><AuthStatus /></section>
+  return <MyPostsContent key={`${auth.scope}:${status}:${query}`} status={status} service={service} />
 }
 function MyPostsContent({ status, service }: { status: PostStatus; service: MyService }) {
   const [params, setParams] = useSearchParams()
@@ -49,7 +60,7 @@ function MyPostsContent({ status, service }: { status: PostStatus; service: MySe
     </div></aside>}
     <nav className="my-post-tabs" aria-label="내 모집글 상태">{(['OPEN','CLOSED'] as const).map(tab => <Button key={tab} aria-pressed={status === tab} disabled={busy} onClick={() => update('status', tab)}>{tab === 'OPEN' ? '모집중' : '마감'}</Button>)}</nav>
     <p className="my-edit-note">수정 기능은 준비 중입니다. 이번 화면에는 수정 화면이 아직 연결되지 않았어요.</p>
-    {!isPostMock && <p className="post-note">공통 인증 연동 대기 중 · 인증 연동 전에는 내 모집글 조회·마감·삭제 요청을 보내지 않습니다.</p>}
+    {!isPostMock && <p className="post-note">실제 로그인 사용자 기준으로 내 모집글을 조회합니다.</p>}
     {state?.notice && <p role="status" tabIndex={-1} ref={notice} className="post-safety">{isPostMock && '개발용 예시 · '}{state.notice}</p>}
     {state?.error && <div role="alert" className="post-message"><p>{state.error}</p><Button disabled={busy || state.loading} onClick={() => { setConfirmation(null); void manager.current?.load() }}>목록 다시 조회</Button></div>}
     {(!state || state.loading || state.status !== status) && <p role="status" className="post-message">내 모집글을 불러오는 중…</p>}

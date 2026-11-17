@@ -32,6 +32,13 @@ export function saveAccessToken(token: string, remember: boolean) {
   const other = remember ? sessionStorage : localStorage
   target.setItem(tokenKey, token)
   other.removeItem(tokenKey)
+  window.dispatchEvent(new Event('teamon:auth-changed'))
+}
+
+export function clearAccessToken() {
+  sessionStorage.removeItem(tokenKey)
+  localStorage.removeItem(tokenKey)
+  window.dispatchEvent(new Event('teamon:auth-changed'))
 }
 
 export function authErrors(error: unknown): { fields?: Record<string, string>; message?: string } {
