@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { Button } from '../../components/Button'
+import { BrandLogo } from '../../components/BrandLogo'
 import { useAuth } from '../auth/useAuth'
 import { AuthStatus } from '../auth/AuthContext'
 import type { AdminService } from './api'
@@ -23,7 +24,7 @@ export default function AdminPage() {
   const service = useMemo<AdminService>(() => example ? createMockAdmin(new URLSearchParams(exampleQuery)) : authenticatedAdmin(auth.store, auth.session), [auth.session, auth.store, example, exampleQuery])
   const status = menu === 'verifications' ? (['PENDING', 'APPROVED', 'REJECTED'].includes(params.get('status') ?? '') ? params.get('status')! : 'PENDING') : menu === 'reports' ? (params.get('status') === 'RESOLVED' ? 'RESOLVED' : 'RECEIVED') : ''
   return <div className="admin-app">
-    <aside className="admin-sidebar"><Link to="/posts" className="admin-brand"><img src={`${import.meta.env.BASE_URL}brand/team-on.png`} alt="TEAM:ON" /></Link><p>관리자</p>
+    <aside className="admin-sidebar"><Link to="/posts" className="admin-brand"><BrandLogo /></Link><p>관리자</p>
       <nav aria-label="관리자 메뉴">{Object.entries(menus).map(([key, label]) => <Link key={key} aria-current={key === menu ? 'page' : undefined} to={`/admin/${key}${example ? `?${exampleQuery}` : ''}`}>{label}</Link>)}</nav><Link className="admin-home" to="/posts">사용자 화면으로 →</Link>
     </aside>
     <main className="admin-main" id="admin-content"><h1>{menus[menu]}</h1>

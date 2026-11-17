@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
+import { BrandLogo } from '../components/BrandLogo'
 import '../features/posts/posts.css'
 import { AuthStatus } from '../features/auth/AuthContext'
 import { NotificationLink } from '../features/notifications/NotificationLink'
@@ -28,7 +29,7 @@ export function AppLayout() {
   if (isRecruitment) return (
     <div className="posts-layout">
       <a className="post-skip" href="#main-content">본문으로 건너뛰기</a>
-      <header className="posts-header"><Link className="post-logo" to="/posts" aria-label="TEAM:ON 홈"><img src="/brand/team-on.png" alt="TEAM:ON" width={659} height={115} /></Link>
+      <header className="posts-header"><Link className="post-logo" to="/posts" aria-label="TEAM:ON 홈"><BrandLogo /></Link>
         <nav aria-label="주 메뉴"><NavLink to="/posts" end>홈</NavLink><NavLink to="/posts/new">모집글 작성</NavLink><NotificationLink /><Link to="/me/profile" aria-current={pathname === '/me/posts' ? 'page' : undefined}>마이페이지</Link></nav>
       </header>
       <main id="main-content" className="posts-main">{!isNotifications && !isPostMock && <AuthStatus publicView />}<Outlet /></main>
