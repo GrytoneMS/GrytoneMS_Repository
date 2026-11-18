@@ -23,13 +23,13 @@ function SettingsForm({ service }: { service: SettingsService }) {
   if (state.phase === 'idle' || state.phase === 'loading') return <p role="status" className="settings-card">알림 설정을 불러오는 중…</p>
   if (!state.draft) return <div className="settings-card"><p role="alert">{state.error}</p><Button onClick={() => void controller.current?.load()}>다시 불러오기</Button></div>
   return <>
-    <aside className="settings-info"><strong>알림함의 알림은 계속 표시돼요.</strong><p>이 설정은 앱 푸시용 환경설정입니다. 현재는 선택한 값의 저장·조회만 지원하며, 알림함 수신에는 영향을 주지 않아요.</p></aside>
+    <aside className="settings-info"><strong>이 설정은 앱 푸시 알림에만 적용됩니다.</strong><p>현재 앱 푸시는 제공하지 않으며, 웹 알림함과 미읽음 개수에는 영향을 주지 않습니다.</p></aside>
     <form onSubmit={event => { event.preventDefault(); void controller.current?.save() }} className="settings-card">
       <fieldset disabled={saving} className="settings-fields"><legend>알림 환경</legend>
         {([
           ['applyEnabled', '지원 알림', '새 지원과 지원 결과에 대한 푸시 알림 설정이에요.'],
           ['deadlineEnabled', '마감 알림', '모집 마감에 대한 푸시 알림 설정이에요.'],
-          ['quietHoursEnabled', '방해 금지 시간', '현재 설정값만 저장되며, 알림 제한 기능은 준비 중입니다.'],
+          ['quietHoursEnabled', '방해 금지 시간', '앱 푸시의 방해 금지 기능은 준비 중입니다.'],
         ] as const).map(([key, title, help]) => <label className="settings-toggle" key={key}><span><strong>{title}</strong><span id={`help-${key}`}>{help}</span></span><input type="checkbox" name={key} checked={state.draft![key]} aria-describedby={`help-${key}`} onChange={event => controller.current?.change(key, event.target.checked)} /></label>)}
       </fieldset>
       {state.error && <p className="settings-error" role="alert">{state.error}</p>}

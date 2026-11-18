@@ -27,7 +27,7 @@ export function validateReport(r: Report) {
   return r
 }
 export function validateVerification(v: Verification) {
-  if (!v || !isId(v.id) || !v.user || !isId(v.user.id) || !text(v.user.email) || !nullableText(v.user.nickname) || !v.school || !isId(v.school.id) || !text(v.school.name) || !nullableText(v.school.campus)
+  if (!v || !isId(v.id) || !v.user || !isId(v.user.id) || !nullableText(v.user.email) || !nullableText(v.user.nickname) || !v.school || !isId(v.school.id) || !text(v.school.name) || !nullableText(v.school.campus)
     || !['PENDING', 'APPROVED', 'REJECTED'].includes(v.status) || !nullableText(v.rejectReason) || !text(v.requestedAt) || !nullableText(v.reviewedAt)
     || !(v.documentUrl === null || v.documentUrl === `/api/admin/verifications/${v.id}/document`)) invalid()
   return v

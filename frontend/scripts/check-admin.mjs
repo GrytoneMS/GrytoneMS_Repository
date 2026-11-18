@@ -55,6 +55,31 @@ try {
     assert.equal((await s.list('schools', '', undefined, signal)).items.length, 1)
     for (const value of [page([report, report]), { items: [], hasNext: true, nextCursor: '10' }, page([{ ...verification, documentUrl: 'https://external.invalid/private' }])]) assert.throws(() => validatePage(value, value.items[0]?.user ? 'verifications' : 'reports'))
   })
+  await check('승인·반려 목록의 null 이메일 허용 및 일반 목록·필수 필드 회귀 검증', async () => {
+    const service = realAdmin('test', () => true, async () => account)
+    await service.account(signal)
+    for (const status of ['APPROVED', 'REJECTED']) {
+      const reviewed = { ...verification, status, documentUrl: null, reviewedAt: verification.requestedAt }
+      const missingEmail = { ...reviewed, id: 12, user: { ...reviewed.user, email: null } }
+      const result = page([missingEmail, reviewed])
+      globalThis.fetch = async (url) => {
+        assert.equal(new URL(url).searchParams.get('status'), status)
+        return envelope(result)
+      }
+      assert.deepEqual(await service.list('verifications', status, undefined, signal), result)
+      for (const invalidRow of [
+        { ...missingEmail, user: { ...missingEmail.user, email: 42 } },
+        { ...missingEmail, user: { ...missingEmail.user, email: undefined } },
+        { ...missingEmail, requestedAt: null },
+      ]) {
+        assert.throws(() => validatePage(page([invalidRow, reviewed]), 'verifications', undefined, status), { code: 'INVALID_RESPONSE' })
+      }
+    }
+
+    const pending = page([verification])
+    globalThis.fetch = async () => envelope(pending)
+    assert.deepEqual(await service.list('verifications', 'PENDING', undefined, signal), pending)
+  })
   await check('신고 대상별 허용 조치·같은 대상 처리 응답·7/30/영구 정지 요청 계약', async () => {
     assert.deepEqual(allowedActions(report), ['NONE', 'HIDE', 'DELETE', 'SUSPEND'])
     for (const targetType of ['USER', 'APPLICATION']) assert.deepEqual(allowedActions({ ...report, targetType }), ['NONE', 'SUSPEND'])
@@ -174,6 +199,13 @@ try {
     const ready = c.getSnapshot()
     const v = renderToStaticMarkup(createElement(Verifications, { rows: [verification], locked: false, controller: c, state: ready, onJob() {} }))
     for (const text of ['서류 확인', '승인', '반려', 'demo@example.invalid']) assert.ok(v.includes(text))
+    const reviewed = renderToStaticMarkup(createElement(Verifications, {
+      rows: [{ ...verification, user: { ...verification.user, email: null }, status: 'APPROVED', documentUrl: null }],
+      locked: false, controller: c, state: ready, onJob() {},
+    }))
+    assert.ok(reviewed.includes('이메일 정보 없음'))
+    assert.ok(!reviewed.includes('탈퇴'))
+    assert.ok(!reviewed.includes('서류 확인'))
     const s = renderToStaticMarkup(createElement(Schools, { rows: [school], locked: false, onJob() {} }))
     for (const text of ['학교 추가', '수정', '비활성화', 'test.example', '활성 학교 목록만']) assert.ok(s.includes(text))
     const dialog = renderToStaticMarkup(createElement(JobDialog, { initial: { kind: 'reject', id: 11, reason: '입력 보존' }, state: ready, controller: c, onClose() {} }))
