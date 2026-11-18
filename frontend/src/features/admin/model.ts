@@ -8,7 +8,7 @@ export type Report = { id: number; targetType: 'POST' | 'USER' | 'APPLICATION'; 
   target: { title: string | null; content: string | null; authorId: number; hidden: boolean; deleted: boolean } | null;
   reasonCode: string; detail: string | null; reporter: { id: number; nickname: string | null }; status: 'RECEIVED' | 'RESOLVED';
   action: Action | null; pendingCountForTarget: number; createdAt: string; handledAt: string | null }
-export type Verification = { id: number; user: { id: number; nickname: string | null; email: string }; school: { id: number; name: string; campus: string | null };
+export type Verification = { id: number; user: { id: number; nickname: string | null; email: string | null }; school: { id: number; name: string; campus: string | null };
   status: 'PENDING' | 'APPROVED' | 'REJECTED'; documentUrl: string | null; rejectReason: string | null; requestedAt: string; reviewedAt: string | null }
 export type School = { id: number; name: string; campus: string | null; emailDomain: string; region: 'CHEONAN' | 'ASAN'; active?: boolean }
 export type SchoolInput = { name: string; campus: string; emailDomain: string; region: 'CHEONAN' | 'ASAN' }
