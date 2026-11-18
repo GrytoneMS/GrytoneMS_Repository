@@ -13,4 +13,6 @@ public interface SchoolRepository extends JpaRepository<School, Long> {
     List<School> findAllByActiveTrueOrderByNameAsc();
 
     boolean existsByEmailDomain(String emailDomain);
+
+    boolean existsByName(String name);
 }

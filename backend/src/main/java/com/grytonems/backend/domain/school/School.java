@@ -2,6 +2,10 @@ package com.grytonems.backend.domain.school;
 
 import com.grytonems.backend.global.common.BaseTimeEntity;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -53,6 +57,23 @@ public class School extends BaseTimeEntity {
         this.emailDomain = emailDomain;
         this.region = region;
         this.active = true;
+    }
+
+    /**
+     * 학교 메일 도메인 목록. 메일이 두 종류인 학교(예: 호서대 vision.hoseo.edu, 365.hoseo.edu)는
+     * email_domain에 쉼표로 이어 저장합니다 (컬럼 구조는 그대로)
+     */
+    public List<String> emailDomains() {
+        return Arrays.stream(emailDomain.split(","))
+                .map(d -> d.trim().toLowerCase(Locale.ROOT))
+                .filter(d -> !d.isEmpty())
+                .toList();
+    }
+
+    /** 이 학교 도메인 중 하나로 끝나는 메일인지 */
+    public boolean acceptsEmail(String email) {
+        String lower = email.trim().toLowerCase(Locale.ROOT);
+        return emailDomains().stream().anyMatch(d -> lower.endsWith("@" + d));
     }
 
     /** ADMN-05: 비활성화하면 신규 인증 불가 */

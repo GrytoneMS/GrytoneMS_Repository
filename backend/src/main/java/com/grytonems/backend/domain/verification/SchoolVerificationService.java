@@ -58,10 +58,9 @@ public class SchoolVerificationService {
         School school = getActiveSchool(request.schoolId());
         String schoolEmail = request.schoolEmail().trim().toLowerCase(Locale.ROOT);
 
-        String domain = school.getEmailDomain().toLowerCase(Locale.ROOT);
-        if (!schoolEmail.endsWith("@" + domain)) {
+        if (!school.acceptsEmail(schoolEmail)) {
             throw new BusinessException(ErrorCode.SCHOOL_EMAIL_DOMAIN_MISMATCH,
-                    school.getName() + " 이메일(@" + domain + ")로 입력해 주세요");
+                    school.getName() + " 이메일(@" + String.join(" 또는 @", school.emailDomains()) + ")로 입력해 주세요");
         }
         if (userRepository.existsBySchoolEmailAndIdNot(schoolEmail, userId)) {
             throw new BusinessException(ErrorCode.SCHOOL_EMAIL_IN_USE);

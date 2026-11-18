@@ -12,6 +12,8 @@ import {
 import type { Account, CodeDelivery, School, Verification } from '../features/verification/api'
 import '../features/verification/verification.css'
 
+const schoolDomains = (value: string) => value.split(',').map(d => d.trim().toLowerCase()).filter(Boolean)
+
 type Challenge = CodeDelivery & { expiresAt: number }
 type Action = 'send' | 'confirm' | 'document'
 const steps = ['학교 선택', '학교 이메일', '코드 입력']
@@ -127,8 +129,10 @@ function VerificationForms({ token }: { token: string }) {
     const schoolEmail = email.trim()
     if (!selectedSchool || action || (challenge && challenge.remainingSendCount <= 0)) return
     setEmailError('')
-    if (schoolEmail.split('@').at(-1)?.toLowerCase() !== selectedSchool.emailDomain.toLowerCase()) {
-      setEmailError(`학교 이메일 도메인이 맞지 않아요. @${selectedSchool.emailDomain} 주소를 입력해 주세요.`)
+    // 메일 도메인이 두 종류인 학교는 쉼표로 이어져 와요 (예: vision.hoseo.edu,365.hoseo.edu)
+    const domains = schoolDomains(selectedSchool.emailDomain)
+    if (!domains.includes(schoolEmail.split('@').at(-1)?.toLowerCase() ?? '')) {
+      setEmailError(`학교 이메일 도메인이 맞지 않아요. ${domains.map(d => `@${d}`).join(' 또는 ')} 주소를 입력해 주세요.`)
       return
     }
     setAction('send')
@@ -254,7 +258,7 @@ function VerificationForms({ token }: { token: string }) {
           {!loading && !loadError && !schools.length && <p className="verification-help">등록된 학교가 없어요. 팀 관리자에게 학교 등록을 요청해 주세요.</p>}
           <div className="verification-send">
             <Input id="verification-email" type="email" label="학교 이메일" required
-              placeholder={selectedSchool ? `id@${selectedSchool.emailDomain}` : '학교 이메일 입력'}
+              placeholder={selectedSchool ? schoolDomains(selectedSchool.emailDomain).map(d => `id@${d}`).join(' 또는 ') : '학교 이메일 입력'}
               value={email} disabled={blocked || !selectedSchool} onChange={event => {
                 setEmail(event.target.value)
                 setEmailError('')
