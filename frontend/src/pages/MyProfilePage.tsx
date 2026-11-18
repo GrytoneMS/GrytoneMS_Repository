@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { useAuth } from '../features/auth/useAuth'
 import { MyProfileData, ProfileAvatar, ProfileProgress } from '../features/profile/ProfileLayout'
 import { schoolName } from '../features/profile/presentation'
 import { ProfileSections } from '../features/profile/ProfileSections'
@@ -10,6 +11,7 @@ export default function MyProfilePage() {
 }
 
 function MyProfile({ profile }: { profile: Profile }) {
+  const { status, session } = useAuth()
   return <div className="profile-view-grid">
     <aside className="profile-stack">
       <section className="profile-card profile-overview">
@@ -28,6 +30,7 @@ function MyProfile({ profile }: { profile: Profile }) {
         <Link to="/notifications">알림함</Link>
         <Link to="/me/scraps">내 스크랩</Link>
         <Link to="/settings">설정</Link>
+        {status === 'authenticated' && session?.account.role === 'ADMIN' && <Link to="/admin">관리자 페이지</Link>}
       </section>
     </aside>
     <div className="profile-stack">
