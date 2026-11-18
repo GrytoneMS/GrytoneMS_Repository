@@ -1,0 +1,17 @@
+# DOMAIN 값(예: 15-135-101-17.sslip.io)으로 HTTPS 인증서를 자동 발급받음
+{$DOMAIN} {
+	encode gzip
+
+	handle /api/* {
+		reverse_proxy backend:8080
+	}
+	handle /files/* {
+		reverse_proxy backend:8080
+	}
+	# 그 밖의 주소는 프론트 화면 (새로고침해도 index.html로)
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
