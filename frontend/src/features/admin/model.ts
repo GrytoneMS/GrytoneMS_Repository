@@ -36,7 +36,7 @@ export function jobError(job: Job) {
   if (job.kind === 'createSchool' || job.kind === 'updateSchool') {
     const s = job.school
     if (!s.name.trim() || s.name.trim().length > 50 || s.campus.trim().length > 30) return '학교명 1~50자, 캠퍼스 30자 이하로 입력해 주세요.'
-    if (s.emailDomain.trim().length > 100 || !/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(s.emailDomain.trim())) return '이메일 도메인을 확인해 주세요.'
+    if (s.emailDomain.trim().length > 100 || !/^[a-z0-9.-]+\.[a-z]{2,}(,[a-z0-9.-]+\.[a-z]{2,})*$/i.test(s.emailDomain.trim())) return '이메일 도메인을 확인해 주세요.'
     if (!['CHEONAN', 'ASAN'].includes(s.region)) return '지역을 선택해 주세요.'
   }
   return ''

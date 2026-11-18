@@ -23,7 +23,9 @@ public record SchoolCreateRequest(
         String campus,
 
         @NotBlank(message = "이메일 도메인을 입력해 주세요")
-        @Pattern(regexp = "^[a-z0-9.-]+\\.[a-z]{2,}$", message = "도메인 형식이 아니에요 (예: dankook.ac.kr)")
+        @Size(max = 100, message = "도메인은 100자 이내로 입력해 주세요")
+        @Pattern(regexp = "^[a-z0-9.-]+\\.[a-z]{2,}(,[a-z0-9.-]+\\.[a-z]{2,})*$",
+                message = "도메인 형식이 아니에요 (예: dankook.ac.kr, 두 개면 쉼표로: vision.hoseo.edu,365.hoseo.edu)")
         String emailDomain,
 
         @NotNull(message = "지역을 선택해 주세요 (CHEONAN / ASAN)")

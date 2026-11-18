@@ -178,6 +178,28 @@ class SchoolVerificationApiTest {
     }
 
     @Test
+    @DisplayName("메일 도메인이 두 개인 학교(호서대)는 둘 다 받고, 다른 도메인은 둘 다 안내한다")
+    void multipleDomains() throws Exception {
+        School hoseo = schoolRepository.save(School.builder()
+                .name("호서대학교").emailDomain("vision.hoseo.edu,365.hoseo.edu").region(Region.ASAN)
+                .build());
+
+        send(token, hoseo.getId(), "student@vision.hoseo.edu").andExpect(status().isOk());
+        send(token, hoseo.getId(), "Student@365.Hoseo.edu")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.schoolEmail").value("student@365.hoseo.edu"));
+        send(token, hoseo.getId(), "student@hoseo.edu")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("SCHOOL_EMAIL_DOMAIN_MISMATCH"))
+                .andExpect(jsonPath("$.message").value("호서대학교 이메일(@vision.hoseo.edu 또는 @365.hoseo.edu)로 입력해 주세요"));
+        assertThat(mailSender.count()).isEqualTo(2);
+
+        confirm(token, mailSender.lastCode())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.school.name").value("호서대학교"));
+    }
+
+    @Test
     @DisplayName("없는 학교나 비활성 학교면 404 SCHOOL_NOT_FOUND")
     void schoolNotFound() throws Exception {
         send(token, 999_999L, "student@dankook.ac.kr")
