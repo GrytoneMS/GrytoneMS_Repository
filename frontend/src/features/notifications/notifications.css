@@ -15,7 +15,7 @@ button.notification-row:not(:disabled) { cursor: pointer; }
 .notification-row[data-unread=true], button.notification-row:not(:disabled):hover { background: #f1f5fc; }
 .notification-dot { width: 8px; height: 8px; border-radius: 100%; background: #e1e6ee; }
 .notification-row[data-unread=true] .notification-dot { background: #465fe3; }
-.notification-label { display: block; color: #50596d; font-size: .77rem; }
+.notification-label { display: block; color: inherit; font-size: inherit; }
 .notification-message { display: block; overflow-wrap: anywhere; font-size: .92rem; }
 .notification-row[data-unread=true] .notification-message { font-weight: 650; }
 .notification-more { display: block; margin: 12px auto 0; }
