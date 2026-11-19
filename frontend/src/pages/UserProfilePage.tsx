@@ -149,7 +149,7 @@ function UserProfile({ userId, applicationId, service }: { userId: string; appli
       </div>
       <div className="user-profile-actions">
         <ReportAction targetType="USER" targetId={profile.id} label="사용자 신고" disabled={saving} />
-        <Button className="profile-secondary" disabled={saving} onClick={() => open('block')}>차단</Button>
+        <Button className="profile-secondary user-profile-block" disabled={saving} onClick={() => open('block')}>차단</Button>
       </div>
     </section>
 

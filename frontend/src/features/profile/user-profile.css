@@ -18,6 +18,7 @@
 
 .user-profile-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .user-profile-overview .profile-secondary { background: #f6f8fe; }
+.user-profile-overview .user-profile-block { color: #000; }
 .user-profile-notice { margin: 0; color: #206544; }
 
 .user-report-form { display: grid; gap: 12px; }
