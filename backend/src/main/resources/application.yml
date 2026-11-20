@@ -26,12 +26,51 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
+  # 학교 인증 메일 (AUTH-06)
+  # 메일 서버 주소(host)는 여기 적지 않습니다. 환경 변수 SPRING_MAIL_HOST 등을 넣으면 실제 메일이 나가고,
+  # 없으면 인증 코드를 서버 로그에 찍습니다 (로컬 개발용). backend/README.md 참고
+  mail:
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+  # 프로필 이미지·학교 인증 서류 업로드 (PROF-01, AUTH-07): 5MB 이하
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
   jackson:
     time-zone: Asia/Seoul
     date-format: yyyy-MM-dd'T'HH:mm:ss
 
 server:
   port: 8080
+
+jwt:
+  # 로컬 개발용 기본값입니다. 배포할 때는 반드시 JWT_SECRET 환경 변수로 32자 이상 임의 문자열을 넣으세요.
+  secret: ${JWT_SECRET:local-dev-only-secret-change-me-0123456789}
+  access-token-expiration: ${JWT_EXPIRATION:PT24H}
+
+app:
+  # 비밀번호 재설정 메일 링크에 쓰는 프론트 주소 (AUTH-05)
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  cors:
+    # 프론트 개발 서버 주소 (여러 개면 쉼표로 구분)
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  upload:
+    # 업로드 파일을 저장할 서버 디렉터리, 프로필 이미지 공개 주소의 앞부분
+    dir: ${UPLOAD_DIR:uploads}
+    public-url: ${UPLOAD_PUBLIC_URL:http://localhost:8080/files}
+  mail:
+    # 보내는 사람 주소. 비우면 SPRING_MAIL_USERNAME을 씁니다
+    from: ${MAIL_FROM:}
 
 logging:
   level:

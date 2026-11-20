@@ -1,0 +1,2 @@
+.teamon-logo { display: block; width: 148px; max-width: 100%; height: auto; object-fit: contain; }
+@media (max-width: 760px) { .teamon-logo { width: 124px; } }

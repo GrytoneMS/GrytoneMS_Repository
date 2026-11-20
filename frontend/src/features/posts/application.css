@@ -1,0 +1,36 @@
+.application-modal { --apply-line: #e5e9f0; width: min(680px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); padding: 0; border: 1px solid var(--apply-line); border-radius: 24px; color: var(--color-text); background: var(--color-background); box-shadow: 0 1px 4px #0004; overflow: auto; overscroll-behavior: contain; }
+.application-modal::backdrop { background: #0f172a55; }
+.application-modal { font-family: 'Noto Sans KR', var(--font-family); font-size: 15px; line-height: 1.6; }
+.application-modal form { margin: 0; }
+.application-modal header { display: flex; align-items: center; justify-content: space-between; padding: 26px 36px 8px; }
+.application-modal h2 { font-size: 28px; line-height: 38px; margin: 0; }
+.application-modal .application-close { background: #eef2f7; color: var(--color-text); padding: 4px 14px; font-size: 24px; }
+.application-body { padding: 0 36px; overflow-wrap: anywhere; }
+.application-body > p:first-child { color: var(--color-muted); font-size: 13px; margin: 8px 0 20px; }
+.application-modal fieldset { padding: 0; margin: 0; border: 0; min-width: 0; }
+.application-modal legend, .application-modal .input-field label { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+.application-roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 12px; margin: 18px 0 16px; }
+.application-role { display: flex; align-items: center; gap: 8px; padding: 14px 18px; border: 1px solid var(--apply-line); border-radius: 16px; cursor: pointer; }
+.application-role.selected { border-color: var(--color-primary); background: #f3f8ff; color: #1559c7; }
+.application-role:has(input:disabled) { opacity: .6; cursor: default; }
+.application-role:focus-within { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.application-role strong, .application-role small { display: block; }
+.application-role small, .application-modal small { font-size: 13px; color: var(--color-muted); }
+.application-modal .input-field { margin-top: 16px; }
+.application-modal textarea, .application-modal .input { width: 100%; border: 1px solid var(--apply-line); border-radius: 14px; background: #f7f9fc; padding: 13px 16px; font: inherit; box-sizing: border-box; }
+.application-modal textarea { resize: vertical; min-height: 104px; }
+.application-modal [aria-invalid=true] { border-color: var(--color-error); }
+.application-profile { margin-top: 20px; background: #f3f8ff; border: 1px solid #e8f1ff; border-radius: 18px; padding: 18px 20px; }
+.application-profile h3 { color: #1559c7; font-size: 16px; margin: 0 0 14px; }
+.application-profile .post-chip { color: #1559c7; background: #e8f1ff; }
+.application-profile .post-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.application-profile .post-chip { border-radius: 99px; padding: 5px 11px; font-size: 12px; font-weight: 700; }
+.application-profile p, .application-notice { font-size: 13px; color: var(--color-muted); }
+.application-modal footer { position: sticky; bottom: 0; display: flex; gap: 24px; align-items: center; padding: 16px 36px 26px; background: var(--color-background); border-top: 1px solid var(--apply-line); margin-top: 16px; }
+.application-modal footer .button { border-radius: 99px; min-height: 48px; }
+.application-modal footer .button[type=submit] { flex: 1; background: #1559c7; }
+.application-modal .application-cancel { background: #eef2f7; color: var(--color-text); }
+.application-examples { margin: 12px 0; padding: 12px; background: #f3f8ff; border: 1px dashed var(--color-primary); }
+.application-examples label { display: flex; flex-wrap: wrap; gap: 8px; }
+.application-examples select { max-width: 100%; }
+@media (max-width: 520px) { .application-modal { max-height: calc(100dvh - 16px); } .application-modal header { padding: 20px 20px 8px; } .application-body { padding: 0 20px; } .application-modal footer { padding: 12px 20px 20px; gap: 12px; } }

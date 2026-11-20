@@ -1,0 +1,35 @@
+﻿.my-applications-page { max-width: 960px; margin: 4px auto 0; display: grid; gap: 16px; min-width: 0; }
+.posts-layout:has(.my-applications-page) .posts-header nav a[href="/me/profile"] { color: var(--color-primary); }
+.my-applications-page > h1 { font-size: 28px; line-height: 38px; }
+.my-application-filters { display: flex; flex-wrap: wrap; gap: 8px; border: 0; padding: 0; }
+.my-application-filters .button { padding: 7px 11px; font-size: 12px; line-height: 16px; background: var(--post-soft); color: var(--post-ink); }
+.my-application-filters .button[aria-pressed=true] { background: var(--post-ink); color: white; }
+.my-applications-list { display: grid; gap: 16px; }
+.my-application-card { display: grid; gap: 12px; min-width: 0; }
+.my-application-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.my-application-heading > div { min-width: 0; }
+.my-application-heading h2 { margin: 0; font-size: 16px; line-height: 24px; }
+.my-application-heading h2 a { color: inherit; }
+.my-application-heading h2 a:hover { text-decoration: underline; }
+.my-application-heading p, .my-application-caption, .my-application-dates { color: var(--post-muted); font-size: 13px; line-height: 20px; }
+.my-application-status { flex-shrink: 0; font-size: 12px; line-height: 16px; font-weight: 700; }
+.my-application-status.accepted { background: #e5f6ec; color: #0b7a43; }
+.my-application-status.rejected { background: #e5372b; color: white; }
+.my-application-status.unknown { border: 1px solid var(--post-line); white-space: normal; }
+.my-application-deleted .my-application-heading > div { color: var(--post-muted); }
+.my-application-dates { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.my-application-contact { display: grid; gap: 8px; border: 1px solid #e8f1ff; background: #f3f8ff; border-radius: 16px; padding: 16px 18px; color: var(--post-blue); }
+.my-application-contact h3 { margin: 0; font-size: 12px; line-height: 16px; }
+.my-application-contact a { font-size: 14px; line-height: 22px; font-weight: 500; }
+.my-application-contact p { font-size: 13px; line-height: 20px; color: #e5372b; }
+.my-application-card > .button { width: 100%; }
+.my-applications-page .my-application-soft, .my-application-dialog .my-application-soft { background: var(--post-soft); color: var(--post-ink); }
+.my-applications-page .my-application-outline { background: white; color: var(--post-ink); border: 1px solid var(--post-line); }
+.my-applications-page .my-application-refresh { justify-self: start; background: var(--post-soft); color: var(--post-ink); }
+.my-application-dialog { width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; border: 1px solid var(--post-line); border-radius: 24px; padding: 28px; color: var(--post-ink); background: white; }
+.my-application-dialog::backdrop { background: #0f172a66; }
+.my-application-dialog h2 { margin: 0 0 16px; font-size: 20px; }
+.my-application-dialog p { margin-bottom: 16px; }
+.my-application-dialog > div { display: flex; flex-wrap: wrap; justify-content: end; gap: 12px; }
+@media (max-width: 760px) { .my-application-card { padding: 20px; } .my-application-filters .button { min-height: 40px; } }
+@media (max-width: 440px) { .my-application-heading { align-items: start; gap: 10px; } .my-applications-page > h1 { font-size: 24px; line-height: 34px; } .my-application-dialog { padding: 20px; } }
